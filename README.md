@@ -9,7 +9,7 @@ See the Wiki-page for [compiling grblHAL](https://github.com/terjeio/grblHAL/wik
 Available driver options can be found [here](Inc/my_machine.h).
 
 Select the processor to build for from the build tool dropdown to build. The `.bin` created file can be found in the folder with the same name as the menu name when the build is completed.  
-![Config](../../media/STM32F4xx_config.png)
+![Config](media/STM32F4xx_config.png)
 
 
 A method for flashing the Nucleo F411 and Nucleo F446 is to drop the `.bin` file on the NODE_F4xxRE flash drive. Note that the file can be dragged from the IDE _Project Explorer_.
