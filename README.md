@@ -4,7 +4,7 @@ A grblHAL driver for the STM32F401xC, STM32F407xx, STM32F411xE and STM32F446xx A
 
 Loosely based on code from robomechs [6-AXIS-USBCNC-GRBL](https://github.com/robomechs/6-AXIS-USBCNC-GRBL) port, updated for [STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.htm) and the latest STM HAL drivers where appropriate.
 
-See the Wiki-page for [compiling grblHAL](https://github.com/terjeio/grblHAL/wiki/Compiling-GrblHAL) for instructions for how to import the project, configure the driver and compile.
+See the Wiki-page for [compiling grblHAL](https://github.com/grblHAL/core/wiki/Compiling-GrblHAL) for instructions for how to import the project, configure the driver and compile.
 
 Available driver options can be found [here](Inc/my_machine.h).
 
@@ -54,4 +54,4 @@ CNC breakout boards:
 [CNC breakout for Nucleo-64](https://github.com/terjeio/CNC_Breakout_Nucleo64) by Terje Io.
 
 ---
-2021-02-19
+2021-04-14
