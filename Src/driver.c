@@ -237,8 +237,8 @@ static void driver_delay (uint32_t ms, void (*callback)(void))
 {
     if((delay.ms = ms) > 0) {
         // Restart systick...
-        SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
-        SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+//        SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
+//        SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
         if(!(delay.callback = callback))
             while(delay.ms);
     } else if(callback)
@@ -1380,7 +1380,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210312";
+    hal.driver_version = "210414";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1662,7 +1662,7 @@ void EXTI0_IRQHandler(void)
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
   #endif
-#elif KEYPAD_STROBE_BIT & (1<<0)
+#elif defined(KEYPAD_ENABLED) && KEYPAD_STROBE_BIT & (1<<0)
         keypad_keyclick_handler(BITBAND_PERI(KEYPAD_PORT->IDR, KEYPAD_STROBE_PIN) == 0);
 #else
         if(hal.driver_cap.software_debounce) {
@@ -1885,7 +1885,7 @@ void EXTI15_10_IRQHandler(void)
 #endif
 
 // Interrupt handler for 1 ms interval timer
-void HAL_IncTick(void)
+void Driver_IncTick (void)
 {
 #ifdef Z_LIMIT_POLL
     static bool z_limit_state = false;
@@ -1910,7 +1910,6 @@ void HAL_IncTick(void)
         fatfs_ticks = 10;
     }
 #endif
-    uwTick += uwTickFreq;
 
     if(delay.ms && !(--delay.ms)) {
         if(delay.callback) {
