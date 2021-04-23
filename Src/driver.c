@@ -233,7 +233,7 @@ static uint32_t dir_outmap[sizeof(c_dir_outmap) / sizeof(uint32_t)];
 
 #define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|KEYPAD_STROBE_BIT|SPINDLE_INDEX_BIT)
 
-static void driver_delay (uint32_t ms, void (*callback)(void))
+static void driver_delay (uint32_t ms, delay_callback_ptr callback)
 {
     if((delay.ms = ms) > 0) {
         // Restart systick...
@@ -241,8 +241,11 @@ static void driver_delay (uint32_t ms, void (*callback)(void))
 //        SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
         if(!(delay.callback = callback))
             while(delay.ms);
-    } else if(callback)
-        callback();
+    } else {
+        delay.callback = NULL;
+        if(callback)
+            callback();
+    }
 }
 
 // Enable/disable stepper motors
@@ -1380,7 +1383,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210414";
+    hal.driver_version = "210423";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1434,6 +1437,7 @@ bool driver_init (void)
     hal.stream.read = usbGetC;
     hal.stream.write = usbWriteS;
     hal.stream.write_all = usbWriteS;
+    hal.stream.write_char = usbPutC;
     hal.stream.get_rx_buffer_available = usbRxFree;
     hal.stream.reset_read_buffer = usbRxFlush;
     hal.stream.cancel_read_buffer = usbRxCancel;
@@ -1442,6 +1446,7 @@ bool driver_init (void)
     hal.stream.read = serialGetC;
     hal.stream.write = serialWriteS;
     hal.stream.write_all = serialWriteS;
+    hal.stream.write_char = serialPutC;
     hal.stream.get_rx_buffer_available = serialRxFree;
     hal.stream.reset_read_buffer = serialRxFlush;
     hal.stream.cancel_read_buffer = serialRxCancel;
