@@ -161,7 +161,16 @@ static uint32_t step_outmap[sizeof(c_step_outmap) / sizeof(uint32_t)];
     #define Y_STEP_PORT STEP_PORT
   #endif
   #ifndef Z_STEP_PORT
-    #define X_STEP_PORT STEP_PORT
+    #define Z_STEP_PORT STEP_PORT
+  #endif
+  #ifndef A_STEP_PORT
+    #define A_STEP_PORT STEP_PORT
+  #endif
+  #ifndef B_STEP_PORT
+    #define B_STEP_PORT STEP_PORT
+  #endif
+  #ifndef C_STEP_PORT
+    #define C_STEP_PORT STEP_PORT
   #endif
 #endif
 
@@ -208,19 +217,25 @@ static const uint32_t c_dir_outmap[] = {
 
 static uint32_t dir_outmap[sizeof(c_dir_outmap) / sizeof(uint32_t)];
 
-#endif
-
-#ifndef X_LIMIT_PORT
-  #define X_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef Y_LIMIT_PORT
-  #define Y_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef Z_LIMIT_PORT
-  #define Z_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef A_LIMIT_PORT
-  #define A_LIMIT_PORT LIMIT_PORT
+#elif DIRECTION_OUTMODE == GPIO_MAP
+  #ifndef X_LIMIT_PORT
+    #define X_LIMIT_PORT LIMIT_PORT
+  #endif
+  #ifndef Y_LIMIT_PORT
+    #define Y_LIMIT_PORT LIMIT_PORT
+  #endif
+  #ifndef Z_LIMIT_PORT
+    #define Z_LIMIT_PORT LIMIT_PORT
+  #endif
+  #ifndef A_LIMIT_PORT
+    #define A_LIMIT_PORT LIMIT_PORT
+  #endif
+  #ifndef B_LIMIT_PORT
+    #define B_LIMIT_PORT LIMIT_PORT
+  #endif
+  #ifndef C_LIMIT_PORT
+    #define C_LIMIT_PORT LIMIT_PORT
+  #endif
 #endif
 
 #if KEYPAD_ENABLE == 0
@@ -264,6 +279,12 @@ static void stepperEnable (axes_signals_t enable)
    #if N_AXIS > 3
     BITBAND_PERI(A_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
    #endif
+   #if N_AXIS > 4
+    BITBAND_PERI(B_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
+   #endif
+   #if N_AXIS > 4
+    BITBAND_PERI(C_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
+   #endif
   #endif
 #endif
 }
@@ -301,6 +322,9 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
     BITBAND_PERI(X_STEP_PORT->ODR, X_STEP_PIN) = step_outbits.x;
     BITBAND_PERI(Y_STEP_PORT->ODR, Y_STEP_PIN) = step_outbits.y;
     BITBAND_PERI(Z_STEP_PORT->ODR, Z_STEP_PIN) = step_outbits.z;
+    BITBAND_PERI(A_STEP_PORT->ODR, A_STEP_PIN) = step_outbits.a;
+    BITBAND_PERI(B_STEP_PORT->ODR, B_STEP_PIN) = step_outbits.b;
+    BITBAND_PERI(C_STEP_PORT->ODR, C_STEP_PIN) = step_outbits.c;
 #elif STEP_OUTMODE == GPIO_MAP
 	STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits.value];
 #else
@@ -317,6 +341,9 @@ inline static __attribute__((always_inline)) void stepperSetDirOutputs (axes_sig
     BITBAND_PERI(X_DIRECTION_PORT->ODR, X_DIRECTION_PIN) = dir_outbits.x;
     BITBAND_PERI(Y_DIRECTION_PORT->ODR, Y_DIRECTION_PIN) = dir_outbits.y;
     BITBAND_PERI(Z_DIRECTION_PORT->ODR, Z_DIRECTION_PIN) = dir_outbits.z;
+    BITBAND_PERI(A_DIRECTION_PORT->ODR, A_DIRECTION_PIN) = dir_outbits.a;
+    BITBAND_PERI(B_DIRECTION_PORT->ODR, B_DIRECTION_PIN) = dir_outbits.b;
+    BITBAND_PERI(C_DIRECTION_PORT->ODR, C_DIRECTION_PIN) = dir_outbits.c;
 #elif DIRECTION_OUTMODE == GPIO_MAP
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | dir_outmap[dir_outbits.value];
 #else
@@ -1033,6 +1060,21 @@ void settings_changed (settings_t *settings)
         HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
 #endif
 
+#ifdef CONTROL_PORT
+  #ifndef CONTROL_RESET_PORT
+    #define CONTROL_RESET_PORT CONTROL_PORT
+  #endif
+  #ifndef CONTROL_FEED_HOLD_PORT
+    #define CONTROL_FEED_HOLD_PORT CONTROL_PORT
+  #endif
+  #ifndef CONTROL_CYCLE_START_PORT
+    #define CONTROL_CYCLE_START_PORT CONTROL_PORT
+  #endif
+  #ifndef CONTROL_SAFETY_DOOR_PORT
+    #define CONTROL_SAFETY_DOOR_PORT CONTROL_PORT
+  #endif
+#endif
+
         GPIO_Init.Pin = CONTROL_RESET_BIT;
         GPIO_Init.Mode = control_ire.reset ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
         GPIO_Init.Pull = settings->control_disable_pullup.reset ? GPIO_NOPULL : GPIO_PULLUP;
@@ -1222,10 +1264,19 @@ static bool driver_setup (settings_t *settings)
     HAL_GPIO_Init(Y_STEPPERS_DISABLE_PORT, &GPIO_Init);
     GPIO_Init.Pin = Z_STEPPERS_DISABLE_BIT;
     HAL_GPIO_Init(Z_STEPPERS_DISABLE_PORT, &GPIO_Init);
- #if N_AXIS > 3
-  GPIO_Init.Pin = A_STEPPERS_DISABLE_BIT;
-  HAL_GPIO_Init(A_STEPPERS_DISABLE_PORT, &GPIO_Init);
- #endif
+  #if N_AXIS > 3
+    GPIO_Init.Pin = A_STEPPERS_DISABLE_BIT;
+    HAL_GPIO_Init(A_STEPPERS_DISABLE_PORT, &GPIO_Init);
+  #endif
+  #if N_AXIS > 4
+    GPIO_Init.Pin = B_STEPPERS_DISABLE_BIT;
+    HAL_GPIO_Init(B_STEPPERS_DISABLE_PORT, &GPIO_Init);
+   #endif
+  #if N_AXIS > 5
+    GPIO_Init.Pin = C_STEPPERS_DISABLE_BIT;
+    HAL_GPIO_Init(C_STEPPERS_DISABLE_PORT, &GPIO_Init);
+  #endif
+
 #endif
 
 #ifdef STEP_MASK
@@ -1238,6 +1289,18 @@ static bool driver_setup (settings_t *settings)
     HAL_GPIO_Init(Y_STEP_PORT, &GPIO_Init);
     GPIO_Init.Pin = Z_STEP_BIT;
     HAL_GPIO_Init(Z_STEP_PORT, &GPIO_Init);
+  #if N_AXIS > 3
+    GPIO_Init.Pin = A_STEP_BIT;
+    HAL_GPIO_Init(A_STEP_PORT, &GPIO_Init);
+  #endif
+  #if N_AXIS > 4
+    GPIO_Init.Pin = B_STEP_BIT;
+    HAL_GPIO_Init(B_STEP_PORT, &GPIO_Init);
+   #endif
+  #if N_AXIS > 5
+    GPIO_Init.Pin = C_STEP_BIT;
+    HAL_GPIO_Init(C_STEP_PORT, &GPIO_Init);
+  #endif
 #endif
 
 #ifdef DIRECTION_MASK
@@ -1250,6 +1313,18 @@ static bool driver_setup (settings_t *settings)
     HAL_GPIO_Init(Y_DIRECTION_PORT, &GPIO_Init);
     GPIO_Init.Pin = Z_DIRECTION_BIT;
     HAL_GPIO_Init(Z_DIRECTION_PORT, &GPIO_Init);
+  #if N_AXIS > 3
+    GPIO_Init.Pin = A_DIRECTION_BIT;
+    HAL_GPIO_Init(A_DIRECTION_PORT, &GPIO_Init);
+  #endif
+  #if N_AXIS > 4
+    GPIO_Init.Pin = B_DIRECTION_BIT;
+    HAL_GPIO_Init(B_DIRECTION_PORT, &GPIO_Init);
+   #endif
+  #if N_AXIS > 5
+    GPIO_Init.Pin = C_DIRECTION_BIT;
+    HAL_GPIO_Init(C_DIRECTION_PORT, &GPIO_Init);
+  #endif
 #endif
 
     STEPPER_TIMER->CR1 &= ~TIM_CR1_CEN;
