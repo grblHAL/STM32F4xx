@@ -499,6 +499,12 @@ inline static limit_signals_t limitsGetState()
   #ifdef A_LIMIT_PIN
     signals.min.a = BITBAND_PERI(A_LIMIT_PORT->IDR, A_LIMIT_PIN);
   #endif
+  #ifdef B_LIMIT_PIN
+    signals.min.b = BITBAND_PERI(B_LIMIT_PORT->IDR, B_LIMIT_PIN);
+  #endif
+  #ifdef C_LIMIT_PIN
+    signals.min.c = BITBAND_PERI(C_LIMIT_PORT->IDR, C_LIMIT_PIN);
+  #endif
 #elif LIMIT_INMODE == GPIO_MAP
     uint32_t bits = LIMIT_PORT->IDR;
     signals.min.x = (bits & X_LIMIT_BIT) != 0;
@@ -506,6 +512,12 @@ inline static limit_signals_t limitsGetState()
     signals.min.z = (bits & Z_LIMIT_BIT) != 0;
   #ifdef A_LIMIT_PIN
     signals.min.a = (bits & A_LIMIT_BIT) != 0;
+  #endif
+  #ifdef B_LIMIT_PIN
+    signals.min.b = (bits & B_LIMIT_BIT) != 0;
+  #endif
+  #ifdef C_LIMIT_PIN
+    signals.min.c = (bits & C_LIMIT_BIT) != 0;
   #endif
 #else
     signals.min.value = (uint8_t)((LIMIT_PORT->IDR & LIMIT_MASK) >> LIMIT_INMODE);
@@ -527,14 +539,14 @@ static control_signals_t systemGetState (void)
 
 #if CONTROL_INMODE == GPIO_BITBAND
 #if ESTOP_ENABLE
-    signals.e_stop = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_RESET_PIN);
+    signals.e_stop = BITBAND_PERI(CONTROL_RESET_PORT->IDR, CONTROL_RESET_PIN);
 #else
-    signals.reset = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_RESET_PIN);
+    signals.reset = BITBAND_PERI(CONTROL_RESET_PORT->IDR, CONTROL_RESET_PIN);
 #endif
-    signals.feed_hold = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_FEED_HOLD_PIN);
-    signals.cycle_start = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_CYCLE_START_PIN);
+    signals.feed_hold = BITBAND_PERI(CONTROL_FEED_HOLD_PORT->IDR, CONTROL_FEED_HOLD_PIN);
+    signals.cycle_start = BITBAND_PERI(CONTROL_CYCLE_START_PORT->IDR, CONTROL_CYCLE_START_PIN);
   #ifdef CONTROL_SAFETY_DOOR_PIN
-    signals.safety_door_ajar = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_SAFETY_DOOR_PIN);
+    signals.safety_door_ajar = BITBAND_PERI(CONTROL_SAFETY_DOOR_PORT->IDR, CONTROL_SAFETY_DOOR_PIN);
   #endif
 #elif CONTROL_INMODE == GPIO_MAP
     uint32_t bits = CONTROL_PORT->IDR;
@@ -1024,23 +1036,23 @@ void settings_changed (settings_t *settings)
         GPIO_Init.Pin = CONTROL_RESET_BIT;
         GPIO_Init.Mode = control_ire.reset ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
         GPIO_Init.Pull = settings->control_disable_pullup.reset ? GPIO_NOPULL : GPIO_PULLUP;
-        HAL_GPIO_Init(CONTROL_PORT, &GPIO_Init);
+        HAL_GPIO_Init(CONTROL_RESET_PORT, &GPIO_Init);
 
         GPIO_Init.Pin = CONTROL_FEED_HOLD_BIT;
         GPIO_Init.Mode = control_ire.feed_hold ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
         GPIO_Init.Pull = settings->control_disable_pullup.feed_hold ? GPIO_NOPULL : GPIO_PULLUP;
-        HAL_GPIO_Init(CONTROL_PORT, &GPIO_Init);
+        HAL_GPIO_Init(CONTROL_FEED_HOLD_PORT, &GPIO_Init);
 
         GPIO_Init.Pin = CONTROL_CYCLE_START_BIT;
         GPIO_Init.Mode = control_ire.cycle_start ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
         GPIO_Init.Pull = settings->control_disable_pullup.cycle_start ? GPIO_NOPULL : GPIO_PULLUP;
-        HAL_GPIO_Init(CONTROL_PORT, &GPIO_Init);
+        HAL_GPIO_Init(CONTROL_CYCLE_START_PORT, &GPIO_Init);
 
 #ifdef CONTROL_SAFETY_DOOR_PIN
         GPIO_Init.Pin = CONTROL_SAFETY_DOOR_BIT;
         GPIO_Init.Mode = control_ire.safety_door_ajar ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
         GPIO_Init.Pull = settings->control_disable_pullup.safety_door_ajar ? GPIO_NOPULL : GPIO_PULLUP;
-        HAL_GPIO_Init(CONTROL_PORT, &GPIO_Init);
+        HAL_GPIO_Init(CONTROL_SAFETY_DOOR_PORT, &GPIO_Init);
 #endif
 
         /***********************
@@ -1074,13 +1086,19 @@ void settings_changed (settings_t *settings)
             GPIO_Init.Pin = A_LIMIT_BIT;
             GPIO_Init.Mode = limit_ire.a ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
             GPIO_Init.Pull = settings->limits.disable_pullup.a ? GPIO_NOPULL : GPIO_PULLUP;
-            HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+            HAL_GPIO_Init(A_LIMIT_PORT, &GPIO_Init);
 #endif
 #ifdef B_LIMIT_BIT
             GPIO_Init.Pin = B_LIMIT_BIT;
             GPIO_Init.Mode = limit_ire.b ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
             GPIO_Init.Pull = settings->limits.disable_pullup.b ? GPIO_NOPULL : GPIO_PULLUP;
-            HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+            HAL_GPIO_Init(B_LIMIT_PORT, &GPIO_Init);
+#endif
+#ifdef C_LIMIT_BIT
+            GPIO_Init.Pin = C_LIMIT_BIT;
+            GPIO_Init.Mode = limit_ire.c ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
+            GPIO_Init.Pull = settings->limits.disable_pullup.c ? GPIO_NOPULL : GPIO_PULLUP;
+            HAL_GPIO_Init(C_LIMIT_PORT, &GPIO_Init);
 #endif
 
         } else {
@@ -1103,12 +1121,17 @@ void settings_changed (settings_t *settings)
 #ifdef A_LIMIT_BIT
             GPIO_Init.Pin = A_LIMIT_BIT;
             GPIO_Init.Pull = settings->limits.disable_pullup.a ? GPIO_NOPULL : GPIO_PULLUP;
-            HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+            HAL_GPIO_Init(A_LIMIT_PORT, &GPIO_Init);
 #endif
 #ifdef B_LIMIT_BIT
             GPIO_Init.Pin = B_LIMIT_BIT;
             GPIO_Init.Pull = settings->limits.disable_pullup.b ? GPIO_NOPULL : GPIO_PULLUP;
-            HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+            HAL_GPIO_Init(B_LIMIT_PORT, &GPIO_Init);
+#endif
+#ifdef C_LIMIT_BIT
+            GPIO_Init.Pin = C_LIMIT_BIT;
+            GPIO_Init.Pull = settings->limits.disable_pullup.c ? GPIO_NOPULL : GPIO_PULLUP;
+            HAL_GPIO_Init(C_LIMIT_PORT, &GPIO_Init);
 #endif
         }
 

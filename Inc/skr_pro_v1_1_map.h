@@ -21,120 +21,167 @@
 #error Trinamic plugin not supported!
 #endif
 
-#if N_AXIS == 5
-#define BOARD_NAME "CNC 3040 5-axis"
-#elif N_AXIS == 4
-#define BOARD_NAME "CNC 3040 4-axis"
-#else
-#define BOARD_NAME "CNC 3040"
-#endif
+#define BOARD_NAME "BTT SKR PRO v1.1"
 
 // Define step pulse output pins.
-#define STEP_PORT       GPIOA
-#define X_STEP_PIN      0
-#define Y_STEP_PIN      2
-#define Z_STEP_PIN      4
+#define X_STEP_PORT     GPIOE
+#define X_STEP_PIN      9                   // X
+#define Y_STEP_PORT     GPIOE
+#define Y_STEP_PIN      11                  // Y
+#define Z_STEP_PORT     GPIOE
+#define Z_STEP_PIN      13                  // Z
 #define X_STEP_BIT      (1<<X_STEP_PIN)
 #define Y_STEP_BIT      (1<<Y_STEP_PIN)
 #define Z_STEP_BIT      (1<<Z_STEP_PIN)
 #if N_AXIS > 3
-#define A_STEP_PIN      6
+#define A_STEP_PORT     GPIOE
+#define A_STEP_PIN      14                  // E0
 #define A_STEP_BIT      (1<<A_STEP_PIN)
 #endif
 #if N_AXIS > 4
-#define B_STEP_PIN      9
+#define B_STEP_PORT     GPIOD
+#define B_STEP_PIN      15                  // E1
 #define B_STEP_BIT      (1<<B_STEP_PIN)
 #endif
-#if N_AXIS == 5
-#define STEP_MASK       (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT|A_STEP_BIT|B_STEP_BIT) // All step bits
-#elif N_AXIS == 4
-#define STEP_MASK       (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT|A_STEP_BIT) // All step bits
-#else
-#define STEP_MASK       (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT) // All step bits
+#if N_AXIS > 5
+#define C_STEP_PORT     GPIOD
+#define C_STEP_PIN      13                  // E2
+#define C_STEP_BIT      (1<<B_STEP_PIN)
 #endif
-#define STEP_OUTMODE GPIO_MAP
+#define STEP_OUTMODE GPIO_BITBAND
 
 // Define step direction output pins.
-#define DIRECTION_PORT      GPIOA
+#define X_DIRECTION_PORT    GPIOF
 #define X_DIRECTION_PIN     1
-#define Y_DIRECTION_PIN     3
-#define Z_DIRECTION_PIN     5
+#define Y_DIRECTION_PORT    GPIOE
+#define Y_DIRECTION_PIN     8
+#define Z_DIRECTION_PORT    GPIOC
+#define Z_DIRECTION_PIN     2
 #define X_DIRECTION_BIT     (1<<X_DIRECTION_PIN)
 #define Y_DIRECTION_BIT     (1<<Y_DIRECTION_PIN)
 #define Z_DIRECTION_BIT     (1<<Z_DIRECTION_PIN)
 #if N_AXIS > 3
-#define A_DIRECTION_PIN     7
+#define A_DIRECTION_PORT    GPIOA
+#define A_DIRECTION_PIN     0
 #define A_DIRECTION_BIT     (1<<A_DIRECTION_PIN)
 #endif
 #if N_AXIS > 4
-#define B_DIRECTION_PIN     10
+#define B_DIRECTION_PORT    GPIOE
+#define B_DIRECTION_PIN     7
 #define B_DIRECTION_BIT     (1<<B_DIRECTION_PIN)
 #endif
-#if N_AXIS == 5
-#define DIRECTION_MASK      (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT|A_DIRECTION_BIT|B_DIRECTION_BIT) // All direction bits
-#elif N_AXIS == 4
-#define DIRECTION_MASK      (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT|A_DIRECTION_BIT) // All direction bits
-#else
-#define DIRECTION_MASK      (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT) // All direction bits
+#if N_AXIS > 5
+#define C_DIRECTION_PORT    GPIOG
+#define C_DIRECTION_PIN     9
+#define C_DIRECTION_BIT     (1<<B_DIRECTION_PIN)
 #endif
-#define DIRECTION_OUTMODE   GPIO_MAP
+#define DIRECTION_OUTMODE   GPIO_BITBAND
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_DISABLE_PORT   GPIOB
-#define STEPPERS_DISABLE_PIN    9
-#define STEPPERS_DISABLE_BIT    (1<<STEPPERS_DISABLE_PIN)
-#define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
+#define X_STEPPERS_DISABLE_PORT   GPIOF
+#define X_STEPPERS_DISABLE_PIN    2
+#define Y_STEPPERS_DISABLE_PORT   GPIOD
+#define Y_STEPPERS_DISABLE_PIN    7
+#define Z_STEPPERS_DISABLE_PORT   GPIOC
+#define Z_STEPPERS_DISABLE_PIN    0
+#define X_STEPPERS_DISABLE_BIT    (1<<X_STEPPERS_DISABLE_PIN)
+#define Y_STEPPERS_DISABLE_BIT    (1<<Y_STEPPERS_DISABLE_PIN)
+#define Z_STEPPERS_DISABLE_BIT    (1<<Z_STEPPERS_DISABLE_PIN)
+#if N_AXIS > 3
+#define A_STEPPERS_DISABLE_PORT   GPIOC
+#define A_STEPPERS_DISABLE_PIN    3
+#define A_STEPPERS_DISABLE_BIT    (1<<A_STEPPERS_DISABLE_PIN)
+#endif
+#if N_AXIS > 4
+#define B_STEPPERS_DISABLE_PORT   GPIOA
+#define B_STEPPERS_DISABLE_PIN    3
+#define B_STEPPERS_DISABLE_BIT    (1<<A_STEPPERS_DISABLE_PIN)
+#endif
+#if N_AXIS > 5
+#define C_STEPPERS_DISABLE_PORT   GPIOF
+#define C_STEPPERS_DISABLE_PIN    0
+#define C_STEPPERS_DISABLE_BIT    (1<<A_STEPPERS_DISABLE_PIN)
+#endif
+
 
 // Define homing/hard limit switch input pins.
-#define LIMIT_PORT       GPIOB
-#define X_LIMIT_PIN      2
-#define Y_LIMIT_PIN      10
-#define Z_LIMIT_PIN      12
+#define X_LIMIT_PORT     GPIOB
+#define X_LIMIT_PIN      10                                      // X- Limit
+#define Y_LIMIT_PORT     GPIOE
+#define Y_LIMIT_PIN      12                                      // Y- Limit
+#define Z_LIMIT_PORT     GPIOG
+#define Z_LIMIT_PIN      8                                       // Z- Limit
 #define X_LIMIT_BIT      (1<<X_LIMIT_PIN)
 #define Y_LIMIT_BIT      (1<<Y_LIMIT_PIN)
 #define Z_LIMIT_BIT      (1<<Z_LIMIT_PIN)
-#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
-#define LIMIT_INMODE GPIO_MAP
+#if N_AXIS > 3
+#define A_LIMIT_PORT     GPIOE
+#define A_LIMIT_PIN      15                                      // E0- Limit
+#define A_LIMIT_BIT      (1<<A_LIMIT_PIN)
+#endif
+#if N_AXIS > 4
+#define B_LIMIT_PORT     GPIOE
+#define B_LIMIT_PIN      10                                      // E1- Limit
+#define B_LIMIT_BIT      (1<<B_LIMIT_PIN)
+#endif
+#if N_AXIS > 5
+#define C_LIMIT_PORT     GPIOG
+#define C_LIMIT_PIN      5                                       // E2- Limit
+#define C_LIMIT_BIT      (1<<C_LIMIT_PIN)
+#endif
+#if N_AXIS == 6
+#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT|B_LIMIT_BIT|C_LIMIT_BIT)
+#elif N_AXIS == 5
+#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT|B_LIMIT_BIT)
+#elif N_AXIS == 4
+#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT)
+#else
+#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT)
+#endif
+#define LIMIT_INMODE     GPIO_BITBAND
 
   // Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT         GPIOB
-#define SPINDLE_ENABLE_PIN          1
+#define SPINDLE_ENABLE_PORT         GPIOD
+#define SPINDLE_ENABLE_PIN          0                            // EXT-2 PD0
 #define SPINDLE_ENABLE_BIT          (1<<SPINDLE_ENABLE_PIN)
-#define SPINDLE_DIRECTION_PORT      GPIOB
-#define SPINDLE_DIRECTION_PIN       0
+#define SPINDLE_DIRECTION_PORT      GPIOD
+#define SPINDLE_DIRECTION_PIN       2                            // EXT-2 PD2
 #define SPINDLE_DIRECTION_BIT       (1<<SPINDLE_DIRECTION_PIN)
 
 // Define spindle PWM output pin.
-#define SPINDLE_PWM_PORT            GPIOA
-#define SPINDLE_PWM_PIN             8
+#define SPINDLE_PWM_PORT            GPIOD
+#define SPINDLE_PWM_PIN             5                            // EXT-2 PD5
 #define SPINDLE_PWM_BIT             (1<<SPINDLE_PWM_PIN)
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB
-#define COOLANT_FLOOD_PIN           3
+#define COOLANT_FLOOD_PIN           1                            // HEAT0
 #define COOLANT_FLOOD_BIT           (1<<COOLANT_FLOOD_PIN)
-#define COOLANT_MIST_PORT           GPIOB
-#define COOLANT_MIST_PIN            4
+#define COOLANT_MIST_PORT           GPIOD
+#define COOLANT_MIST_PIN            14                           // HEAT1
 #define COOLANT_MIST_BIT            (1<<COOLANT_MIST_PIN)
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define CONTROL_PORT                GPIOB
-#define CONTROL_RESET_PIN           5
+#define CONTROL_RESET_PORT          GPIOG
+#define CONTROL_RESET_PIN           4                            // E0 Limit
 #define CONTROL_RESET_BIT           (1<<CONTROL_RESET_PIN)
-#define CONTROL_FEED_HOLD_PIN       14
+#define CONTROL_FEED_HOLD_PORT      GPIOD
+#define CONTROL_FEED_HOLD_PIN       11                           // E1 Limit
 #define CONTROL_FEED_HOLD_BIT       (1<<CONTROL_FEED_HOLD_PIN)
-#define CONTROL_CYCLE_START_PIN     15
+#define CONTROL_CYCLE_START_PORT    GPIOG
+#define CONTROL_CYCLE_START_PIN     2                            // E2 Limit
 #define CONTROL_CYCLE_START_BIT     (1<<CONTROL_CYCLE_START_PIN)
 #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
-#define CONTROL_SAFETY_DOOR_PIN     8
+#define CONTROL_SAFETY_DOOR_PORT    GPIOG
+#define CONTROL_SAFETY_DOOR_PIN     6                            // EXP1 PG4
 #define CONTROL_SAFETY_DOOR_BIT     (1<<CONTROL_SAFETY_DOOR_PIN)
 #define CONTROL_MASK                (CONTROL_RESET_BIT|CONTROL_FEED_HOLD_BIT|CONTROL_CYCLE_START_BIT|CONTROL_SAFETY_DOOR_BIT)
 #else
 #define CONTROL_MASK                (CONTROL_RESET_BIT|CONTROL_FEED_HOLD_BIT|CONTROL_CYCLE_START_BIT)
 #endif
-#define CONTROL_INMODE GPIO_MAP
+#define CONTROL_INMODE GPIO_BITBAND
 
 // Define probe switch input pin.
-#define PROBE_PORT                  GPIOB
-#define PROBE_PIN                   13
+#define PROBE_PORT                  GPIOA
+#define PROBE_PIN                   1                            // BLTouch PA1
 #define PROBE_BIT                   (1<<PROBE_PIN)
