@@ -217,25 +217,25 @@ static const uint32_t c_dir_outmap[] = {
 
 static uint32_t dir_outmap[sizeof(c_dir_outmap) / sizeof(uint32_t)];
 
-#elif DIRECTION_OUTMODE == GPIO_MAP
-  #ifndef X_LIMIT_PORT
-    #define X_LIMIT_PORT LIMIT_PORT
-  #endif
-  #ifndef Y_LIMIT_PORT
-    #define Y_LIMIT_PORT LIMIT_PORT
-  #endif
-  #ifndef Z_LIMIT_PORT
-    #define Z_LIMIT_PORT LIMIT_PORT
-  #endif
-  #ifndef A_LIMIT_PORT
-    #define A_LIMIT_PORT LIMIT_PORT
-  #endif
-  #ifndef B_LIMIT_PORT
-    #define B_LIMIT_PORT LIMIT_PORT
-  #endif
-  #ifndef C_LIMIT_PORT
-    #define C_LIMIT_PORT LIMIT_PORT
-  #endif
+#endif
+
+#ifndef X_LIMIT_PORT
+  #define X_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef Y_LIMIT_PORT
+  #define Y_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef Z_LIMIT_PORT
+  #define Z_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef A_LIMIT_PORT
+  #define A_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef B_LIMIT_PORT
+  #define B_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef C_LIMIT_PORT
+  #define C_LIMIT_PORT LIMIT_PORT
 #endif
 
 #if KEYPAD_ENABLE == 0
