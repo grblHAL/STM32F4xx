@@ -21,6 +21,10 @@
 #error Trinamic plugin not supported!
 #endif
 
+#if SDCARD_ENABLE
+#error SD Card not supported!
+#endif
+
 #define BOARD_NAME "BTT SKR PRO v1.1"
 
 // Define step pulse output pins.
