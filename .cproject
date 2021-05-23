@@ -1134,6 +1134,12 @@
                                     <listOptionValue builtIn="false" value="OVERRIDE_MY_MACHINE"/>
                                     									
                                     <listOptionValue builtIn="false" value="BOARD_SKR_PRO_1_1"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="N_AXIS=6"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="USB_SERIAL_CDC=1"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="HSE_VALUE=8000000"/>
                                     								
                                 </option>
                                 								
