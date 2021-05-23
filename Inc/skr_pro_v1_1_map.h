@@ -141,16 +141,16 @@
 #define LIMIT_INMODE     GPIO_BITBAND
 
   // Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT         GPIOD
-#define SPINDLE_ENABLE_PIN          0                            // EXT-2 PD0
+#define SPINDLE_ENABLE_PORT         GPIOE
+#define SPINDLE_ENABLE_PIN          5                            // FAN1
 #define SPINDLE_ENABLE_BIT          (1<<SPINDLE_ENABLE_PIN)
-#define SPINDLE_DIRECTION_PORT      GPIOD
-#define SPINDLE_DIRECTION_PIN       2                            // EXT-2 PD2
+#define SPINDLE_DIRECTION_PORT      GPIOE
+#define SPINDLE_DIRECTION_PIN       6                            // FAN2
 #define SPINDLE_DIRECTION_BIT       (1<<SPINDLE_DIRECTION_PIN)
 
 // Define spindle PWM output pin.
-#define SPINDLE_PWM_PORT            GPIOD
-#define SPINDLE_PWM_PIN             5                            // EXT-2 PD5
+#define SPINDLE_PWM_PORT            GPIOC
+#define SPINDLE_PWM_PIN             8                            // FAN0
 #define SPINDLE_PWM_BIT             (1<<SPINDLE_PWM_PIN)
 
 // Define flood and mist coolant enable output pins.
@@ -185,3 +185,11 @@
 #define PROBE_PORT                  GPIOA
 #define PROBE_PIN                   1                            // BLTouch PA1
 #define PROBE_BIT                   (1<<PROBE_PIN)
+
+// SD Card
+#if SDCARD_ENABLE
+#define SD_CS_PORT  GPIOA
+#define SD_CS_PIN   4
+#define SD_CS_BIT   (1<<SD_CS_PIN)
+#endif
+
