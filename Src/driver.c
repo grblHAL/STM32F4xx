@@ -280,10 +280,10 @@ static void stepperEnable (axes_signals_t enable)
     BITBAND_PERI(A_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
    #endif
    #if N_AXIS > 4
-    BITBAND_PERI(B_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
+    BITBAND_PERI(B_STEPPERS_DISABLE_PORT->ODR, B_STEPPERS_DISABLE_PIN) = enable.a;
    #endif
    #if N_AXIS > 4
-    BITBAND_PERI(C_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
+    BITBAND_PERI(C_STEPPERS_DISABLE_PORT->ODR, C_STEPPERS_DISABLE_PIN) = enable.a;
    #endif
   #endif
 #endif

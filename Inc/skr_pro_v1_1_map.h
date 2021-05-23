@@ -46,7 +46,7 @@
 #if N_AXIS > 5
 #define C_STEP_PORT     GPIOD
 #define C_STEP_PIN      13                  // E2
-#define C_STEP_BIT      (1<<B_STEP_PIN)
+#define C_STEP_BIT      (1<<C_STEP_PIN)
 #endif
 #define STEP_OUTMODE GPIO_BITBAND
 
@@ -73,7 +73,7 @@
 #if N_AXIS > 5
 #define C_DIRECTION_PORT    GPIOG
 #define C_DIRECTION_PIN     9
-#define C_DIRECTION_BIT     (1<<B_DIRECTION_PIN)
+#define C_DIRECTION_BIT     (1<<C_DIRECTION_PIN)
 #endif
 #define DIRECTION_OUTMODE   GPIO_BITBAND
 
@@ -95,12 +95,12 @@
 #if N_AXIS > 4
 #define B_STEPPERS_DISABLE_PORT   GPIOA
 #define B_STEPPERS_DISABLE_PIN    3
-#define B_STEPPERS_DISABLE_BIT    (1<<A_STEPPERS_DISABLE_PIN)
+#define B_STEPPERS_DISABLE_BIT    (1<<B_STEPPERS_DISABLE_PIN)
 #endif
 #if N_AXIS > 5
 #define C_STEPPERS_DISABLE_PORT   GPIOF
 #define C_STEPPERS_DISABLE_PIN    0
-#define C_STEPPERS_DISABLE_BIT    (1<<A_STEPPERS_DISABLE_PIN)
+#define C_STEPPERS_DISABLE_BIT    (1<<C_STEPPERS_DISABLE_PIN)
 #endif
 
 
