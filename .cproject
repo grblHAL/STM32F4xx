@@ -1140,6 +1140,8 @@
                                     <listOptionValue builtIn="false" value="USB_SERIAL_CDC=1"/>
                                     									
                                     <listOptionValue builtIn="false" value="HSE_VALUE=8000000"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="EEPROM_ENABLE=2"/>
                                     								
                                 </option>
                                 								
