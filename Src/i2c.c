@@ -28,6 +28,8 @@
 #include "keypad/keypad.h"
 #endif
 
+#ifdef I2C_PORT
+
 #ifndef I2C1_ALT_PINMAP
   #define I2C1_SCL GPIO_PIN_6
   #define I2C1_SDA GPIO_PIN_7
@@ -35,8 +37,6 @@
   #define I2C1_SCL GPIO_PIN_8
   #define I2C1_SDA GPIO_PIN_9
 #endif
-
-#ifdef I2C_PORT
 
 #define I2Cport(p) I2CportI(p)
 #define I2CportI(p) I2C ## p
