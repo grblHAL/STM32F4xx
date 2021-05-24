@@ -27,6 +27,8 @@
 
 #define BOARD_NAME "BTT SKR PRO v1.1"
 
+#define I2C1_ALT_PINMAP  // SCL on PB6, SDA on PB7
+
 // Define step pulse output pins.
 #define X_STEP_PORT     GPIOE
 #define X_STEP_PIN      9                   // X
