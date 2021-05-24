@@ -30,7 +30,7 @@
 
 #ifdef I2C_PORT
 
-#ifndef I2C1_ALT_PINMAP
+#ifdef I2C1_ALT_PINMAP
   #define I2C1_SCL GPIO_PIN_6
   #define I2C1_SDA GPIO_PIN_7
 #else
