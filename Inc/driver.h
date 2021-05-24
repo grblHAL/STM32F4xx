@@ -152,6 +152,8 @@
     #error EEPROM plugin not supported!
   #endif
   #include "cnc3040_map.h"
+#elif defined(BOARD_SKR_PRO_1_1)
+  #include "skr_pro_v1_1_map.h"
 #elif defined(BOARD_PROTONEER_3XX)
   #include "protoneer_3.xx_map.h"
 #elif defined(BOARD_GENERIC_UNO)
