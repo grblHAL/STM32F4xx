@@ -1481,7 +1481,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210423";
+    hal.driver_version = "210524";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
