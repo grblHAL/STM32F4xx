@@ -21,8 +21,8 @@
 #error Trinamic plugin not supported!
 #endif
 
-#if SDCARD_ENABLE
-#error SD Card not supported!
+#if SPI_PORT == 1
+#error Port SPI1 is not supported!
 #endif
 
 #define BOARD_NAME "BTT SKR PRO v1.1"
@@ -189,3 +189,10 @@
 #define PROBE_PORT                  GPIOA
 #define PROBE_PIN                   1                            // BLTouch PA1
 #define PROBE_BIT                   (1<<PROBE_PIN)
+
+#if SDCARD_ENABLE
+#define SD_CS_PORT  GPIOB
+#define SD_CS_PIN   12
+#define SD_CS_BIT   (1<<SD_CS_PIN)
+#define SPI_PORT    2 // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15 (EXP2 Header)
+#endif
