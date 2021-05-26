@@ -155,8 +155,8 @@
 #define SPINDLE_DIRECTION_BIT       (1<<SPINDLE_DIRECTION_PIN)
 
 // Define spindle PWM output pin.
-#define SPINDLE_PWM_PORT            GPIOC
-#define SPINDLE_PWM_PIN             8                            // FAN0
+#define SPINDLE_PWM_PORT            GPIOA
+#define SPINDLE_PWM_PIN             8                            // EXT1 - PA8
 #define SPINDLE_PWM_BIT             (1<<SPINDLE_PWM_PIN)
 
 // Define flood and mist coolant enable output pins.
