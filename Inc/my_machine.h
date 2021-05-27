@@ -29,7 +29,7 @@
 //#define BOARD_MORPHO_DAC_CNC  // For use with F446RE boards and a 32-bit I2S stereo DAC for X and Y output. **EXPERIMENTAL**
 //#define BOARD_MINI_BLACKPILL
 //#define BOARD_MY_MACHINE      // Add my_machine_map.h before enabling this!
-
+//#define BOARD_SKR_PRO_1_1
 // Configuration
 // Uncomment to enable.
 
@@ -37,7 +37,7 @@
 #define USB_SERIAL_CDC       1 // Serial communication via native USB.
 #endif
 //#define SPINDLE_HUANYANG     1 // Set to 1 or 2 for Huanyang VFD spindle. Requires spindle plugin. !! NOT TESTED !!
-//#define SDCARD_ENABLE        1 // Run gcode programs from SD card, requires sdcard plugin.
+//#define SDCARD_ENABLE        2 // Run gcode programs from SD card, requires sdcard plugin.
 //#define KEYPAD_ENABLE        1 // I2C keypad for jogging etc., requires keypad plugin.
 //#define ODOMETER_ENABLE      1 // Odometer plugin.
 //#define PPI_ENABLE           1 // Laser PPI plugin. To be completed.

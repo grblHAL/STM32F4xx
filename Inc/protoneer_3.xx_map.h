@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020 Terje Io
+  Copyright (c) 2020-2021 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -77,19 +77,19 @@
 #define SPINDLE_DIRECTION_BIT   (1<<SPINDLE_DIRECTION_PIN)
 
 // Define flood and mist coolant enable output pins.
-#define COOLANT_FLOOD_PORT  GPIOB // A3
-#define COOLANT_FLOOD_PIN   0
-#define COOLANT_FLOOD_BIT   (1<<COOLANT_FLOOD_PIN)
+#define COOLANT_FLOOD_PORT      GPIOB // A3
+#define COOLANT_FLOOD_PIN       0
+#define COOLANT_FLOOD_BIT       (1<<COOLANT_FLOOD_PIN)
 
 // Define user-control CONTROLs (cycle start, reset, feed hold) input pins.
 #define CONTROL_PORT            GPIOA // A0
-#define CONTROL_RESET_PIN       0
-#define CONTROL_RESET_BIT       (1<<CONTROL_RESET_PIN)
-#define CONTROL_FEED_HOLD_PIN   1 // A1
-#define CONTROL_FEED_HOLD_BIT   (1<<CONTROL_FEED_HOLD_PIN)
-#define CONTROL_CYCLE_START_PIN 4 // A2
-#define CONTROL_CYCLE_START_BIT (1<<CONTROL_CYCLE_START_PIN)
-#define CONTROL_MASK            (CONTROL_RESET_BIT|CONTROL_FEED_HOLD_BIT|CONTROL_CYCLE_START_BIT)
+#define RESET_PIN                0
+#define RESET_BIT               (1<<RESET_PIN)
+#define FEED_HOLD_PIN           1 // A1
+#define FEED_HOLD_BIT           (1<<FEED_HOLD_PIN)
+#define CYCLE_START_PIN         4 // A2
+#define CYCLE_START_BIT         (1<<CYCLE_START_PIN)
+#define CONTROL_MASK            (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT)
 #define CONTROL_INMODE          GPIO_MAP
 
 /**/
