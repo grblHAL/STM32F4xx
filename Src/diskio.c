@@ -408,7 +408,7 @@ DRESULT disk_read (
     BYTE drv,            /* Physical drive nmuber (0) */
     BYTE *buff,            /* Pointer to the data buffer to store read data */
     DWORD sector,        /* Start sector number (LBA) */
-    UINT count            /* Sector count (1..255) */
+    BYTE count            /* Sector count (1..255) */
 )
 {
     if (drv || !count) return RES_PARERR;
