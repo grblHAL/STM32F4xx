@@ -168,22 +168,22 @@
 #define COOLANT_MIST_BIT            (1<<COOLANT_MIST_PIN)
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define CONTROL_RESET_PORT          GPIOG
-#define CONTROL_RESET_PIN           4                            // E0 Limit
-#define CONTROL_RESET_BIT           (1<<CONTROL_RESET_PIN)
-#define CONTROL_FEED_HOLD_PORT      GPIOD
-#define CONTROL_FEED_HOLD_PIN       11                           // E1 Limit
-#define CONTROL_FEED_HOLD_BIT       (1<<CONTROL_FEED_HOLD_PIN)
-#define CONTROL_CYCLE_START_PORT    GPIOG
-#define CONTROL_CYCLE_START_PIN     2                            // E2 Limit
-#define CONTROL_CYCLE_START_BIT     (1<<CONTROL_CYCLE_START_PIN)
+#define RESET_PORT          GPIOG
+#define RESET_PIN           4                            // E0 Limit
+#define RESET_BIT           (1<<RESET_PIN)
+#define FEED_HOLD_PORT      GPIOD
+#define FEED_HOLD_PIN       11                           // E1 Limit
+#define FEED_HOLD_BIT       (1<<FEED_HOLD_PIN)
+#define CYCLE_START_PORT    GPIOG
+#define CYCLE_START_PIN     2                            // E2 Limit
+#define CYCLE_START_BIT     (1<<CYCLE_START_PIN)
 #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
-#define CONTROL_SAFETY_DOOR_PORT    GPIOG
-#define CONTROL_SAFETY_DOOR_PIN     6                            // EXP1 PG4
-#define CONTROL_SAFETY_DOOR_BIT     (1<<CONTROL_SAFETY_DOOR_PIN)
-#define CONTROL_MASK                (CONTROL_RESET_BIT|CONTROL_FEED_HOLD_BIT|CONTROL_CYCLE_START_BIT|CONTROL_SAFETY_DOOR_BIT)
+#define SAFETY_DOOR_PORT    GPIOG
+#define SAFETY_DOOR_PIN     6                            // EXP1 PG4
+#define SAFETY_DOOR_BIT     (1<<SAFETY_DOOR_PIN)
+#define MASK                (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT|SAFETY_DOOR_BIT)
 #else
-#define CONTROL_MASK                (CONTROL_RESET_BIT|CONTROL_FEED_HOLD_BIT|CONTROL_CYCLE_START_BIT)
+#define CONTROL_MASK        (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT)
 #endif
 #define CONTROL_INMODE GPIO_BITBAND
 
