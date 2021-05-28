@@ -20,6 +20,8 @@
 */
 
 #define HAS_BOARD_INIT
+#define I2C_PORT 1
+#define IS_NUCLEO_BOB
 #define SPINDLE_SYNC_ENABLE
 
 // Define step pulse output pins.

@@ -909,7 +909,7 @@ void settings_changed (settings_t *settings)
     hal.driver_cap.variable_spindle = settings->spindle.rpm_min < settings->spindle.rpm_max;
 #endif
 
-#if (STEP_OUTMODE == GPIO_MAP) || (DIRECTION_OUTMODE == GPIO_MAP)
+#if USE_STEPDIR_MAP
     stepdirmap_init(settings);
 #endif
 

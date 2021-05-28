@@ -24,6 +24,8 @@
 #endif
 
 #define BOARD_NAME "Protoneer v3"
+#define I2C_PORT 1
+#define IS_NUCLEO_BOB
 
 // Define step pulse output pins.
 #define X_STEP_PORT         GPIOA // D2
@@ -83,7 +85,7 @@
 
 // Define user-control CONTROLs (cycle start, reset, feed hold) input pins.
 #define CONTROL_PORT            GPIOA // A0
-#define RESET_PIN                0
+#define RESET_PIN               0
 #define RESET_BIT               (1<<RESET_PIN)
 #define FEED_HOLD_PIN           1 // A1
 #define FEED_HOLD_BIT           (1<<FEED_HOLD_PIN)

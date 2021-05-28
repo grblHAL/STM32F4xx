@@ -172,10 +172,8 @@
 #endif
 
 
-#if defined(BOARD_PROTONEER_3XX) || defined(BOARD_GENERIC_UNO) || defined(BOARD_MORPHO_CNC) || defined(BOARD_MORPHO_DAC_CNC)
-#if USB_SERIAL_CDC
+#if defined(IS_NUCLEO_BOB) && USB_SERIAL_CDC
 #error "Nucleo based boards does not support USB CDC communication!"
-#endif
 #endif
 
 // Adjust STEP_PULSE_LATENCY to get accurate step pulse length when required, e.g if using high step rates.
@@ -205,16 +203,12 @@
 #define SERIAL2_MOD
 #endif
 
-#ifndef SPI_PORT
-#define SPI_PORT 1
+#ifndef I2C_PORT
+#define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
 #endif
 
-#if EEPROM_ENABLE|| KEYPAD_ENABLE || (TRINAMIC_ENABLE && TRINAMIC_I2C)
-  #if defined(NUCLEO_F411) || defined(NUCLEO_F446) || defined(BOARD_SKR_PRO_1_1)
-    #define I2C_PORT 1 // GPIOB, SCL_PIN = 8, SDA_PIN = 9
-  #else
-    #define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
-  #endif
+#ifndef SPI_PORT
+#define SPI_PORT 1
 #endif
 
 #if TRINAMIC_ENABLE

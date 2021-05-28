@@ -24,7 +24,8 @@
 #endif
 
 #define BOARD_NAME "Generic Uno"
-
+#define I2C_PORT 1
+#define IS_NUCLEO_BOB
 #define VARIABLE_SPINDLE // Comment out to disable variable spindle
 
 // Define step pulse output pins.

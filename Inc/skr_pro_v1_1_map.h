@@ -21,12 +21,9 @@
 #error Trinamic plugin not supported!
 #endif
 
-#if SPI_PORT == 1
-#error Port SPI1 is not supported!
-#endif
-
 #define BOARD_NAME "BTT SKR PRO v1.1"
-
+#define SPI_PORT 2
+#define I2C_PORT 1
 #define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
 
 // Define step pulse output pins.

@@ -29,7 +29,8 @@
 #endif
 
 #define BOARD_NAME "ST Nucleo-64"
-
+#define I2C_PORT 1
+#define IS_NUCLEO_BOB
 #define HAS_BOARD_INIT
 //#define SPINDLE_SYNC_ENABLE
 
