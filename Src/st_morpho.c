@@ -31,33 +31,23 @@
 #include "grbl/protocol.h"
 #include "grbl/settings.h"
 
+static input_signal_t *aux_in;
+static output_signal_t *aux_out;
+static ioport_bus_t out = {0};
+static char input_ports[56] = "", output_ports[56] = "";
+
 static void aux_settings_load (void);
 static status_code_t aux_set_invert_out (setting_id_t id, uint_fast16_t int_value);
 static uint32_t aux_get_invert_out (setting_id_t setting);
-
-typedef struct {
-    GPIO_TypeDef *gpio;
-    uint32_t pin;
-} aux_port_t;
-
-static const aux_port_t aux_in[] = {
-    { .gpio = AUXINPUT0_PORT, .pin = AUXINPUT0_PIN },
-    { .gpio = AUXINPUT1_PORT, .pin = AUXINPUT1_PIN }
-};
-
-static const aux_port_t aux_out[] = {
-    { .gpio = AUXOUTPUT0_PORT, .pin = AUXOUTPUT0_PIN },
-    { .gpio = AUXOUTPUT1_PORT, .pin = AUXOUTPUT1_PIN }
-};
 
 static const setting_group_detail_t aux_groups[] = {
     { Group_Root, Group_AuxPorts, "Aux ports"}
 };
 
 static const setting_detail_t aux_settings[] = {
-    { Settings_IoPort_InvertIn, Group_AuxPorts, "Invert I/O Port inputs", NULL, Format_Bitfield, "Port 0,Port 1", NULL, NULL, Setting_NonCore, &settings.ioport.invert_in.mask },
+    { Settings_IoPort_InvertIn, Group_AuxPorts, "Invert I/O Port inputs", NULL, Format_Bitfield, input_ports, NULL, NULL, Setting_NonCore, &settings.ioport.invert_in.mask },
 //    { Settings_IoPort_Pullup_Disable, Group_AuxPorts, "I/O Port inputs pullup disable", NULL, Format_Bitfield, "Port 0,Port 1,Port 2,Port 3,Port 4,Port 5,Port 6,Port 7", NULL, NULL },
-    { Settings_IoPort_InvertOut, Group_AuxPorts, "Invert I/O Port outputs", NULL, Format_Bitfield, "Port 0,Port 1", NULL, NULL, Setting_NonCoreFn, aux_set_invert_out, aux_get_invert_out },
+    { Settings_IoPort_InvertOut, Group_AuxPorts, "Invert I/O Port outputs", NULL, Format_Bitfield, output_ports, NULL, NULL, Setting_NonCoreFn, aux_set_invert_out, aux_get_invert_out },
 //    { Settings_IoPort_OD_Enable, Group_AuxPorts, "I/O Port outputs as open drain", NULL, Format_Bitfield, "Port 0,Port 1,Port 2,Port 3,Port 4,Port 5,Port 6,Port 7", NULL, NULL }
 };
 
@@ -80,15 +70,15 @@ static setting_details_t *onReportSettings (void)
 static status_code_t aux_set_invert_out (setting_id_t id, uint_fast16_t value)
 {
     ioport_bus_t invert;
-    invert.mask = (uint8_t)value & AUX_OUT_MASK;
+    invert.mask = (uint8_t)value & out.mask;
 
     if(invert.mask != settings.ioport.invert_out.mask) {
-        uint_fast8_t idx = AUX_N_OUT;
+        uint_fast8_t port = hal.port.num_digital_out;
         do {
-            idx--;
-            if(((settings.ioport.invert_out.mask >> idx) & 0x01) != ((invert.mask >> idx) & 0x01))
-                BITBAND_PERI(aux_out[idx].gpio->ODR, aux_out[idx].pin) = !BITBAND_PERI(aux_out[idx].gpio->IDR, aux_out[idx].pin);
-        } while(idx);
+            port--;
+            if(((settings.ioport.invert_out.mask >> port) & 0x01) != ((invert.mask >> port) & 0x01))
+                BITBAND_PERI(aux_out[port].port->ODR, aux_out[port].pin) = !BITBAND_PERI(aux_out[port].port->IDR, aux_out[port].pin);
+        } while(port);
 
         settings.ioport.invert_out.mask = invert.mask;
     }
@@ -108,7 +98,7 @@ static void aux_settings_load (void)
     uint_fast8_t idx = hal.port.num_digital_out;
     do {
         idx--;
-        BITBAND_PERI(aux_out[idx].gpio->ODR, aux_out[idx].pin) = (settings.ioport.invert_out.mask >> idx) & 0x01;
+        BITBAND_PERI(aux_out[idx].port->ODR, aux_out[idx].pin) = (settings.ioport.invert_out.mask >> idx) & 0x01;
     } while(idx);
 }
 
@@ -132,22 +122,22 @@ static void aux_set_pullup (void)
 
 static void digital_out (uint8_t port, bool on)
 {
-    if(port < AUX_N_OUT)
-        BITBAND_PERI(aux_out[port].gpio->ODR, aux_out[port].pin) = ((settings.ioport.invert_out.mask >> port) & 0x01) ? !on : on;
+    if(port < hal.port.num_digital_out)
+        BITBAND_PERI(aux_out[port].port->ODR, aux_out[port].pin) = ((settings.ioport.invert_out.mask >> port) & 0x01) ? !on : on;
 }
 
-inline static __attribute__((always_inline)) int32_t get_input (const aux_port_t *port, bool invert, wait_mode_t wait_mode, float timeout)
+inline static __attribute__((always_inline)) int32_t get_input (const input_signal_t *port, bool invert, wait_mode_t wait_mode, float timeout)
 {
     if(wait_mode == WaitMode_Immediate)
-        return BITBAND_PERI(port->gpio->IDR, port->pin) ^ invert;
+        return BITBAND_PERI(port->port->IDR, port->pin) ^ invert;
 
     uint_fast16_t delay = (uint_fast16_t)ceilf((1000.0f / 50.0f) * timeout) + 1;
 
     bool wait_for = wait_mode != WaitMode_Low;
 
     do {
-        if((BITBAND_PERI(port->gpio->IDR, port->pin) ^ invert) == wait_for)
-            return BITBAND_PERI(port->gpio->IDR, port->pin) ^ invert;
+        if((BITBAND_PERI(port->port->IDR, port->pin) ^ invert) == wait_for)
+            return BITBAND_PERI(port->port->IDR, port->pin) ^ invert;
 
         if(delay) {
             protocol_execute_realtime();
@@ -163,8 +153,14 @@ static int32_t wait_on_input (bool digital, uint8_t port, wait_mode_t wait_mode,
 {
     int32_t value = -1;
 
-    if(digital && port < AUX_N_IN)
+    if(digital && port < hal.port.num_digital_in)
         value = get_input(&aux_in[port], (settings.ioport.invert_in.mask << port) & 0x01, wait_mode, timeout);
+
+    hal.stream.write("[MSG:AUX");
+    hal.stream.write(uitoa(port));
+    hal.stream.write("=");
+    hal.stream.write(value == -1 ? "fail" : uitoa(value));
+    hal.stream.write("]" ASCII_EOL);
 
     return value;
 }
@@ -349,26 +345,31 @@ void tmc_uart_write (trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
 
 #endif
 
-void board_init (void)
+void board_init (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs)
 {
+    aux_in = aux_inputs->pins.inputs;
+    aux_out = aux_outputs->pins.outputs;
+
     hal.port.wait_on_input = wait_on_input;
     hal.port.digital_out = digital_out;
-    hal.port.num_digital_in = AUX_N_IN;
-    hal.port.num_digital_out = AUX_N_OUT;
+    hal.port.num_digital_in = aux_inputs->n_pins;
+    hal.port.num_digital_out = aux_outputs->n_pins;
 
     details.on_get_settings = grbl.on_get_settings;
     grbl.on_get_settings = onReportSettings;
 
-    GPIO_InitTypeDef GPIO_Init = {0};
+    uint32_t i;
 
-    GPIO_Init.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_Init.Mode = GPIO_MODE_OUTPUT_PP;
+    for(i = 0; i < min(hal.port.num_digital_in, 8); i++) {
+        strcat(input_ports, i == 0 ? "Port " : ",Port ");
+        strcat(input_ports, uitoa(i));
+    }
 
-    GPIO_Init.Pin = AUXOUTPUT0_BIT;
-    HAL_GPIO_Init(AUXOUTPUT0_PORT, &GPIO_Init);
-
-    GPIO_Init.Pin = AUXOUTPUT1_BIT;
-    HAL_GPIO_Init(AUXOUTPUT1_PORT, &GPIO_Init);
+    for(i = 0; i < min(hal.port.num_digital_out, 8) ; i++) {
+        out.mask = (out.mask << 1) + 1;
+        strcat(output_ports, i == 0 ? "Port " : ",Port ");
+        strcat(output_ports, uitoa(i));
+    }
 
 #if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
 
@@ -393,7 +394,6 @@ void board_init (void)
 #if TRINAMIC_ENABLE == 2209
     serial2Init(230400);
 #endif
-
 }
 
 #endif

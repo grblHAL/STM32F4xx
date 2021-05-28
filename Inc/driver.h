@@ -35,6 +35,7 @@
 #include "grbl/hal.h"
 #include "grbl/grbl.h"
 #include "grbl/nuts_bolts.h"
+#include "grbl/crossbar.h"
 
 #ifndef OVERRIDE_MY_MACHINE
 #include "my_machine.h"
@@ -240,7 +241,106 @@
 #error SD card plugin not supported!
 #endif
 
+#ifndef X_STEP_PORT
+#define X_STEP_PORT STEP_PORT
+#endif
+#ifndef Y_STEP_PORT
+#define Y_STEP_PORT STEP_PORT
+#endif
+#ifndef Z_STEP_PORT
+#define Z_STEP_PORT STEP_PORT
+#endif
+#ifndef A_STEP_PORT
+#define A_STEP_PORT STEP_PORT
+#endif
+#ifndef B_STEP_PORT
+#define B_STEP_PORT STEP_PORT
+#endif
+#ifndef C_STEP_PORT
+#define C_STEP_PORT STEP_PORT
+#endif
+
+#ifndef X_DIRECTION_PORT
+#define X_DIRECTION_PORT DIRECTION_PORT
+#endif
+#ifndef Y_DIRECTION_PORT
+#define Y_DIRECTION_PORT DIRECTION_PORT
+#endif
+#ifndef Z_DIRECTION_PORT
+#define Z_DIRECTION_PORT DIRECTION_PORT
+#endif
+#ifndef A_DIRECTION_PORT
+#define A_DIRECTION_PORT DIRECTION_PORT
+#endif
+#ifndef B_DIRECTION_PORT
+#define B_DIRECTION_PORT DIRECTION_PORT
+#endif
+#ifndef C_DIRECTION_PORT
+#define C_DIRECTION_PORT DIRECTION_PORT
+#endif
+
+#ifndef X_LIMIT_PORT
+#define X_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef Y_LIMIT_PORT
+#define Y_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef Z_LIMIT_PORT
+#define Z_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef A_LIMIT_PORT
+#define A_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef B_LIMIT_PORT
+#define B_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef C_LIMIT_PORT
+#define C_LIMIT_PORT LIMIT_PORT
+#endif
+
+#ifndef RESET_PORT
+#define RESET_PORT CONTROL_PORT
+#endif
+#ifndef FEED_HOLD_PORT
+#define FEED_HOLD_PORT CONTROL_PORT
+#endif
+#ifndef CYCLE_START_PORT
+#define CYCLE_START_PORT CONTROL_PORT
+#endif
+#if SAFETY_DOOR_ENABLE && !defined(SAFETY_DOOR_PORT)
+#define SAFETY_DOOR_PORT CONTROL_PORT
+#endif
+
+typedef struct {
+    pin_function_t id;
+    GPIO_TypeDef *port;
+    uint8_t pin;
+    pin_group_t group;
+    volatile bool active;
+    volatile bool debounce;
+    pin_irq_mode_t irq_mode;
+} input_signal_t;
+
+typedef struct {
+    pin_function_t id;
+    GPIO_TypeDef *port;
+    uint8_t pin;
+    pin_group_t group;
+} output_signal_t;
+
+typedef struct {
+    uint8_t n_pins;
+    union {
+        input_signal_t *inputs;
+        output_signal_t *outputs;
+    } pins;
+} pin_group_pins_t;
+
 bool driver_init (void);
 void Driver_IncTick (void);
+#ifdef HAS_BOARD_INIT
+void board_init(pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
+
+#endif
 
 #endif // __DRIVER_H__
