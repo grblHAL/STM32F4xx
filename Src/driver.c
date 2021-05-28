@@ -161,7 +161,20 @@ static uint32_t step_outmap[sizeof(c_step_outmap) / sizeof(uint32_t)];
     #define Y_STEP_PORT STEP_PORT
   #endif
   #ifndef Z_STEP_PORT
+<<<<<<< HEAD
     #define X_STEP_PORT STEP_PORT
+=======
+    #define Z_STEP_PORT STEP_PORT
+  #endif
+  #ifndef A_STEP_PORT
+    #define A_STEP_PORT STEP_PORT
+  #endif
+  #ifndef B_STEP_PORT
+    #define B_STEP_PORT STEP_PORT
+  #endif
+  #ifndef C_STEP_PORT
+    #define C_STEP_PORT STEP_PORT
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
   #endif
 #endif
 
@@ -222,6 +235,15 @@ static uint32_t dir_outmap[sizeof(c_dir_outmap) / sizeof(uint32_t)];
 #ifndef A_LIMIT_PORT
   #define A_LIMIT_PORT LIMIT_PORT
 #endif
+<<<<<<< HEAD
+=======
+#ifndef B_LIMIT_PORT
+  #define B_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef C_LIMIT_PORT
+  #define C_LIMIT_PORT LIMIT_PORT
+#endif
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 
 #if KEYPAD_ENABLE == 0
 #define KEYPAD_STROBE_BIT 0
@@ -264,6 +286,15 @@ static void stepperEnable (axes_signals_t enable)
    #if N_AXIS > 3
     BITBAND_PERI(A_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
    #endif
+<<<<<<< HEAD
+=======
+   #if N_AXIS > 4
+    BITBAND_PERI(B_STEPPERS_DISABLE_PORT->ODR, B_STEPPERS_DISABLE_PIN) = enable.a;
+   #endif
+   #if N_AXIS > 4
+    BITBAND_PERI(C_STEPPERS_DISABLE_PORT->ODR, C_STEPPERS_DISABLE_PIN) = enable.a;
+   #endif
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
   #endif
 #endif
 }
@@ -301,6 +332,12 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
     BITBAND_PERI(X_STEP_PORT->ODR, X_STEP_PIN) = step_outbits.x;
     BITBAND_PERI(Y_STEP_PORT->ODR, Y_STEP_PIN) = step_outbits.y;
     BITBAND_PERI(Z_STEP_PORT->ODR, Z_STEP_PIN) = step_outbits.z;
+<<<<<<< HEAD
+=======
+    BITBAND_PERI(A_STEP_PORT->ODR, A_STEP_PIN) = step_outbits.a;
+    BITBAND_PERI(B_STEP_PORT->ODR, B_STEP_PIN) = step_outbits.b;
+    BITBAND_PERI(C_STEP_PORT->ODR, C_STEP_PIN) = step_outbits.c;
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #elif STEP_OUTMODE == GPIO_MAP
 	STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits.value];
 #else
@@ -317,6 +354,12 @@ inline static __attribute__((always_inline)) void stepperSetDirOutputs (axes_sig
     BITBAND_PERI(X_DIRECTION_PORT->ODR, X_DIRECTION_PIN) = dir_outbits.x;
     BITBAND_PERI(Y_DIRECTION_PORT->ODR, Y_DIRECTION_PIN) = dir_outbits.y;
     BITBAND_PERI(Z_DIRECTION_PORT->ODR, Z_DIRECTION_PIN) = dir_outbits.z;
+<<<<<<< HEAD
+=======
+    BITBAND_PERI(A_DIRECTION_PORT->ODR, A_DIRECTION_PIN) = dir_outbits.a;
+    BITBAND_PERI(B_DIRECTION_PORT->ODR, B_DIRECTION_PIN) = dir_outbits.b;
+    BITBAND_PERI(C_DIRECTION_PORT->ODR, C_DIRECTION_PIN) = dir_outbits.c;
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #elif DIRECTION_OUTMODE == GPIO_MAP
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | dir_outmap[dir_outbits.value];
 #else
@@ -527,6 +570,7 @@ static control_signals_t systemGetState (void)
 
 #if CONTROL_INMODE == GPIO_BITBAND
 #if ESTOP_ENABLE
+<<<<<<< HEAD
     signals.e_stop = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_RESET_PIN);
 #else
     signals.reset = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_RESET_PIN);
@@ -535,6 +579,16 @@ static control_signals_t systemGetState (void)
     signals.cycle_start = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_CYCLE_START_PIN);
   #ifdef CONTROL_SAFETY_DOOR_PIN
     signals.safety_door_ajar = BITBAND_PERI(CONTROL_PORT->IDR, CONTROL_SAFETY_DOOR_PIN);
+=======
+    signals.e_stop = BITBAND_PERI(CONTROL_RESET_PORT->IDR, CONTROL_RESET_PIN);
+#else
+    signals.reset = BITBAND_PERI(CONTROL_RESET_PORT->IDR, CONTROL_RESET_PIN);
+#endif
+    signals.feed_hold = BITBAND_PERI(CONTROL_FEED_HOLD_PORT->IDR, CONTROL_FEED_HOLD_PIN);
+    signals.cycle_start = BITBAND_PERI(CONTROL_CYCLE_START_PORT->IDR, CONTROL_CYCLE_START_PIN);
+  #ifdef CONTROL_SAFETY_DOOR_PIN
+    signals.safety_door_ajar = BITBAND_PERI(CONTROL_SAFETY_DOOR_PORT->IDR, CONTROL_SAFETY_DOOR_PIN);
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
   #endif
 #elif CONTROL_INMODE == GPIO_MAP
     uint32_t bits = CONTROL_PORT->IDR;
@@ -868,6 +922,7 @@ void settings_changed (settings_t *settings)
 
 #if (STEP_OUTMODE == GPIO_MAP) || (DIRECTION_OUTMODE == GPIO_MAP)
     uint8_t i;
+<<<<<<< HEAD
 #endif
 
 #if STEP_OUTMODE == GPIO_MAP
@@ -887,6 +942,27 @@ void settings_changed (settings_t *settings)
     } while(i);
 #endif
 
+=======
+#endif
+
+#if STEP_OUTMODE == GPIO_MAP
+
+    i = sizeof(step_outmap) / sizeof(uint32_t);
+    do {
+        i--;
+        step_outmap[i] = c_step_outmap[i ^ settings->steppers.step_invert.value];
+    } while(i);
+#endif
+
+#if DIRECTION_OUTMODE == GPIO_MAP
+    i = sizeof(dir_outmap) / sizeof(uint32_t);
+    do {
+        i--;
+        dir_outmap[i] = c_dir_outmap[i ^ settings->steppers.dir_invert.value];
+    } while(i);
+#endif
+
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
     stepperSetStepOutputs((axes_signals_t){0});
     stepperSetDirOutputs((axes_signals_t){0});
 
@@ -1021,6 +1097,7 @@ void settings_changed (settings_t *settings)
         HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
 #endif
 
+<<<<<<< HEAD
         GPIO_Init.Pin = CONTROL_RESET_BIT;
         GPIO_Init.Mode = control_ire.reset ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
         GPIO_Init.Pull = settings->control_disable_pullup.reset ? GPIO_NOPULL : GPIO_PULLUP;
@@ -1053,6 +1130,55 @@ void settings_changed (settings_t *settings)
 
             limit_ire.mask = ~(settings->limits.disable_pullup.mask ^ settings->limits.invert.mask);
 
+=======
+#ifdef CONTROL_PORT
+  #ifndef CONTROL_RESET_PORT
+    #define CONTROL_RESET_PORT CONTROL_PORT
+  #endif
+  #ifndef CONTROL_FEED_HOLD_PORT
+    #define CONTROL_FEED_HOLD_PORT CONTROL_PORT
+  #endif
+  #ifndef CONTROL_CYCLE_START_PORT
+    #define CONTROL_CYCLE_START_PORT CONTROL_PORT
+  #endif
+  #ifndef CONTROL_SAFETY_DOOR_PORT
+    #define CONTROL_SAFETY_DOOR_PORT CONTROL_PORT
+  #endif
+#endif
+
+        GPIO_Init.Pin = CONTROL_RESET_BIT;
+        GPIO_Init.Mode = control_ire.reset ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
+        GPIO_Init.Pull = settings->control_disable_pullup.reset ? GPIO_NOPULL : GPIO_PULLUP;
+        HAL_GPIO_Init(CONTROL_RESET_PORT, &GPIO_Init);
+
+        GPIO_Init.Pin = CONTROL_FEED_HOLD_BIT;
+        GPIO_Init.Mode = control_ire.feed_hold ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
+        GPIO_Init.Pull = settings->control_disable_pullup.feed_hold ? GPIO_NOPULL : GPIO_PULLUP;
+        HAL_GPIO_Init(CONTROL_FEED_HOLD_PORT, &GPIO_Init);
+
+        GPIO_Init.Pin = CONTROL_CYCLE_START_BIT;
+        GPIO_Init.Mode = control_ire.cycle_start ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
+        GPIO_Init.Pull = settings->control_disable_pullup.cycle_start ? GPIO_NOPULL : GPIO_PULLUP;
+        HAL_GPIO_Init(CONTROL_CYCLE_START_PORT, &GPIO_Init);
+
+#ifdef CONTROL_SAFETY_DOOR_PIN
+        GPIO_Init.Pin = CONTROL_SAFETY_DOOR_BIT;
+        GPIO_Init.Mode = control_ire.safety_door_ajar ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
+        GPIO_Init.Pull = settings->control_disable_pullup.safety_door_ajar ? GPIO_NOPULL : GPIO_PULLUP;
+        HAL_GPIO_Init(CONTROL_SAFETY_DOOR_PORT, &GPIO_Init);
+#endif
+
+        /***********************
+         *  Limit pins config  *
+         ***********************/
+
+        if (settings->limits.flags.hard_enabled) {
+
+            axes_signals_t limit_ire;
+
+            limit_ire.mask = ~(settings->limits.disable_pullup.mask ^ settings->limits.invert.mask);
+
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
             // NOTE: Z limit must be first. Do not change!
             GPIO_Init.Pin = Z_LIMIT_BIT;
             GPIO_Init.Mode = limit_ire.z ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
@@ -1074,13 +1200,27 @@ void settings_changed (settings_t *settings)
             GPIO_Init.Pin = A_LIMIT_BIT;
             GPIO_Init.Mode = limit_ire.a ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
             GPIO_Init.Pull = settings->limits.disable_pullup.a ? GPIO_NOPULL : GPIO_PULLUP;
+<<<<<<< HEAD
             HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+=======
+            HAL_GPIO_Init(A_LIMIT_PORT, &GPIO_Init);
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #endif
 #ifdef B_LIMIT_BIT
             GPIO_Init.Pin = B_LIMIT_BIT;
             GPIO_Init.Mode = limit_ire.b ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
             GPIO_Init.Pull = settings->limits.disable_pullup.b ? GPIO_NOPULL : GPIO_PULLUP;
+<<<<<<< HEAD
             HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+=======
+            HAL_GPIO_Init(B_LIMIT_PORT, &GPIO_Init);
+#endif
+#ifdef C_LIMIT_BIT
+            GPIO_Init.Pin = C_LIMIT_BIT;
+            GPIO_Init.Mode = limit_ire.c ? GPIO_MODE_IT_RISING : GPIO_MODE_IT_FALLING;
+            GPIO_Init.Pull = settings->limits.disable_pullup.c ? GPIO_NOPULL : GPIO_PULLUP;
+            HAL_GPIO_Init(C_LIMIT_PORT, &GPIO_Init);
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #endif
 
         } else {
@@ -1103,12 +1243,25 @@ void settings_changed (settings_t *settings)
 #ifdef A_LIMIT_BIT
             GPIO_Init.Pin = A_LIMIT_BIT;
             GPIO_Init.Pull = settings->limits.disable_pullup.a ? GPIO_NOPULL : GPIO_PULLUP;
+<<<<<<< HEAD
             HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+=======
+            HAL_GPIO_Init(A_LIMIT_PORT, &GPIO_Init);
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #endif
 #ifdef B_LIMIT_BIT
             GPIO_Init.Pin = B_LIMIT_BIT;
             GPIO_Init.Pull = settings->limits.disable_pullup.b ? GPIO_NOPULL : GPIO_PULLUP;
+<<<<<<< HEAD
             HAL_GPIO_Init(LIMIT_PORT, &GPIO_Init);
+=======
+            HAL_GPIO_Init(B_LIMIT_PORT, &GPIO_Init);
+#endif
+#ifdef C_LIMIT_BIT
+            GPIO_Init.Pin = C_LIMIT_BIT;
+            GPIO_Init.Pull = settings->limits.disable_pullup.c ? GPIO_NOPULL : GPIO_PULLUP;
+            HAL_GPIO_Init(C_LIMIT_PORT, &GPIO_Init);
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #endif
         }
 
@@ -1199,10 +1352,26 @@ static bool driver_setup (settings_t *settings)
     HAL_GPIO_Init(Y_STEPPERS_DISABLE_PORT, &GPIO_Init);
     GPIO_Init.Pin = Z_STEPPERS_DISABLE_BIT;
     HAL_GPIO_Init(Z_STEPPERS_DISABLE_PORT, &GPIO_Init);
+<<<<<<< HEAD
  #if N_AXIS > 3
   GPIO_Init.Pin = A_STEPPERS_DISABLE_BIT;
   HAL_GPIO_Init(A_STEPPERS_DISABLE_PORT, &GPIO_Init);
  #endif
+=======
+  #if N_AXIS > 3
+    GPIO_Init.Pin = A_STEPPERS_DISABLE_BIT;
+    HAL_GPIO_Init(A_STEPPERS_DISABLE_PORT, &GPIO_Init);
+  #endif
+  #if N_AXIS > 4
+    GPIO_Init.Pin = B_STEPPERS_DISABLE_BIT;
+    HAL_GPIO_Init(B_STEPPERS_DISABLE_PORT, &GPIO_Init);
+   #endif
+  #if N_AXIS > 5
+    GPIO_Init.Pin = C_STEPPERS_DISABLE_BIT;
+    HAL_GPIO_Init(C_STEPPERS_DISABLE_PORT, &GPIO_Init);
+  #endif
+
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #endif
 
 #ifdef STEP_MASK
@@ -1215,6 +1384,21 @@ static bool driver_setup (settings_t *settings)
     HAL_GPIO_Init(Y_STEP_PORT, &GPIO_Init);
     GPIO_Init.Pin = Z_STEP_BIT;
     HAL_GPIO_Init(Z_STEP_PORT, &GPIO_Init);
+<<<<<<< HEAD
+=======
+  #if N_AXIS > 3
+    GPIO_Init.Pin = A_STEP_BIT;
+    HAL_GPIO_Init(A_STEP_PORT, &GPIO_Init);
+  #endif
+  #if N_AXIS > 4
+    GPIO_Init.Pin = B_STEP_BIT;
+    HAL_GPIO_Init(B_STEP_PORT, &GPIO_Init);
+   #endif
+  #if N_AXIS > 5
+    GPIO_Init.Pin = C_STEP_BIT;
+    HAL_GPIO_Init(C_STEP_PORT, &GPIO_Init);
+  #endif
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #endif
 
 #ifdef DIRECTION_MASK
@@ -1227,6 +1411,21 @@ static bool driver_setup (settings_t *settings)
     HAL_GPIO_Init(Y_DIRECTION_PORT, &GPIO_Init);
     GPIO_Init.Pin = Z_DIRECTION_BIT;
     HAL_GPIO_Init(Z_DIRECTION_PORT, &GPIO_Init);
+<<<<<<< HEAD
+=======
+  #if N_AXIS > 3
+    GPIO_Init.Pin = A_DIRECTION_BIT;
+    HAL_GPIO_Init(A_DIRECTION_PORT, &GPIO_Init);
+  #endif
+  #if N_AXIS > 4
+    GPIO_Init.Pin = B_DIRECTION_BIT;
+    HAL_GPIO_Init(B_DIRECTION_PORT, &GPIO_Init);
+   #endif
+  #if N_AXIS > 5
+    GPIO_Init.Pin = C_DIRECTION_BIT;
+    HAL_GPIO_Init(C_DIRECTION_PORT, &GPIO_Init);
+  #endif
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #endif
 
     STEPPER_TIMER->CR1 &= ~TIM_CR1_CEN;
@@ -1268,10 +1467,17 @@ static bool driver_setup (settings_t *settings)
 #if !VFD_SPINDLE
 
  // Spindle init
+<<<<<<< HEAD
 
     GPIO_Init.Pin = SPINDLE_DIRECTION_BIT;
     HAL_GPIO_Init(SPINDLE_DIRECTION_PORT, &GPIO_Init);
 
+=======
+
+    GPIO_Init.Pin = SPINDLE_DIRECTION_BIT;
+    HAL_GPIO_Init(SPINDLE_DIRECTION_PORT, &GPIO_Init);
+
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
     GPIO_Init.Pin = SPINDLE_ENABLE_BIT;
     HAL_GPIO_Init(SPINDLE_ENABLE_PORT, &GPIO_Init);
 
@@ -1383,7 +1589,11 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
+<<<<<<< HEAD
     hal.driver_version = "210423";
+=======
+    hal.driver_version = "210524";
+>>>>>>> parent of 2f8531d (Merge remote-tracking branch 'upstream/master' into SKR-PRO_v1_1)
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
