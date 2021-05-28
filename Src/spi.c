@@ -22,8 +22,13 @@
 #include "main.h"
 #include "driver.h"
 
-static SPI_HandleTypeDef hspi1 = {
-    .Instance = SPI1,
+#define SPIport(p) SPIportI(p)
+#define SPIportI(p) SPI ## p
+
+#define SPIPORT SPIport(SPI_PORT)
+
+static SPI_HandleTypeDef spi_port = {
+    .Instance = SPIPORT,
     .Init.Mode = SPI_MODE_MASTER,
     .Init.Direction = SPI_DIRECTION_2LINES,
     .Init.DataSize = SPI_DATASIZE_8BIT,
@@ -48,6 +53,7 @@ void spi_init (void)
 
     if(!init) {
 
+    #if SPI_PORT == 1
         __HAL_RCC_SPI1_CLK_ENABLE();
 
         GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -58,8 +64,38 @@ void spi_init (void)
         GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-        HAL_SPI_Init(&hspi1);
-        __HAL_SPI_ENABLE(&hspi1);
+        HAL_SPI_Init(&spi_port);
+        __HAL_SPI_ENABLE(&spi_port);
+    #endif
+    #if SPI_PORT == 2
+        __HAL_RCC_SPI2_CLK_ENABLE();
+
+        GPIO_InitTypeDef GPIO_InitStruct = {0};
+        GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
+        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+        HAL_SPI_Init(&spi_port);
+        __HAL_SPI_ENABLE(&spi_port);
+    #endif
+    #if SPI_PORT == 3
+        __HAL_RCC_SPI2_CLK_ENABLE();
+
+        GPIO_InitTypeDef GPIO_InitStruct = {0};
+        GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        GPIO_InitStruct.Alternate = GPIO_AF6_SPI3;
+        HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+        HAL_SPI_Init(&spi_port);
+        __HAL_SPI_ENABLE(&spi_port);
+    #endif
+
     }
 
     init = true;
@@ -69,40 +105,39 @@ void spi_init (void)
 // set the SSI speed to the max setting
 void spi_set_max_speed (void)
 {
-    hspi1.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
-    hspi1.Instance->CR1 |= SPI_BAUDRATEPRESCALER_64; // should be able to go to 12Mhz...
+	spi_port.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
+	spi_port.Instance->CR1 |= SPI_BAUDRATEPRESCALER_64; // should be able to go to 12Mhz...
 }
 
 uint32_t spi_set_speed (uint32_t prescaler)
 {
-    uint32_t cur = hspi1.Instance->CR1 & SPI_BAUDRATEPRESCALER_256;
+    uint32_t cur = spi_port.Instance->CR1 & SPI_BAUDRATEPRESCALER_256;
 
-    hspi1.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
-    hspi1.Instance->CR1 |= prescaler;
+    spi_port.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
+    spi_port.Instance->CR1 |= prescaler;
 
     return cur;
 }
 
 uint8_t spi_get_byte (void)
 {
-    hspi1.Instance->DR = 0xFF; // Writing dummy data into Data register
+	spi_port.Instance->DR = 0xFF; // Writing dummy data into Data register
 
-    while(!__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_RXNE));
+    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_RXNE));
 
-    return (uint8_t)hspi1.Instance->DR;
+    return (uint8_t)spi_port.Instance->DR;
 }
 
 uint8_t spi_put_byte (uint8_t byte)
 {
-    hspi1.Instance->DR = byte;
+	spi_port.Instance->DR = byte;
 
-    while(!__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_TXE));
-//    while(__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_BSY));
+    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_TXE));
+//    while(__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_BSY));
 
-    while(!__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_RXNE));
+    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_RXNE));
 
-    __HAL_SPI_CLEAR_OVRFLAG(&hspi1);
+    __HAL_SPI_CLEAR_OVRFLAG(&spi_port);
 
-    return (uint8_t)hspi1.Instance->DR;
+    return (uint8_t)spi_port.Instance->DR;
 }
-

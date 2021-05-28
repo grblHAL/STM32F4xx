@@ -30,6 +30,14 @@
 
 #ifdef I2C_PORT
 
+#ifdef I2C1_ALT_PINMAP
+  #define I2C1_SCL GPIO_PIN_6
+  #define I2C1_SDA GPIO_PIN_7
+#else
+  #define I2C1_SCL GPIO_PIN_8
+  #define I2C1_SDA GPIO_PIN_9
+#endif
+
 #define I2Cport(p) I2CportI(p)
 #define I2CportI(p) I2C ## p
 
@@ -52,7 +60,7 @@ void i2c_init (void)
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 #if I2C_PORT == 1
-    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
+    GPIO_InitStruct.Pin = I2C1_SCL|I2C1_SDA;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;

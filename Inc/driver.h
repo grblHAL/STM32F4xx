@@ -205,8 +205,12 @@
 #define SERIAL2_MOD
 #endif
 
+#ifndef SPI_PORT
+#define SPI_PORT 1
+#endif
+
 #if EEPROM_ENABLE|| KEYPAD_ENABLE || (TRINAMIC_ENABLE && TRINAMIC_I2C)
-  #if defined(NUCLEO_F411) || defined(NUCLEO_F446)
+  #if defined(NUCLEO_F411) || defined(NUCLEO_F446) || defined(BOARD_SKR_PRO_1_1)
     #define I2C_PORT 1 // GPIOB, SCL_PIN = 8, SDA_PIN = 9
   #else
     #define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
