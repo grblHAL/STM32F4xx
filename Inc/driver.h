@@ -153,6 +153,8 @@
     #error EEPROM plugin not supported!
   #endif
   #include "cnc3040_map.h"
+#elif defined(BOARD_BLACKPILL)
+  #include "blackpill_map.h"
 #elif defined(BOARD_SKR_PRO_1_1)
   #include "skr_pro_v1_1_map.h"
 #elif defined(BOARD_PROTONEER_3XX)
@@ -208,7 +210,7 @@
 #endif
 
 #ifndef SPI_PORT
-#define SPI_PORT 1
+#define SPI_PORT 3
 #endif
 
 #if TRINAMIC_ENABLE
@@ -238,11 +240,20 @@
 #ifndef X_STEP_PORT
 #define X_STEP_PORT STEP_PORT
 #endif
+#ifndef X2_STEP_PORT
+#define X2_STEP_PORT STEP_PORT
+#endif
 #ifndef Y_STEP_PORT
 #define Y_STEP_PORT STEP_PORT
 #endif
+#ifndef Y2_STEP_PORT
+#define Y2_STEP_PORT STEP_PORT
+#endif
 #ifndef Z_STEP_PORT
 #define Z_STEP_PORT STEP_PORT
+#endif
+#ifndef Z2_STEP_PORT
+#define Z2_STEP_PORT STEP_PORT
 #endif
 #ifndef A_STEP_PORT
 #define A_STEP_PORT STEP_PORT
@@ -257,12 +268,22 @@
 #ifndef X_DIRECTION_PORT
 #define X_DIRECTION_PORT DIRECTION_PORT
 #endif
+#ifndef X2_DIRECTION_PORT
+#define X2_DIRECTION_PORT DIRECTION_PORT
+#endif
 #ifndef Y_DIRECTION_PORT
 #define Y_DIRECTION_PORT DIRECTION_PORT
+#endif
+#ifndef Y2_DIRECTION_PORT
+#define Y2_DIRECTION_PORT DIRECTION_PORT
 #endif
 #ifndef Z_DIRECTION_PORT
 #define Z_DIRECTION_PORT DIRECTION_PORT
 #endif
+#ifndef Z2_DIRECTION_PORT
+#define Z2_DIRECTION_PORT DIRECTION_PORT
+#endif
+
 #ifndef A_DIRECTION_PORT
 #define A_DIRECTION_PORT DIRECTION_PORT
 #endif
@@ -276,11 +297,20 @@
 #ifndef X_LIMIT_PORT
 #define X_LIMIT_PORT LIMIT_PORT
 #endif
+#ifndef X2_LIMIT_PORT
+#define X2_LIMIT_PORT LIMIT_PORT
+#endif
 #ifndef Y_LIMIT_PORT
 #define Y_LIMIT_PORT LIMIT_PORT
 #endif
+#ifndef Y2_LIMIT_PORT
+#define Y2_LIMIT_PORT LIMIT_PORT
+#endif
 #ifndef Z_LIMIT_PORT
 #define Z_LIMIT_PORT LIMIT_PORT
+#endif
+#ifndef Z2_LIMIT_PORT
+#define Z2_LIMIT_PORT LIMIT_PORT
 #endif
 #ifndef A_LIMIT_PORT
 #define A_LIMIT_PORT LIMIT_PORT
