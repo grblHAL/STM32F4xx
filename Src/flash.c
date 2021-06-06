@@ -1,6 +1,6 @@
 /*
 
-  flash.h - driver code for STM32F103C8 ARM processors
+  flash.h - driver code for STM32F4xx ARM processors
 
   Part of grblHAL
 

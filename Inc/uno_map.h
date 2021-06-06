@@ -29,52 +29,55 @@
 #define VARIABLE_SPINDLE // Comment out to disable variable spindle
 
 // Define step pulse output pins.
-#define X_STEP_PORT         GPIOA // D2
-#define X_STEP_PIN          10
-#define X_STEP_BIT          (1<<X_STEP_PIN)
-#define Y_STEP_PORT         GPIOB // D3
-#define Y_STEP_PIN          3
-#define Y_STEP_BIT          (1<<Y_STEP_PIN)
-#define Z_STEP_PORT         GPIOB // D4
-#define Z_STEP_PIN          5
-#define Z_STEP_BIT          (1<<Z_STEP_PIN)
-#define STEP_OUTMODE        GPIO_BITBAND
+#define X_STEP_PORT             GPIOA // D2
+#define X_STEP_PIN              10
+#define X_STEP_BIT              (1<<X_STEP_PIN)
+#define Y_STEP_PORT             GPIOB // D3
+#define Y_STEP_PIN              3
+#define Y_STEP_BIT              (1<<Y_STEP_PIN)
+#define Z_STEP_PORT             GPIOB // D4
+#define Z_STEP_PIN              5
+#define Z_STEP_BIT              (1<<Z_STEP_PIN)
+#define STEP_OUTMODE            GPIO_BITBAND
+//#define STEP_PINMODE            PINMODE_OD // Uncomment for open drain outputs
 
 // Define step direction output pins.
-#define X_DIRECTION_PORT    GPIOB // D5
-#define X_DIRECTION_PIN     4
-#define X_DIRECTION_BIT     (1<<X_DIRECTION_PIN)
-#define Y_DIRECTION_PORT    GPIOB // D6
-#define Y_DIRECTION_PIN     10
-#define Y_DIRECTION_BIT     (1<<Y_DIRECTION_PIN)
-#define Z_DIRECTION_PORT    GPIOA // D7
-#define Z_DIRECTION_PIN     8
-#define Z_DIRECTION_BIT     (1<<Z_DIRECTION_PIN)
-#define DIRECTION_OUTMODE   GPIO_BITBAND
+#define X_DIRECTION_PORT        GPIOB // D5
+#define X_DIRECTION_PIN         4
+#define X_DIRECTION_BIT         (1<<X_DIRECTION_PIN)
+#define Y_DIRECTION_PORT        GPIOB // D6
+#define Y_DIRECTION_PIN         10
+#define Y_DIRECTION_BIT         (1<<Y_DIRECTION_PIN)
+#define Z_DIRECTION_PORT        GPIOA // D7
+#define Z_DIRECTION_PIN         8
+#define Z_DIRECTION_BIT         (1<<Z_DIRECTION_PIN)
+#define DIRECTION_OUTMODE       GPIO_BITBAND
+//#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pin.
 #define STEPPERS_DISABLE_PORT   GPIOA // D8
 #define STEPPERS_DISABLE_PIN    9
 #define STEPPERS_DISABLE_BIT    (1<<STEPPERS_DISABLE_PIN)
 #define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
+//#define STEPPERS_DISABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
-#define X_LIMIT_PORT        GPIOC // D9
-#define X_LIMIT_PIN         7
-#define X_LIMIT_BIT         (1<<X_LIMIT_PIN)
-#define Y_LIMIT_PORT        GPIOB // D10
-#define Y_LIMIT_PIN         6
-#define Y_LIMIT_BIT         (1<<Y_LIMIT_PIN)
+#define X_LIMIT_PORT            GPIOC // D9
+#define X_LIMIT_PIN             7
+#define X_LIMIT_BIT             (1<<X_LIMIT_PIN)
+#define Y_LIMIT_PORT            GPIOB // D10
+#define Y_LIMIT_PIN             6
+#define Y_LIMIT_BIT             (1<<Y_LIMIT_PIN)
 #ifdef VARIABLE_SPINDLE
-  #define Z_LIMIT_PORT      GPIOA // D12
-  #define Z_LIMIT_PIN       6
+  #define Z_LIMIT_PORT          GPIOA // D12
+  #define Z_LIMIT_PIN           6
 #else
-  #define Z_LIMIT_PORT      GPIOA // D11
-  #define Z_LIMIT_PIN       7
+  #define Z_LIMIT_PORT          GPIOA // D11
+  #define Z_LIMIT_PIN           7
 #endif
-#define Z_LIMIT_BIT         (1<<Z_LIMIT_PIN)
-#define LIMIT_MASK          (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
-#define LIMIT_INMODE        GPIO_BITBAND
+#define Z_LIMIT_BIT             (1<<Z_LIMIT_PIN)
+#define LIMIT_MASK              (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
+#define LIMIT_INMODE            GPIO_BITBAND
 
 // Comment out if Z limit pin is not assigned to an interrupt enabled pin on a different port.
 

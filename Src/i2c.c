@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2018-2020 Terje Io
+  Copyright (c) 2018-2021 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -57,14 +57,14 @@ static I2C_HandleTypeDef i2c_port = {
 
 void i2c_init (void)
 {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-
 #if I2C_PORT == 1
-    GPIO_InitStruct.Pin = I2C1_SCL|I2C1_SDA;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
+    GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = I2C1_SCL|I2C1_SDA,
+        .Mode = GPIO_MODE_AF_OD,
+        .Pull = GPIO_PULLUP,
+        .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Alternate = GPIO_AF4_I2C1
+    };
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     __HAL_RCC_I2C1_CLK_ENABLE();
@@ -76,11 +76,13 @@ void i2c_init (void)
 #endif
 
 #if I2C_PORT == 2
-    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF4_I2C2;
+    GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = GPIO_PIN_10|GPIO_PIN_11,
+        .Mode = GPIO_MODE_AF_OD,
+        .Pull = GPIO_PULLUP,
+        .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Alternate = GPIO_AF4_I2C2
+    };
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     __HAL_RCC_I2C2_CLK_ENABLE();

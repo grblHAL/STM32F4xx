@@ -53,49 +53,44 @@ void spi_init (void)
 
     if(!init) {
 
-    #if SPI_PORT == 1
+#if SPI_PORT == 1
         __HAL_RCC_SPI1_CLK_ENABLE();
 
-        GPIO_InitTypeDef GPIO_InitStruct = {0};
-        GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
-        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-        GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF5_SPI1,
+        };
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-        HAL_SPI_Init(&spi_port);
-        __HAL_SPI_ENABLE(&spi_port);
-    #endif
-    #if SPI_PORT == 2
+#endif
+#if SPI_PORT == 2
         __HAL_RCC_SPI2_CLK_ENABLE();
 
-        GPIO_InitTypeDef GPIO_InitStruct = {0};
-        GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-        GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF5_SPI2,
+        };
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+#endif
+#if SPI_PORT == 3
+        __HAL_RCC_SPI3_CLK_ENABLE();
 
-        HAL_SPI_Init(&spi_port);
-        __HAL_SPI_ENABLE(&spi_port);
-    #endif
-    #if SPI_PORT == 3
-        __HAL_RCC_SPI2_CLK_ENABLE();
-
-        GPIO_InitTypeDef GPIO_InitStruct = {0};
-        GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
-        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-        GPIO_InitStruct.Alternate = GPIO_AF6_SPI3;
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF6_SPI3
+        };
         HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
+#endif
         HAL_SPI_Init(&spi_port);
         __HAL_SPI_ENABLE(&spi_port);
-    #endif
-
     }
 
     init = true;
@@ -133,8 +128,6 @@ uint8_t spi_put_byte (uint8_t byte)
 	spi_port.Instance->DR = byte;
 
     while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_TXE));
-//    while(__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_BSY));
-
     while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_RXNE));
 
     __HAL_SPI_CLEAR_OVRFLAG(&spi_port);

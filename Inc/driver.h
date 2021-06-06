@@ -322,6 +322,18 @@
 #define C_LIMIT_PORT LIMIT_PORT
 #endif
 
+#ifndef STEP_PINMODE
+#define STEP_PINMODE PINMODE_OUTPUT
+#endif
+
+#ifndef DIRECTION_PINMODE
+#define DIRECTION_PINMODE PINMODE_OUTPUT
+#endif
+
+#ifndef STEPPERS_DISABLE_PINMODE
+#define STEPPERS_DISABLE_PINMODE PINMODE_OUTPUT
+#endif
+
 #ifndef RESET_PORT
 #define RESET_PORT CONTROL_PORT
 #endif
@@ -350,6 +362,7 @@ typedef struct {
     GPIO_TypeDef *port;
     uint8_t pin;
     pin_group_t group;
+    pin_mode_t mode;
 } output_signal_t;
 
 typedef struct {
