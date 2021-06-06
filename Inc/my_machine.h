@@ -28,7 +28,6 @@
 //#define BOARD_MORPHO_CNC      // For use with Nucleo-F411RE and F446RE boards. Work in progress.
 //#define BOARD_MORPHO_DAC_CNC  // For use with F446RE boards and a 32-bit I2S stereo DAC for X and Y output. **EXPERIMENTAL**
 //#define BOARD_MINI_BLACKPILL
-#define BOARD_BLACKPILL
 //#define BOARD_SKR_PRO_1_1     // F407 based 3D Printer board
 //#define BOARD_MY_MACHINE      // Add my_machine_map.h before enabling this!
 //#define BOARD_SKR_PRO_1_1
@@ -41,7 +40,7 @@
 //#define SPINDLE_HUANYANG     1 // Set to 1 or 2 for Huanyang VFD spindle. Requires spindle plugin. !! NOT TESTED !!
 //#define SDCARD_ENABLE        2 // Run gcode programs from SD card, requires sdcard plugin.
 //#define KEYPAD_ENABLE        1 // I2C keypad for jogging etc., requires keypad plugin.
-#define ODOMETER_ENABLE      1 // Odometer plugin.
+//#define ODOMETER_ENABLE      1 // Odometer plugin.
 //#define PPI_ENABLE           1 // Laser PPI plugin. To be completed.
 //#define LASER_COOLANT_ENABLE 1 // Laser coolant plugin. To be completed.
 //#define TRINAMIC_ENABLE   2130 // Trinamic TMC2130 stepper driver support. NOTE: work in progress.

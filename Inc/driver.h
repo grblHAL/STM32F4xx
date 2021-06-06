@@ -210,7 +210,7 @@
 #endif
 
 #ifndef SPI_PORT
-#define SPI_PORT 3
+#define SPI_PORT 1
 #endif
 
 #if TRINAMIC_ENABLE
