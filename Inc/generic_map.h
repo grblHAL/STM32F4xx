@@ -27,7 +27,7 @@
 #define STEP_PORT               GPIOA
 #define X_STEP_PIN              0
 #define Y_STEP_PIN              1
-#define Z_STEP_PIN              3
+#define Z_STEP_PIN              2
 #define X_STEP_BIT              (1<<X_STEP_PIN)
 #define Y_STEP_BIT              (1<<Y_STEP_PIN)
 #define Z_STEP_BIT              (1<<Z_STEP_PIN)

@@ -173,6 +173,9 @@
   #include "generic_map.h"
 #endif
 
+#if (defined(NUCLEO_F411) || defined(NUCLEO_F446)) && !defined(IS_NUCLEO_BOB)
+#warning "Board map is not for Nucleo based boards and firmware may not work!"
+#endif
 
 #if defined(IS_NUCLEO_BOB) && USB_SERIAL_CDC
 #error "Nucleo based boards does not support USB CDC communication!"
