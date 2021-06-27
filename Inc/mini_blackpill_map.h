@@ -19,6 +19,10 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if N_AUTO_SQUARED || N_ABC_MOTORS > 1
+#error "Axis configuration is not supported!"
+#endif
+
 #define BOARD_NAME "Minimal BlackPill grblHAL"
 
 #ifdef EEPROM_ENABLE
@@ -40,13 +44,6 @@
 #define X_STEP_BIT              (1<<X_STEP_PIN)
 #define Y_STEP_BIT              (1<<Y_STEP_PIN)
 #define Z_STEP_BIT              (1<<Z_STEP_PIN)
-#if N_AXIS > 3
-#define A_STEP_PIN              6
-#define A_STEP_BIT              (1<<A_STEP_PIN)
-#define STEP_MASK               (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT|A_STEP_BIT) // All step bits
-#else
-#define STEP_MASK               (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT) // All step bits
-#endif
 #define STEP_OUTMODE            GPIO_MAP
 
 // Define step direction output pins.
@@ -57,20 +54,20 @@
 #define X_DIRECTION_BIT         (1<<X_DIRECTION_PIN)
 #define Y_DIRECTION_BIT         (1<<Y_DIRECTION_PIN)
 #define Z_DIRECTION_BIT         (1<<Z_DIRECTION_PIN)
-#if N_AXIS > 3
-#define A_DIRECTION_PIN         7
-#define A_DIRECTION_BIT         (1<<A_DIRECTION_PIN)
-#define DIRECTION_MASK          (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT|A_DIRECTION_BIT) // All direction bits
-#else
-#define DIRECTION_MASK          (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT) // All direction bits
-#endif
 #define DIRECTION_OUTMODE       GPIO_MAP
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_DISABLE_PORT   GPIOB
-#define STEPPERS_DISABLE_PIN    0
-#define STEPPERS_DISABLE_BIT    (1<<STEPPERS_DISABLE_PIN)
-#define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
+#define STEPPERS_ENABLE_PORT    GPIOB
+#define STEPPERS_ENABLE_PIN     0
+#define STEPPERS_ENABLE_BIT     (1<<STEPPERS_ENABLE_PIN)
+
+#if N_ABC_MOTORS == 1
+#define M3_AVAILABLE
+#define M3_STEP_PORT            GPIOA
+#define M3_STEP_PIN             6
+#define M3_DIRECTION_PORT       GPIOA
+#define M3_DIRECTION_PIN        7
+#endif
 
 // Define homing/hard limit switch input pins.
 #define LIMIT_PORT              GPIOB
@@ -80,7 +77,6 @@
 #define X_LIMIT_BIT             (1<<X_LIMIT_PIN)
 #define Y_LIMIT_BIT             (1<<Y_LIMIT_PIN)
 #define Z_LIMIT_BIT             (1<<Z_LIMIT_PIN)
-#define LIMIT_MASK              (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
 #define LIMIT_INMODE            GPIO_SHIFT12
 
   // Define spindle enable and spindle direction output pins.

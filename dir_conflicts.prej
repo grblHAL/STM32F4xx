@@ -1,0 +1,41 @@
+Trying to change property 'svn:ignore'
+but the property has already been locally changed to a different value.
+Local property value:
+.git
+Drivers
+FatFS
+Middlewares
+USB_DEVICE
+
+Incoming property value:
+Drivers
+Middlewares
+FatFS
+USB_DEVICE
+FatFs
+
+Trying to change property 'svn:externals'
+but the property has been locally deleted.
+<<<<<<< (local property value)
+||||||| (incoming 'changed from' value)
+^/Trunk/Engineering/GRBL/Master grbl
+^/Trunk/Engineering/GRBL/Plugins/laser laser
+^/Trunk/Engineering/GRBL/Plugins/eeprom eeprom
+^/Trunk/Engineering/GRBL/Plugins/odometer odometer
+^/Trunk/Engineering/GRBL/Plugins/sdcard sdcard
+^/Trunk/Engineering/GRBL/Plugins/keypad keypad
+^/Trunk/Engineering/GRBL/Trinamic%20Stepper%20Drivers trinamic
+^/Trunk/Engineering/GRBL/Plugins/motors motors
+^/Trunk/Engineering/GRBL/Plugins/spindle spindle
+=======
+^/Trunk/Engineering/GRBL/Master grbl
+^/Trunk/Engineering/GRBL/Plugins/laser laser
+^/Trunk/Engineering/GRBL/Plugins/eeprom eeprom
+^/Trunk/Engineering/GRBL/Plugins/odometer odometer
+^/Trunk/Engineering/GRBL/Plugins/sdcard sdcard
+^/Trunk/Engineering/GRBL/Plugins/keypad keypad
+^/Trunk/Engineering/GRBL/Trinamic%20Stepper%20Drivers trinamic
+^/Trunk/Engineering/GRBL/Plugins/motors motors
+^/Trunk/Engineering/GRBL/Plugins/spindle spindle
+^/Trunk/Engineering/GRBL/Plugins/bluetooth bluetooth
+>>>>>>> (incoming 'changed to' value)

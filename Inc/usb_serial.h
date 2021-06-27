@@ -1,10 +1,10 @@
 /*
 
-  usb_serial.h - low level functions for transmitting bytes via the USB virtual serial port
+  usb_serial.h - stream interface for USB virtual serial port
 
   Part of grblHAL
 
-  Copyright (c) 2019-2021 Terje Io
+  Copyright (c) 2021 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,15 +21,14 @@
 
 */
 
+#pragma once
+
 #include <stdint.h>
 #include <stdbool.h>
 
-void usbInit (void);
-int16_t usbGetC (void);
-bool usbPutC (const char c);
-void usbWriteS (const char *s);
-uint16_t usbRxFree (void);
-void usbRxFlush (void);
-void usbRxCancel (void);
+#include "driver.h"
+
+const io_stream_t *usbInit (void);
 void usbBufferInput (uint8_t *data, uint32_t length);
-bool usbSuspendInput (bool suspend);
+
+/*EOF*/

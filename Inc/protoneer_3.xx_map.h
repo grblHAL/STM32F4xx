@@ -19,8 +19,12 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if N_AUTO_SQUARED || N_ABC_MOTORS > 1
+#error "Axis configuration is not supported!"
+#endif
+
 #if TRINAMIC_ENABLE
-#error Trinamic plugin not supported!
+#error "Trinamic plugin not supported!"
 #endif
 
 #define BOARD_NAME "Protoneer v3"
@@ -54,11 +58,10 @@
 //#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_DISABLE_PORT   GPIOA // D8
-#define STEPPERS_DISABLE_PIN    9
-#define STEPPERS_DISABLE_BIT    (1<<STEPPERS_DISABLE_PIN)
-#define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
-//#define STEPPERS_DISABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
+#define STEPPERS_ENABLE_PORT    GPIOA // D8
+#define STEPPERS_ENABLE_PIN     9
+#define STEPPERS_ENABLE_BIT     (1<<STEPPERS_ENABLE_PIN)
+//#define STEPPERS_ENABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
 #define X_LIMIT_PORT            GPIOC // D9
@@ -70,21 +73,19 @@
 #define Z_LIMIT_PORT            GPIOA // D11
 #define Z_LIMIT_PIN             7
 #define Z_LIMIT_BIT             (1<<Z_LIMIT_PIN)
-#define LIMIT_MASK              (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
 #define LIMIT_INMODE            GPIO_BITBAND
 
-// Define A axis step pulse and step direction output pins.
-#ifdef A_AXIS
-#define A_STEP_PORT             GPIOA // D12
-#define A_STEP_PIN              6
-#define A_STEP_BIT              (1<<A_STEP_PIN)
-#define A_DIRECTION_PORT        GPIOA // D13
-#define A_DIRECTION_PIN         5
-#define A_DIRECTION_BIT         (1<<A_DIRECTION_PIN)
+// Define ganged axis or A axis step pulse and step direction output pins.
+#if N_ABC_MOTORS == 1
+#define M3_AVAILABLE
+#define M3_STEP_PORT            GPIOA
+#define M3_STEP_PIN             6
+#define M3_DIRECTION_PORT       GPIOA
+#define M3_DIRECTION_PIN        5
 #endif
 
 // Define spindle enable and spindle direction output pins.
-#ifndef A_AXIS
+#ifndef M3_AVAILABLE
 #define SPINDLE_ENABLE_PORT     GPIOA // D12
 #define SPINDLE_ENABLE_PIN      6
 #define SPINDLE_ENABLE_BIT      (1<<SPINDLE_ENABLE_PIN)

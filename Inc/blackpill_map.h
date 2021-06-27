@@ -38,6 +38,10 @@
  * A15              | B15 Probe             | C15 coolant Mist
  */
 
+#if N_ABC_MOTORS > 1
+#error "Axis configuration is not supported!"
+#endif
+
 #define BOARD_NAME "BlackPill"
 
 #ifdef EEPROM_ENABLE
@@ -50,12 +54,6 @@
 
 #define CNC_BLACKPILL   1
 #define EEPROM_ENABLE   0 // Disabled for now for BlackPill - pin differences... // Only change if BoosterPack does not have EEPROM mounted
-#define X_GANGED        0
-#define X_AUTO_SQUARE   0
-#define Y_GANGED        0
-#define Y_AUTO_SQUARE   1
-#define Z_GANGED        0
-#define Z_AUTO_SQUARE   0
 
 // Define step pulse output pins.
 #define STEP_PORT           GPIOA
@@ -65,76 +63,23 @@
 #define X_STEP_BIT          (1<<X_STEP_PIN)
 #define X_DIRECTION_PIN     1
 #define X_DIRECTION_BIT     (1<<X_DIRECTION_PIN)
-
-#if X_GANGED || X_AUTO_SQUARE
- #define X2_STEP_PIN         9
- #define X2_STEP_BIT         (1<<X2_STEP_PIN)
- #define X2_DIRECTION_PIN    10
- #define X2_DIRECTION_BIT    (1<<X2_DIRECTION_PIN)
- #if X_AUTO_SQUARE
-  #define X2_LIMIT_PIN       10 // PORT GPIOB
-  #define X2_LIMIT_BIT       (1<<X2_LIMIT_PIN)
- #endif
-#endif
-
 #define Y_STEP_PIN          2
 #define Y_STEP_BIT          (1<<Y_STEP_PIN)
 #define Y_DIRECTION_PIN     3
 #define Y_DIRECTION_BIT     (1<<Y_DIRECTION_PIN)
-
-#if Y_GANGED || Y_AUTO_SQUARE
- #define Y2_STEP_PIN         9
- #define Y2_STEP_BIT         (1<<Y2_STEP_PIN)
- #define Y2_DIRECTION_PIN    10
- #define Y2_DIRECTION_BIT    (1<<Y2_DIRECTION_PIN)
- #if Y_AUTO_SQUARE
-  #define Y2_LIMIT_PIN       10 // PORT GPIOB Doubling up on Z- Axis Limit Switch as they will never be used at the same time
-  #define Y2_LIMIT_BIT       (1<<Y2_LIMIT_PIN)
- #endif
-#endif
-
 #define Z_STEP_PIN          4
 #define Z_STEP_BIT          (1<<Z_STEP_PIN)
 #define Z_DIRECTION_PIN     5
 #define Z_DIRECTION_BIT     (1<<Z_DIRECTION_PIN)
 
-#if Z_GANGED || Z_AUTO_SQUARE
- #define Z2_STEP_PIN         9
- #define Z2_STEP_BIT         (1<<Z2_STEP_PIN)
- #define Z2_DIRECTION_PIN    10
- #define Z2_DIRECTION_BIT    (1<<Z2_DIRECTION_PIN)
- #if Z_AUTO_SQUARE
-  #define Z2_LIMIT_PIN       10 // PORT GPIOB
-  #define Z2_LIMIT_BIT       (1<<Z2_LIMIT_PIN)
- #endif
-
-#endif
-
-#if N_AXIS > 3
- #define A_STEP_PIN          6
- #define A_STEP_BIT          (1<<A_STEP_PIN)
- #define A_DIRECTION_PIN     7
- #define A_DIRECTION_BIT     (1<<A_DIRECTION_PIN)
-
-  #define STEP_MASK           (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT|A_STEP_BIT) // All step bits
-  #define DIRECTION_MASK      (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT|A_DIRECTION_BIT) // All direction bits
-#else
-  #define STEP_MASK           (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT) // All step bits
-  #define DIRECTION_MASK      (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT) // All direction bits
-#endif
-
-// TODO: Get AutoSquaring and Ganged Axis to work with GPIO_MAP mode
-#define STEP_OUTMODE        GPIO_BITBAND
-#define DIRECTION_OUTMODE   GPIO_BITBAND
-//#define STEP_OUTMODE    GPIO_MAP
-//#define DIRECTION_OUTMODE   GPIO_MAP
-
+#define STEP_OUTMODE        GPIO_MAP
+#define DIRECTION_OUTMODE   GPIO_MAP
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_DISABLE_PORT   GPIOB
-#define STEPPERS_DISABLE_PIN    0
-#define STEPPERS_DISABLE_BIT    (1<<STEPPERS_DISABLE_PIN)
-#define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
+#define STEPPERS_ENABLE_PORT   GPIOB
+#define STEPPERS_ENABLE_PIN    0
+#define STEPPERS_ENABLE_BIT    (1<<STEPPERS_ENABLE_PIN)
+#define STEPPERS_ENABLE_MASK   STEPPERS_ENABLE_BIT
 
 // Define homing/hard limit switch input pins.
 #define LIMIT_PORT       GPIOB
@@ -144,24 +89,20 @@
 #define X_LIMIT_BIT      (1<<X_LIMIT_PIN)
 #define Y_LIMIT_BIT      (1<<Y_LIMIT_PIN)
 #define Z_LIMIT_BIT      (1<<Z_LIMIT_PIN)
-#if N_AXIS > 3
-// Not tested, might need to remap due to B15 being mapped to probe
-#define A_LIMIT_PIN      15
-#define A_LIMIT_BIT      (1<<A_LIMIT_PIN)
-#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT) // All limit bits
-#else
-#if defined(X2_LIMIT_BIT)
-#define LIMIT_MASK       (X_LIMIT_BIT|X2_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
-#elif defined(Y2_LIMIT_BIT)
-#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Y2_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
-#elif defined(Z2_LIMIT_BIT)
-#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|Z2_LIMIT_BIT) // All limit bits
-#else
-#define LIMIT_MASK       (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
-#endif
+#define LIMIT_INMODE     GPIO_SHIFT12
 
+// Define ganged axis or A axis step pulse and step direction output pins.
+#if N_ABC_MOTORS == 1
+#define M3_AVAILABLE
+#define M3_STEP_PORT        STEP_PORT
+#define M3_STEP_PIN         6
+#define M3_DIRECTION_PORT   DIRECTION_PORT
+#define M3_DIRECTION_PIN    7
+#if N_AUTO_SQUARED
+#define M3_LIMIT_PORT       LIMIT_PORT
+#define M3_LIMIT_PIN        15
 #endif
-#define LIMIT_INMODE GPIO_SHIFT12
+#endif
 
   // Define spindle enable and spindle direction output pins.
 #define SPINDLE_ENABLE_PORT     GPIOB

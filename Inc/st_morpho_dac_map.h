@@ -1,5 +1,5 @@
 /*
-  st_morpho_map.h - driver code for STM32F4xx ARM processors
+  st_morpho_dac_map.h - driver code for STM32F4xx ARM processors
 
   Part of grblHAL
 
@@ -19,6 +19,12 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if N_ABC_MOTORS > 1
+#error "Axis configuration is not supported!"
+#endif
+
+#define BOARD_NAME "Nucleo-64 CNC Breakout (DAC)"
+#define HAS_IOPORTS
 #define HAS_BOARD_INIT
 #define I2C_PORT 1
 #define IS_NUCLEO_BOB
@@ -32,13 +38,6 @@
 #define X_STEP_BIT              (1<<X_STEP_PIN)
 #define Y_STEP_BIT              (1<<Y_STEP_PIN)
 #define Z_STEP_BIT              (1<<Z_STEP_PIN)
-#if N_AXIS > 3
-#define A_STEP_PIN              6
-#define A_STEP_BIT              (1<<A_STEP_PIN)
-#define STEP_MASK               (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT|A_STEP_BIT) // All step bits
-#else
-#define STEP_MASK               (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT) // All step bits
-#endif
 #define STEP_OUTMODE GPIO_MAP
 //#define STEP_PINMODE        PINMODE_OD // Uncomment for open drain outputs
 
@@ -50,33 +49,20 @@
 #define X_DIRECTION_BIT         (1<<X_DIRECTION_PIN)
 #define Y_DIRECTION_BIT         (1<<Y_DIRECTION_PIN)
 #define Z_DIRECTION_BIT         (1<<Z_DIRECTION_PIN)
-#if N_AXIS > 3
-#define A_DIRECTION_PIN         12
-#define A_DIRECTION_BIT         (1<<A_DIRECTION_PIN)
-#define DIRECTION_MASK          (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT|A_DIRECTION_BIT) // All direction bits
-#else
-#define DIRECTION_MASK          (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT) // All direction bits
-#endif
 #define DIRECTION_OUTMODE       GPIO_MAP
 //#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
-// Define stepper driver enable/disable output pin.a2
-
-#define X_STEPPERS_DISABLE_PORT GPIOA
-#define X_STEPPERS_DISABLE_PIN  1
-#define Y_STEPPERS_DISABLE_PORT GPIOB
-#define Y_STEPPERS_DISABLE_PIN  12
-#define Z_STEPPERS_DISABLE_PORT GPIOB
-#define Z_STEPPERS_DISABLE_PIN  1
-#define X_STEPPERS_DISABLE_BIT  (1<<X_STEPPERS_DISABLE_PIN)
-#define Y_STEPPERS_DISABLE_BIT  (1<<Y_STEPPERS_DISABLE_PIN)
-#define Z_STEPPERS_DISABLE_BIT  (1<<Z_STEPPERS_DISABLE_PIN)
-#if N_AXIS > 3
-#define A_STEPPERS_DISABLE_PORT GPIOA
-#define A_STEPPERS_DISABLE_PIN  6
-#define A_STEPPERS_DISABLE_BIT  (1<<A_STEPPERS_DISABLE_PIN)
-#endif
-//#define STEPPERS_DISABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
+// Define stepper driver enable/disable output pins.
+#define X_ENABLE_PORT           GPIOA
+#define X_ENABLE_PIN            1
+#define Y_ENABLE_PORT            GPIOB
+#define Y_ENABLE_PIN            12
+#define Z_ENABLE_PORT           GPIOB
+#define Z_ENABLE_PIN            1
+#define X_ENABLE_BIT            (1<<X_ENABLE_PIN)
+#define Y_ENABLE_BIT            (1<<Y_ENABLE_PIN)
+#define Z_ENABLE_BIT            (1<<Z_ENABLE_PIN)
+//#define STEPPERS_ENABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
 #define LIMIT_PORT              GPIOC
@@ -86,13 +72,6 @@
 #define X_LIMIT_BIT             (1<<X_LIMIT_PIN)
 #define Y_LIMIT_BIT             (1<<Y_LIMIT_PIN)
 #define Z_LIMIT_BIT             (1<<Z_LIMIT_PIN)
-#if N_AXIS > 3
-#define A_LIMIT_PIN             11
-#define A_LIMIT_BIT             (1<<A_LIMIT_PIN)
-#define LIMIT_MASK              (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT) // All limit bits
-#else
-#define LIMIT_MASK              (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
-#endif
 #define LIMIT_INMODE            GPIO_BITBAND
 
   // Define spindle enable and spindle direction output pins.
@@ -115,6 +94,19 @@
 #define COOLANT_MIST_PORT       GPIOB
 #define COOLANT_MIST_PIN        4
 #define COOLANT_MIST_BIT        (1<<COOLANT_MIST_PIN)
+
+// Define ganged axis or A axis step pulse and step direction output pins.
+#if N_ABC_MOTORS == 1
+#define M3_AVAILABLE
+#define M3_STEP_PORT            GPIOC
+#define M3_STEP_PIN             6
+#define M3_DIRECTION_PORT       GPIOA
+#define M3_DIRECTION_PIN        12
+#define M3_LIMIT_PORT           GPIOC
+#define M3_LIMIT_PIN            11
+#define M3_ENABLE_PORT          GPIOA
+#define M3_ENABLE_PIN           6
+#endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #define CONTROL_PORT            GPIOC
@@ -151,17 +143,14 @@
 // Auxiliary I/O
 #define AUXINPUT0_PORT          GPIOB
 #define AUXINPUT0_PIN           13
-#define AUXINPUT0_BIT           (1<<AUXINPUT0_PIN)
 #define AUXINPUT1_PORT          GPIOB
 #define AUXINPUT1_PIN           14
-#define AUXINPUT1_BIT           (1<<AUXINPUT1_PIN)
+#define AUXINPUT_MASK           (1<<AUXINPUT0_PIN|1<<AUXINPUT1_PIN)
 
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          15
-#define AUXOUTPUT0_BIT          (1<<AUXOUTPUT0_PIN)
 #define AUXOUTPUT1_PORT         GPIOB
 #define AUXOUTPUT1_PIN          2
-#define AUXOUTPUT1_BIT          (1<<AUXOUTPUT1_PIN)
 
 #if KEYPAD_ENABLE
 #define KEYPAD_PORT             GPIOB

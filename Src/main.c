@@ -23,6 +23,7 @@
 */
 
 #include "main.h"
+#include "driver.h"
 #include "grbl/grbllib.h"
 
 static void SystemClock_Config (void);
@@ -80,11 +81,19 @@ static void SystemClock_Config(void)
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = HSE_VALUE / 1000000UL;
+#if HSE_VALUE == 8000000
+    RCC_OscInitStruct.PLL.PLLM = 7;
+    RCC_OscInitStruct.PLL.PLLN = 294;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+    RCC_OscInitStruct.PLL.PLLQ = 7;
+    RCC_OscInitStruct.PLL.PLLR = 7;
+#else
+    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
     RCC_OscInitStruct.PLL.PLLN = 336;
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
     RCC_OscInitStruct.PLL.PLLQ = 2;
     RCC_OscInitStruct.PLL.PLLR = 2;
+#endif
 
     #define FLASH_LATENCY FLASH_LATENCY_5
 
@@ -118,7 +127,7 @@ static void SystemClock_Config(void)
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = HSE_VALUE / 1000000UL;
+    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
     RCC_OscInitStruct.PLL.PLLN = 192;
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
     RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -136,7 +145,7 @@ static void SystemClock_Config(void)
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = HSE_VALUE / 1000000UL;
+    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
     RCC_OscInitStruct.PLL.PLLN = 336;
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
     RCC_OscInitStruct.PLL.PLLQ = 7;
@@ -170,7 +179,18 @@ static void SystemClock_Config(void)
     Error_Handler();
   }
 
+#if USB_SERIAL_CDC && defined(STM32F446xx)
 
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
+  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLQ;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+#endif
 }
 
 /**

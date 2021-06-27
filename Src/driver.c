@@ -29,6 +29,8 @@
 #include "serial.h"
 
 #include "grbl/limits.h"
+#include "grbl/protocol.h"
+#include "grbl/motor_pins.h"
 
 #ifdef I2C_PORT
 #include "i2c.h"
@@ -46,6 +48,10 @@
 
 #if EEPROM_ENABLE
 #include "eeprom/eeprom.h"
+#endif
+
+#if BLUETOOTH_ENABLE
+#include "bluetooth/bluetooth.h"
 #endif
 
 #if KEYPAD_ENABLE
@@ -74,16 +80,24 @@
   #endif
 #endif
 
-#if X_AUTO_SQUARE || Y_AUTO_SQUARE || Z_AUTO_SQUARE
-#define SQUARING_ENABLED
+#if KEYPAD_ENABLE == 0
+#define KEYPAD_STROBE_BIT 0
 #endif
 
-#if defined(X2_LIMIT_PIN) || defined(Y2_LIMIT_PIN) || defined(Z2_LIMIT_PIN)
-#define DUAL_LIMIT_SWITCHES
+#if !SPINDLE_SYNC_ENABLE
+#define SPINDLE_INDEX_BIT 0
+#endif
+
+#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|KEYPAD_STROBE_BIT|SPINDLE_INDEX_BIT)
+
+#ifdef Z_LIMIT_POLL
+#if (DRIVER_IRQMASK-Z_LIMIT_BIT) != (LIMIT_MASK-Z_LIMIT_BIT+CONTROL_MASK+KEYPAD_STROBE_BIT+SPINDLE_INDEX_BIT)
+#error Interrupt enabled input pins must have unique pin numbers!
+#endif
 #else
-  #ifdef SQUARING_ENABLED
-    #error "Squaring requires at least one axis with dual switch inputs!"
-  #endif
+#if DRIVER_IRQMASK != (LIMIT_MASK+CONTROL_MASK+KEYPAD_STROBE_BIT+SPINDLE_INDEX_BIT)
+#error Interrupt enabled input pins must have unique pin numbers!
+#endif
 #endif
 
 typedef union {
@@ -133,7 +147,7 @@ static input_signal_t inputpin[] = {
 #ifdef C_LIMIT_PIN
   , { .id = Input_LimitC,         .port = C_LIMIT_PORT,       .pin = C_LIMIT_PIN,         .group = PinGroup_Limit }
 #endif
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
   , { .id = Input_SpindleIndex,   .port = SPINDLE_INDEX_PORT, .pin = SPINDLE_INDEX_PIN,   .group = PinGroup_SpindleIndex }
 #endif
 // Aux input pins must be consecutive in this array
@@ -161,110 +175,110 @@ static input_signal_t inputpin[] = {
 };
 
 static output_signal_t outputpin[] = {
-    { .id = Output_StepX,           .port = X_STEP_PORT,                .pin = X_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
-    { .id = Output_StepY,           .port = Y_STEP_PORT,                .pin = Y_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
-    { .id = Output_StepZ,           .port = Z_STEP_PORT,                .pin = Z_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepX,           .port = X_STEP_PORT,            .pin = X_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepY,           .port = Y_STEP_PORT,            .pin = Y_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepZ,           .port = Z_STEP_PORT,            .pin = Z_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #ifdef A_AXIS
-    { .id = Output_StepA,           .port = A_STEP_PORT,                .pin = A_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepA,           .port = A_STEP_PORT,            .pin = A_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef B_AXIS
-    { .id = Output_StepB,           .port = B_STEP_PORT,                .pin = B_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepB,           .port = B_STEP_PORT,            .pin = B_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef C_AXIS
-    { .id = Output_StepC,           .port = C_STEP_PORT,                .pin = C_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepC,           .port = C_STEP_PORT,            .pin = C_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef X2_STEP_PIN
-    { .id = Output_StepX,           .port = X2_STEP_PORT,               .pin = X2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepX,           .port = X2_STEP_PORT,           .pin = X2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef Y2_STEP_PIN
-    { .id = Output_StepY,           .port = Y2_STEP_PORT,               .pin = Y2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepY,           .port = Y2_STEP_PORT,           .pin = Y2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef Z2_STEP_PIN
-    { .id = Output_StepZ,           .port = Z2_STEP_PORT,               .pin = Z2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepZ,           .port = Z2_STEP_PORT,           .pin = Z2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
-    { .id = Output_DirX,            .port = X_DIRECTION_PORT,           .pin = X_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
-    { .id = Output_DirY,            .port = Y_DIRECTION_PORT,           .pin = Y_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
-    { .id = Output_DirZ,            .port = Z_DIRECTION_PORT,           .pin = Z_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirX,            .port = X_DIRECTION_PORT,       .pin = X_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirY,            .port = Y_DIRECTION_PORT,       .pin = Y_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirZ,            .port = Z_DIRECTION_PORT,       .pin = Z_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #ifdef A_AXIS
-    { .id = Output_DirA,            .port = A_DIRECTION_PORT,           .pin = A_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirA,            .port = A_DIRECTION_PORT,       .pin = A_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef B_AXIS
-    { .id = Output_DirB,            .port = B_DIRECTION_PORT,           .pin = B_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirB,            .port = B_DIRECTION_PORT,       .pin = B_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef C_AXIS
-    { .id = Output_DirC,            .port = C_DIRECTION_PORT,           .pin = C_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirC,            .port = C_DIRECTION_PORT,       .pin = C_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef X2_DIRECTION_PIN
-    { .id = Output_DirX,            .port = X2_DIRECTION_PORT,          .pin = X2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirX,            .port = X2_DIRECTION_PORT,      .pin = X2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef Y2_DIRECTION_PIN
-    { .id = Output_DirY,            .port = Y2_DIRECTION_PORT,          .pin = Y2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirY,            .port = Y2_DIRECTION_PORT,      .pin = Y2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef Z2_DIRECTION_PIN
-    { .id = Output_DirZ,            .port = Z2_DIRECTION_PORT,          .pin = Z2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirZ,            .port = Z2_DIRECTION_PORT,      .pin = Z2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #if !TRINAMIC_ENABLE
-#ifdef STEPPERS_DISABLE_PORT
-    { .id = Output_StepperEnable,   .port = STEPPERS_DISABLE_PORT,      .pin = STEPPERS_DISABLE_PIN,    .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+#ifdef STEPPERS_ENABLE_PORT
+    { .id = Output_StepperEnable,   .port = STEPPERS_ENABLE_PORT,   .pin = STEPPERS_ENABLE_PIN,     .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-#ifdef X_STEPPERS_DISABLE_PORT
-    { .id = Output_StepperEnableX,  .port = X_STEPPERS_DISABLE_PORT,    .pin = X_STEPPERS_DISABLE_PIN,  .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+#ifdef X_ENABLE_PORT
+    { .id = Output_StepperEnableX,  .port = X_ENABLE_PORT,          .pin = X_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-#ifdef Y_STEPPERS_DISABLE_PORT
-    { .id = Output_StepperEnableY,  .port = Y_STEPPERS_DISABLE_PORT,    .pin = Y_STEPPERS_DISABLE_PIN,  .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+#ifdef Y_ENABLE_PORT
+    { .id = Output_StepperEnableY,  .port = Y_ENABLE_PORT,          .pin = Y_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-#ifdef Z_STEPPERS_DISABLE_PORT
-    { .id = Output_StepperEnableZ,  .port = Z_STEPPERS_DISABLE_PORT,    .pin = Z_STEPPERS_DISABLE_PIN,  .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+#ifdef Z_ENABLE_PORT
+    { .id = Output_StepperEnableZ,  .port = Z_ENABLE_PORT,          .pin = Z_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-#ifdef A_STEPPERS_DISABLE_PORT
-    { .id = Output_StepperEnableA,  .port = A_STEPPERS_DISABLE_PORT,    .pin = A_STEPPERS_DISABLE_PIN,  .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+#ifdef A_ENABLE_PORT
+    { .id = Output_StepperEnableA,  .port = A_ENABLE_PORT,          .pin = A_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-#ifdef B_STEPPERS_DISABLE_PORT
-    { .id = Output_StepperEnableB,  .port = B_STEPPERS_DISABLE_PORT,    .pin = B_STEPPERS_DISABLE_PIN,  .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+#ifdef B_ENABLE_PORT
+    { .id = Output_StepperEnableB,  .port = B_ENABLE_PORT,          .pin = B_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-#ifdef C_STEPPERS_DISABLE_PORT
-    { .id = Output_StepperEnableC,  .port = C_STEPPERS_DISABLE_PORT,    .pin = C_STEPPERS_DISABLE_PIN,  .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+#ifdef C_ENABLE_PORT
+    { .id = Output_StepperEnableC,  .port = C_ENABLE_PORT,          .pin = C_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
 #ifdef X2_ENABLE_PIN
-    { .id = Output_StepperEnableX,  .port = &enableX2,                  .pin = X2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+    { .id = Output_StepperEnableX,  .port = X2_ENABLE_PORT,         .pin = X2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
 #ifdef Y2_ENABLE_PIN
-    { .id = Output_StepperEnableY,  .port = &enableY2,                  .pin = Y2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+    { .id = Output_StepperEnableY,  .port = Y2_ENABLE_PORT,         .pin = Y2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
 #ifdef Z2_ENABLE_PIN
-    { .id = Output_StepperEnableZ,  .port = &enableZ2,                  .pin = Z2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_DISABLE_PINMODE} },
+    { .id = Output_StepperEnableZ,  .port = Z2_ENABLE_PORT,         .pin = Z2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-
-#endif
+#endif // TRINAMIC_ENABLE
 #if !VFD_SPINDLE
 #ifdef SPINDLE_ENABLE_PIN
-    { .id = Output_SpindleOn,       .port = SPINDLE_ENABLE_PORT,        .pin = SPINDLE_ENABLE_PIN,      .group = PinGroup_SpindleControl },
+    { .id = Output_SpindleOn,       .port = SPINDLE_ENABLE_PORT,    .pin = SPINDLE_ENABLE_PIN,      .group = PinGroup_SpindleControl },
 #endif
 #ifdef SPINDLE_DIRECTION_PIN
-    { .id = Output_SpindleDir,      .port = SPINDLE_DIRECTION_PORT,     .pin = SPINDLE_DIRECTION_PIN,   .group = PinGroup_SpindleControl },
+    { .id = Output_SpindleDir,      .port = SPINDLE_DIRECTION_PORT, .pin = SPINDLE_DIRECTION_PIN,   .group = PinGroup_SpindleControl },
 #endif
 #endif
-    { .id = Output_CoolantMist,     .port = COOLANT_FLOOD_PORT,         .pin = COOLANT_FLOOD_PIN,       .group = PinGroup_Coolant },
+    { .id = Output_CoolantMist,     .port = COOLANT_FLOOD_PORT,     .pin = COOLANT_FLOOD_PIN,       .group = PinGroup_Coolant },
 #ifdef COOLANT_MIST_PIN
-    { .id = Output_CoolantFlood,    .port = COOLANT_MIST_PORT,          .pin = COOLANT_MIST_PIN,        .group = PinGroup_Coolant },
+    { .id = Output_CoolantFlood,    .port = COOLANT_MIST_PORT,      .pin = COOLANT_MIST_PIN,        .group = PinGroup_Coolant },
 #endif
 #ifdef SD_CS_PORT
-    { .id = Output_SdCardCS,        .port = SD_CS_PORT,                 .pin = SD_CS_PIN,               .group = PinGroup_SdCard },
+    { .id = Output_SdCardCS,        .port = SD_CS_PORT,             .pin = SD_CS_PIN,               .group = PinGroup_SdCard },
 #endif
 #ifdef AUXOUTPUT0_PORT
-    { .id = Output_Aux0,            .port = AUXOUTPUT0_PORT,            .pin = AUXOUTPUT0_PIN,          .group = PinGroup_AuxOutput },
+    { .id = Output_Aux0,            .port = AUXOUTPUT0_PORT,        .pin = AUXOUTPUT0_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT1_PORT
-    { .id = Output_Aux1,            .port = AUXOUTPUT1_PORT,            .pin = AUXOUTPUT1_PIN,          .group = PinGroup_AuxOutput },
+    { .id = Output_Aux1,            .port = AUXOUTPUT1_PORT,        .pin = AUXOUTPUT1_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT2_PORT
-    { .id = Output_Aux2,            .port = AUXOUTPUT2_PORT,            .pin = AUXOUTPUT2_PIN,          .group = PinGroup_AuxOutput }
+    { .id = Output_Aux2,            .port = AUXOUTPUT2_PORT,        .pin = AUXOUTPUT2_PIN,          .group = PinGroup_AuxOutput }
 #endif
 };
 
 extern __IO uint32_t uwTick;
-static uint32_t pulse_length, pulse_delay;
+static uint32_t pulse_length, pulse_delay, aux_irq = 0;;
 static bool IOInitDone = false;
+static const io_stream_t *serial_stream;
 static axes_signals_t next_step_outbits;
 static delay_t delay = { .ms = 1, .callback = NULL }; // NOTE: initial ms set to 1 for "resetting" systick timer on startup
 static debounce_t debounce;
@@ -286,11 +300,7 @@ static spindle_pwm_t spindle_pwm;
 static void spindle_set_speed (uint_fast16_t pwm_value);
 #endif
 
-#if MODBUS_ENABLE
-static modbus_stream_t modbus_stream = {0};
-#endif
-
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
 
 #include "grbl/spindle_sync.h"
 
@@ -307,16 +317,6 @@ static spindle_data_t *spindleGetData (spindle_data_request_t request);
 
 #endif
 
-#if KEYPAD_ENABLE == 0
-#define KEYPAD_STROBE_BIT 0
-#endif
-
-#ifndef SPINDLE_SYNC_ENABLE
-#define SPINDLE_INDEX_BIT 0
-#endif
-
-#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|KEYPAD_STROBE_BIT|SPINDLE_INDEX_BIT)
-
 static void driver_delay (uint32_t ms, delay_callback_ptr callback)
 {
     if((delay.ms = ms) > 0) {
@@ -332,6 +332,28 @@ static void driver_delay (uint32_t ms, delay_callback_ptr callback)
     }
 }
 
+static bool selectStream (const io_stream_t *stream)
+{
+    if(!stream)
+        stream = serial_stream;
+
+    if(hal.stream.read != stream->read)
+        stream->reset_read_buffer();
+
+    memcpy(&hal.stream, stream, sizeof(io_stream_t));
+
+    if(!hal.stream.write_all)
+        hal.stream.write_all = hal.stream.write;
+
+    if(!hal.stream.enqueue_realtime_command)
+        hal.stream.enqueue_realtime_command = protocol_enqueue_realtime_command;
+
+    if(hal.stream.disable)
+        hal.stream.disable(false);
+
+    return stream->type == hal.stream.type;
+}
+
 // Enable/disable stepper motors
 static void stepperEnable (axes_signals_t enable)
 {
@@ -339,20 +361,29 @@ static void stepperEnable (axes_signals_t enable)
 #if TRINAMIC_ENABLE && TRINAMIC_I2C
     axes_signals_t tmc_enable = trinamic_stepper_enable(enable);
 #else
-  #ifdef STEPPERS_DISABLE_PORT
-    BITBAND_PERI(STEPPERS_DISABLE_PORT->ODR, STEPPERS_DISABLE_PIN) = enable.x;
+  #ifdef STEPPERS_ENABLE_PORT
+    BITBAND_PERI(STEPPERS_ENABLE_PORT->ODR, STEPPERS_ENABLE_PIN) = enable.x;
   #else
-    BITBAND_PERI(X_STEPPERS_DISABLE_PORT->ODR, X_STEPPERS_DISABLE_PIN) = enable.x;
-    BITBAND_PERI(Y_STEPPERS_DISABLE_PORT->ODR, Y_STEPPERS_DISABLE_PIN) = enable.y;
-    BITBAND_PERI(Z_STEPPERS_DISABLE_PORT->ODR, Z_STEPPERS_DISABLE_PIN) = enable.z;
-   #ifdef A_STEPPERS_DISABLE_PORT
-    BITBAND_PERI(A_STEPPERS_DISABLE_PORT->ODR, A_STEPPERS_DISABLE_PIN) = enable.a;
+    BITBAND_PERI(X_ENABLE_PORT->ODR, X_ENABLE_PIN) = enable.x;
+   #ifdef X2_DIRECTION_PIN
+    BITBAND_PERI(X2_DIRECTION_PORT->ODR, X2_DIRECTION_PIN) = enable.x;
    #endif
-   #ifdef B_STEPPERS_DISABLE_PORT
-    BITBAND_PERI(B_STEPPERS_DISABLE_PORT->ODR, B_STEPPERS_DISABLE_PIN) = enable.b;
+    BITBAND_PERI(Y_ENABLE_PORT->ODR, Y_ENABLE_PIN) = enable.y;
+   #ifdef Y2_DIRECTION_PIN
+    BITBAND_PERI(Y2_DIRECTION_PORT->ODR, Y2_DIRECTION_PIN) = enable.y;
    #endif
-   #ifdef C_STEPPERS_DISABLE_PORT
-    BITBAND_PERI(C_STEPPERS_DISABLE_PORT->ODR, C_STEPPERS_DISABLE_PIN) = enable.c;
+    BITBAND_PERI(Z_ENABLE_PORT->ODR, Z_ENABLE_PIN) = enable.z;
+   #ifdef Z2_DIRECTION_PIN
+    BITBAND_PERI(Z2_DIRECTION_PORT->ODR, Z2_DIRECTION_PIN) = enable.z;
+   #endif
+   #ifdef A_ENABLE_PORT
+    BITBAND_PERI(A_ENABLE_PORT->ODR, A_ENABLE_PIN) = enable.a;
+   #endif
+   #ifdef B_ENABLE_PORT
+    BITBAND_PERI(B_ENABLE_PORT->ODR, B_ENABLE_PIN) = enable.b;
+   #endif
+   #ifdef C_ENABLE_PORT
+    BITBAND_PERI(C_ENABLE_PORT->ODR, C_ENABLE_PIN) = enable.c;
    #endif
   #endif
 #endif
@@ -384,9 +415,11 @@ static void stepperCyclesPerTick (uint32_t cycles_per_tick)
 // Set stepper pulse output pins
 // NOTE: step_outbits are: bit0 -> X, bit1 -> Y, bit2 -> Z...
 #ifdef SQUARING_ENABLED
+
 inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_signals_t step_outbits_1)
 {
 	axes_signals_t step_outbits_2;
+    step_outbits_2.mask = (step_outbits_1.mask & motors_2.mask) ^ settings.steppers.step_invert.mask;
 
 #if STEP_OUTMODE == GPIO_BITBAND
     step_outbits_1.mask = (step_outbits_1.mask & motors_1.mask) ^ settings.steppers.step_invert.mask;
@@ -406,26 +439,50 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
  #endif
 
 #elif STEP_OUTMODE == GPIO_MAP
-    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits_1.value];
+    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits_1.value & motors_1.mask];
 #else
-    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | ((step_outbits_1.mask ^ settings.steppers.step_invert.mask) << STEP_OUTMODE);
+    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | (((step_outbits_1.mask & motors_1.mask) ^ settings.steppers.step_invert.mask) << STEP_OUTMODE);
 #endif
-
-    step_outbits_2.mask = (step_outbits_1.mask & motors_2.mask) ^ settings.steppers.step_invert.mask;
 
 #ifdef X2_STEP_PIN
     BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits_2.x;
 #endif
-
 #ifdef Y2_STEP_PIN
     BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits_2.y;
 #endif
-
 #ifdef Z2_STEP_PIN
     BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits_2.z;
 #endif
 }
-#else
+
+static axes_signals_t getAutoSquaredAxes (void)
+{
+    axes_signals_t ganged = {0};
+
+    #if X_AUTO_SQUARE
+        ganged.x = On;
+    #endif
+
+    #if Y_AUTO_SQUARE
+        ganged.y = On;
+    #endif
+
+    #if Z_AUTO_SQUARE
+        ganged.z = On;
+    #endif
+
+    return ganged;
+}
+
+// Enable/disable motors for auto squaring of ganged axes
+static void StepperDisableMotors (axes_signals_t axes, squaring_mode_t mode)
+{
+    motors_1.mask = (mode == SquaringMode_A || mode == SquaringMode_Both ? axes.mask : 0) ^ AXES_BITMASK;
+    motors_2.mask = (mode == SquaringMode_B || mode == SquaringMode_Both ? axes.mask : 0) ^ AXES_BITMASK;
+}
+
+#else // SQUARING DISABLED
+
 inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_signals_t step_outbits)
 {
 #if STEP_OUTMODE == GPIO_BITBAND
@@ -453,19 +510,36 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
   #endif
 #elif STEP_OUTMODE == GPIO_MAP
     STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits.value];
+ #if N_GANGED
   #ifdef X2_STEP_PIN
-    BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits_2.x;
+    BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits.x ^ settings.steppers.step_invert.x;
   #endif
   #ifdef Y2_STEP_PIN
-    BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits_2.y;
+    BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits.y ^ settings.steppers.step_invert.y;
   #endif
   #ifdef Z2_STEP_PIN
-    BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits_2.z;
+    BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits.z ^ settings.steppers.step_invert.z;
   #endif
+ #endif
 #else
-    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | ((step_outbits.mask ^ settings.steppers.step_invert.mask) << STEP_OUTMODE);
+ #if N_GANGED
+   step_outbits.mask ^= settings.steppers.step_invert.mask;
+   STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | (step_outbits.mask << STEP_OUTMODE);
+  #ifdef X2_STEP_PIN
+   BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits.x;
+  #endif
+  #ifdef Y2_STEP_PIN
+   BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits.y;
+  #endif
+  #ifdef Z2_STEP_PIN
+   BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits.z;
+  #endif
+ #else
+   STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | ((step_outbits.value << STEP_OUTMODE) ^ settings.steppers.step_invert.value);
+ #endif
 #endif
 }
+
 #endif
 
 // Set stepper direction output pins
@@ -497,15 +571,40 @@ inline static __attribute__((always_inline)) void stepperSetDirOutputs (axes_sig
 #endif
 #elif DIRECTION_OUTMODE == GPIO_MAP
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | dir_outmap[dir_outbits.value];
+ #if N_GANGED
+  #ifdef X2_DIRECTION_PIN
+    BITBAND_PERI(X2_DIRECTION_PORT->ODR, X2_DIRECTION_PIN) = dir_outbits.x ^ settings.steppers.dir_invert.x;
+  #endif
+  #ifdef Y2_DIRECTION_PIN
+    BITBAND_PERI(Y2_DIRECTION_PORT->ODR, Y2_DIRECTION_PIN) = dir_outbits.y ^ settings.steppers.dir_invert.y;
+  #endif
+  #ifdef Z2_DIRECTION_PIN
+    BITBAND_PERI(Z2_DIRECTION_PORT->ODR, Z2_DIRECTION_PIN) = dir_outbits.z ^ settings.steppers.dir_invert.z;
+  #endif
+ #endif
 #else
+ #if N_GANGED
+    dir_outbits.mask ^= settings.steppers.dir_invert.mask;
+    DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | (dir_outbits.mask << DIRECTION_OUTMODE);
+  #ifdef X2_DIRECTION_PIN
+    BITBAND_PERI(X2_DIRECTION_PORT->ODR, X2_DIRECTION_PIN) = dir_outbits.x;
+  #endif
+  #ifdef Y2_DIRECTION_PIN
+    BITBAND_PERI(Y2_DIRECTION_PORT->ODR, Y2_DIRECTION_PIN) = dir_outbits.y;
+  #endif
+  #ifdef Z2_DIRECTION_PIN
+    BITBAND_PERI(Z2_DIRECTION_PORT->ODR, Z2_DIRECTION_PIN) = dir_outbits.z;
+  #endif
+ #else
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | ((dir_outbits.mask ^ settings.steppers.dir_invert.mask) << DIRECTION_OUTMODE);
+ #endif
 #endif
 }
 
 // Sets stepper direction and pulse pins and starts a step pulse.
 static void stepperPulseStart (stepper_t *stepper)
 {
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
     if(stepper->new_block && stepper->exec_segment->spindle_sync) {
         spindle_tracker.stepper_pulse_start_normal = hal.stepper.pulse_start;
         hal.stepper.pulse_start = stepperPulseStartSynchronized;
@@ -528,7 +627,7 @@ static void stepperPulseStart (stepper_t *stepper)
 // Note: delay is only added when there is a direction change and a pulse to be output.
 static void stepperPulseStartDelayed (stepper_t *stepper)
 {
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
     if(stepper->new_block && stepper->exec_segment->spindle_sync) {
         spindle_tracker.stepper_pulse_start_normal = hal.stepper.pulse_start;
         hal.stepper.pulse_start = stepperPulseStartSynchronized;
@@ -558,7 +657,7 @@ static void stepperPulseStartDelayed (stepper_t *stepper)
     }
 }
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
 
 // Spindle sync version: sets stepper direction and pulse pins and starts a step pulse.
 // Switches back to "normal" version if spindle synchronized motion is finished.
@@ -668,86 +767,77 @@ inline static limit_signals_t limitsGetState()
 {
     limit_signals_t signals = {0};
 
-    signals.min.mask = signals.min2.mask = settings.limits.invert.mask;
+    signals.min.mask = settings.limits.invert.mask;
+#ifdef DUAL_LIMIT_SWITCHES
+    signals.min2.mask = settings.limits.invert.mask;
+#endif
+#ifdef MAX_LIMIT_SWITCHES
+    signals.max.mask = settings.limits.invert.mask;
+#endif
 
 #if LIMIT_INMODE == GPIO_BITBAND
-    signals.min.x = BITBAND_PERI(X_LIMIT_PORT->IDR, X_LIMIT_PIN);
-    signals.min.y = BITBAND_PERI(Y_LIMIT_PORT->IDR, Y_LIMIT_PIN);
-    signals.min.z = BITBAND_PERI(Z_LIMIT_PORT->IDR, Z_LIMIT_PIN);
+    signals.min.x = DIGITAL_IN(X_LIMIT_PORT, X_LIMIT_PIN);
+    signals.min.y = DIGITAL_IN(Y_LIMIT_PORT, Y_LIMIT_PIN);
+    signals.min.z = DIGITAL_IN(Z_LIMIT_PORT, Z_LIMIT_PIN);
   #ifdef A_LIMIT_PIN
-    signals.min.a = BITBAND_PERI(A_LIMIT_PORT->IDR, A_LIMIT_PIN);
+    signals.min.a = DIGITAL_IN(A_LIMIT_PORT, A_LIMIT_PIN);
   #endif
   #ifdef B_LIMIT_PIN
-    signals.min.b = BITBAND_PERI(B_LIMIT_PORT->IDR, B_LIMIT_PIN);
+    signals.min.b = DIGITAL_IN(B_LIMIT_PORT, B_LIMIT_PIN);
   #endif
   #ifdef C_LIMIT_PIN
-    signals.min.c = BITBAND_PERI(C_LIMIT_PORT->IDR, C_LIMIT_PIN);
+    signals.min.c = DIGITAL_IN(C_LIMIT_PORT, C_LIMIT_PIN);
   #endif
 #elif LIMIT_INMODE == GPIO_MAP
     uint32_t bits = LIMIT_PORT->IDR;
-    signals.min.x = (bits & X_LIMIT_BIT) != 0;
-    signals.min.y = (bits & Y_LIMIT_BIT) != 0;
-    signals.min.z = (bits & Z_LIMIT_BIT) != 0;
+    signals.min.x = (bits & X_LIMIT_PIN) != 0;
+    signals.min.y = (bits & Y_LIMIT_PIN) != 0;
+    signals.min.z = (bits & Z_LIMIT_PIN) != 0;
   #ifdef A_LIMIT_PIN
-    signals.min.a = (bits & A_LIMIT_BIT) != 0;
+    signals.min.a = (bits & A_LIMIT_PIN) != 0;
   #endif
   #ifdef B_LIMIT_PIN
-    signals.min.b = (bits & B_LIMIT_BIT) != 0;
+    signals.min.b = (bits & B_LIMIT_PIN) != 0;
   #endif
   #ifdef C_LIMIT_PIN
-    signals.min.c = (bits & C_LIMIT_BIT) != 0;
+    signals.min.c = (bits & C_LIMIT_PIN) != 0;
   #endif
 #else
     signals.min.value = (uint8_t)((LIMIT_PORT->IDR & LIMIT_MASK) >> LIMIT_INMODE);
 #endif
 
 #ifdef X2_LIMIT_PIN
-    signals.min2.x = BITBAND_PERI(X2_LIMIT_PORT->IDR, X2_LIMIT_PIN);
+    signals.min2.x = DIGITAL_IN(X2_LIMIT_PORT, X2_LIMIT_PIN);
 #endif
 #ifdef Y2_LIMIT_PIN
-    signals.min2.y = BITBAND_PERI(Y2_LIMIT_PORT->IDR, Y2_LIMIT_PIN);
+    signals.min2.y = DIGITAL_IN(Y2_LIMIT_PORT, Y2_LIMIT_PIN);
 #endif
 #ifdef Z2_LIMIT_PIN
-    signals.min2.z = BITBAND_PERI(Z2_LIMIT_PORT->IDR, Z2_LIMIT_PIN);
+    signals.min2.z = DIGITAL_IN(Z2_LIMIT_PORT, Z2_LIMIT_PIN);
+#endif
+
+#ifdef X_LIMIT_PIN_MAX
+    signals.max.x = DIGITAL_IN(X_LIMIT_PORT_MAX, X_LIMIT_PIN_MAX);
+#endif
+#ifdef Y_LIMIT_PIN_MAX
+    signals.max.y = DIGITAL_IN(Y_LIMIT_PORT_MAX, Y_LIMIT_PIN_MAX);
+#endif
+#ifdef Z_LIMIT_PIN_MAX
+    signals.max.z = DIGITAL_IN(Z_LIMIT_PORT_MAX, Z_LIMIT_PIN_MAX);
 #endif
 
     if (settings.limits.invert.mask) {
         signals.min.value ^= settings.limits.invert.mask;
-    	signals.min2.value ^= settings.limits.invert.mask;
+#ifdef DUAL_LIMIT_SWITCHES
+        signals.min2.mask ^= settings.limits.invert.mask;
+#endif
+#ifdef MAX_LIMIT_SWITCHES
+        signals.max.value ^= settings.limits.invert.mask;
+#endif
     }
 
     return signals;
 }
-
-#ifdef SQUARING_ENABLED
-
-static axes_signals_t getAutoSquaredAxes (void)
-{
-    axes_signals_t ganged = {0};
-
-	#if X_AUTO_SQUARE
-    	ganged.x = On;
-	#endif
-
-	#if Y_AUTO_SQUARE
-    	ganged.y = On;
-	#endif
-
-    #if Z_AUTO_SQUARE
-    	ganged.z = On;
-	#endif
-
-    return ganged;
-}
-
-// Enable/disable motors for auto squaring of ganged axes
-static void StepperDisableMotors (axes_signals_t axes, squaring_mode_t mode)
-{
-    motors_1.mask = (mode == SquaringMode_A || mode == SquaringMode_Both ? axes.mask : 0) ^ AXES_BITMASK;
-    motors_2.mask = (mode == SquaringMode_B || mode == SquaringMode_Both ? axes.mask : 0) ^ AXES_BITMASK;
-}
-
-#endif
 
 // Returns system state as a control_signals_t variable.
 // Each bitfield bit indicates a control signal, where triggered is 1 and not triggered is 0.
@@ -838,7 +928,7 @@ inline static void spindle_on (void)
 #ifdef SPINDLE_ENABLE_PIN
     BITBAND_PERI(SPINDLE_ENABLE_PORT->ODR, SPINDLE_ENABLE_PIN) = !settings.spindle.invert.on;
 #endif
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
     spindleDataReset();
 #endif
 }
@@ -912,7 +1002,7 @@ static void spindleSetStateVariable (spindle_state_t state, float rpm)
         spindle_set_speed(spindle_compute_pwm_value(&spindle_pwm, rpm, false));
     }
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
     if(settings.spindle.at_speed_tolerance > 0.0f) {
         float tolerance = rpm * settings.spindle.at_speed_tolerance / 100.0f;
         spindle_data.rpm_low_limit = rpm - tolerance;
@@ -935,7 +1025,7 @@ static spindle_state_t spindleGetState (void)
 #endif
     state.value ^= settings.spindle.invert.mask;
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
     float rpm = spindleGetData(SpindleData_RPM)->rpm;
     state.at_speed = settings.spindle.at_speed_tolerance <= 0.0f || (rpm >= spindle_data.rpm_low_limit && rpm <= spindle_data.rpm_high_limit);
     state.encoder_error = spindle_encoder.error_count > 0;
@@ -956,7 +1046,7 @@ static void spindlePulseOn (uint_fast16_t pulse_length)
 
 #endif
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
 
 static spindle_data_t *spindleGetData (spindle_data_request_t request)
 {
@@ -1059,9 +1149,9 @@ static coolant_state_t coolantGetState (void)
 {
     coolant_state_t state = (coolant_state_t){settings.coolant_invert.mask};
 
-    state.flood = (COOLANT_FLOOD_PORT->IDR & COOLANT_FLOOD_BIT) != 0;
+    state.flood = DIGITAL_IN(COOLANT_FLOOD_PORT, COOLANT_FLOOD_PIN);
 #ifdef COOLANT_MIST_PIN
-    state.mist  = (COOLANT_MIST_PORT->IDR & COOLANT_MIST_BIT) != 0;
+    state.mist  = DIGITAL_IN(COOLANT_MIST_PORT, COOLANT_MIST_PIN);
 #endif
     state.value ^= settings.coolant_invert.mask;
 
@@ -1178,7 +1268,7 @@ void settings_changed (settings_t *settings)
 
 #endif
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
 
         if((hal.spindle.get_data = hal.driver_cap.spindle_at_speed ? spindleGetData : NULL) &&
              (spindle_encoder.ppr != settings->spindle.ppr || pidf_config_changed(&spindle_tracker.pid, &settings->position.pid))) {
@@ -1222,25 +1312,25 @@ void settings_changed (settings_t *settings)
          *  Control pins config  *
          *************************/
 
-#if DRIVER_IRQMASK & (1<<0)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<0)
         HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 #endif
-#if DRIVER_IRQMASK & (1<<1)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<1)
         HAL_NVIC_DisableIRQ(EXTI1_IRQn);
 #endif
-#if DRIVER_IRQMASK & (1<<2)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<2)
         HAL_NVIC_DisableIRQ(EXTI2_IRQn);
 #endif
-#if DRIVER_IRQMASK & (1<<3)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<3)
         HAL_NVIC_DisableIRQ(EXTI3_IRQn);
 #endif
-#if DRIVER_IRQMASK & (1<<4)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<4)
         HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 #endif
-#if DRIVER_IRQMASK & 0x03E0
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & 0x03E0
         HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 #endif
-#if DRIVER_IRQMASK & 0xFC00
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & 0xFC00
         HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
 #endif
 
@@ -1256,9 +1346,10 @@ void settings_changed (settings_t *settings)
 
         do {
 
+            pullup = false;
             input = &inputpin[--i];
             input->irq_mode = IRQ_Mode_None;
-            pullup = input->group == PinGroup_AuxInput;
+            input->bit = 1 << input->pin;
 
             switch(input->id) {
 
@@ -1343,6 +1434,19 @@ void settings_changed (settings_t *settings)
                     break;
             }
 
+            if(input->group == PinGroup_AuxInput) {
+                pullup = true;
+                input->cap.pull_mode = (PullMode_Up|PullMode_Down);
+                if(!(input->bit & DRIVER_IRQMASK)) {
+                    aux_irq |= input->bit;
+                    input->cap.irq_mode = (IRQ_Mode_Rising|IRQ_Mode_Falling);
+                    // Map interrupt to pin
+                    uint32_t extireg = SYSCFG->EXTICR[input->pin >> 2] & ~(0b1111 << ((input->pin & 0b11) << 2));
+                    extireg |= ((uint32_t)(GPIO_GET_INDEX(input->port)) << ((input->pin & 0b11) << 2));
+                    SYSCFG->EXTICR[input->pin >> 2] = extireg;
+                }
+            }
+
             GPIO_Init.Pin = 1 << input->pin;
             GPIO_Init.Pull = pullup ? GPIO_PULLUP : GPIO_NOPULL;
             switch(input->irq_mode) {
@@ -1365,84 +1469,48 @@ void settings_changed (settings_t *settings)
 
         } while(i);
 
-        __HAL_GPIO_EXTI_CLEAR_IT(DRIVER_IRQMASK);
+        uint32_t irq_mask = DRIVER_IRQMASK|aux_irq;
 
-#if DRIVER_IRQMASK & (1<<0)
-        HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 2);
-        HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-#endif
-#if DRIVER_IRQMASK & (1<<1)
-        HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 2);
-        HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-#endif
-#if DRIVER_IRQMASK & (1<<2)
-        HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 2);
-        HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-#endif
-#if DRIVER_IRQMASK & (1<<3)
-        HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 2);
-        HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-#endif
-#if DRIVER_IRQMASK & (1<<4)
-        HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 2);
-        HAL_NVIC_EnableIRQ(EXTI4_IRQn);
-#endif
-#if DRIVER_IRQMASK & 0x03E0
-        HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 2);
-        HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-#endif
-#if DRIVER_IRQMASK & 0xFC00
-        HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 2);
-        HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-#endif
+        __HAL_GPIO_EXTI_CLEAR_IT(irq_mask);
+
+        if(irq_mask & (1<<0)) {
+            HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 2);
+            HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+        }
+        if(irq_mask & (1<<1)) {
+            HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 2);
+            HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+        }
+        if(irq_mask & (1<<2)) {
+            HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 2);
+            HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+        }
+        if(irq_mask & (1<<3)) {
+            HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 2);
+            HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+        }
+        if(irq_mask & (1<<4)) {
+            HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 2);
+            HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+        }
+        if(irq_mask & 0x03E0) {
+            HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 2);
+            HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+        }
+        if(irq_mask & 0xFC00) {
+            HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 2);
+            HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+        }
     }
 }
 
 static char *port2char (GPIO_TypeDef *port)
 {
-    switch((uint32_t)port) {
+    static char name[3] = "P?";
 
-        case (uint32_t)GPIOA:
-            return "PA";
+    name[1] = 'A' + GPIO_GET_INDEX(port);
 
-        case (uint32_t)GPIOB:
-            return "PB";
-
-        case (uint32_t)GPIOC:
-            return "PC";
-
-        case (uint32_t)GPIOD:
-            return "PD";
-
-        case (uint32_t)GPIOE:
-            return "PE";
-#ifdef GPIOF
-        case (uint32_t)GPIOF:
-            return "PF";
-#endif
-#ifdef GPIOG
-        case (uint32_t)GPIOG:
-            return "PG";
-#endif
-#ifdef GPIOH
-        case (uint32_t)GPIOH:
-            return "PH";
-#endif
-#ifdef GPIOI
-        case (uint32_t)GPIOI:
-            return "PI";
-#endif
-#ifdef GPIOJ
-        case (uint32_t)GPIOJ:
-            return "PJ";
-#endif
-#ifdef GPIOK
-        case (uint32_t)GPIOK:
-            return "PK";
-#endif
-    }
-
-    return "";
+    return name;
 }
 
 static void enumeratePins (bool low_level, pin_info_ptr pin_info)
@@ -1589,7 +1657,7 @@ static bool driver_setup (settings_t *settings)
 
 #endif
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
 
     RPM_TIMER->CR1 = TIM_CR1_CKD_1;
     RPM_TIMER->PSC = hal.f_step_timer / 1000000UL - 1;
@@ -1645,7 +1713,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210606";
+    hal.driver_version = "210627";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1702,30 +1770,13 @@ bool driver_init (void)
     hal.enumerate_pins = enumeratePins;
 
 #if USB_SERIAL_CDC
-    hal.stream.read = usbGetC;
-    hal.stream.write = usbWriteS;
-    hal.stream.write_all = usbWriteS;
-    hal.stream.write_char = usbPutC;
-    hal.stream.get_rx_buffer_available = usbRxFree;
-    hal.stream.reset_read_buffer = usbRxFlush;
-    hal.stream.cancel_read_buffer = usbRxCancel;
-    hal.stream.suspend_read = usbSuspendInput;
+    serial_stream = usbInit();
 #else
-    hal.stream.read = serialGetC;
-    hal.stream.write = serialWriteS;
-    hal.stream.write_all = serialWriteS;
-    hal.stream.write_char = serialPutC;
-    hal.stream.get_rx_buffer_available = serialRxFree;
-    hal.stream.reset_read_buffer = serialRxFlush;
-    hal.stream.cancel_read_buffer = serialRxCancel;
-    hal.stream.suspend_read = serialSuspendInput;
+    serial_stream = serialInit(115200);
 #endif
 
-#if USB_SERIAL_CDC
-    usbInit();
-#else
-    serialInit();
-#endif
+    hal.stream_select = selectStream;
+    hal.stream_select(serial_stream);
 
 #ifdef I2C_PORT
     i2c_init();
@@ -1741,7 +1792,7 @@ bool driver_init (void)
     hal.nvs.type = NVS_None;
 #endif
 
-  // driver capabilities, used for announcing and negotiating (with Grbl) driver functionality
+// driver capabilities, used for announcing and negotiating (with the core) driver functionality
 
 #if ESTOP_ENABLE
     hal.signals_cap.e_stop = On;
@@ -1758,7 +1809,7 @@ bool driver_init (void)
   #endif
 #endif
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
     hal.driver_cap.spindle_sync = On;
     hal.driver_cap.spindle_at_speed = On;
 #endif
@@ -1773,6 +1824,8 @@ bool driver_init (void)
 #ifdef PROBE_PIN
     hal.driver_cap.probe_pull_up = On;
 #endif
+
+#ifdef HAS_IOPORTS
 
     uint32_t i;
     input_signal_t *input;
@@ -1797,8 +1850,12 @@ bool driver_init (void)
         }
     }
 
+    ioports_init(&aux_inputs, &aux_outputs);
+
+#endif
+
 #ifdef HAS_BOARD_INIT
-    board_init(&aux_inputs, &aux_outputs);
+    board_init();
 #endif
 
 #if ETHERNET_ENABLE
@@ -1813,25 +1870,16 @@ bool driver_init (void)
     keypad_init();
 #endif
 
-#if MODBUS_ENABLE
-
-    serial2Init(115200);
-
-    modbus_stream.write = serial2Write;
-    modbus_stream.read = serial2GetC;
-    modbus_stream.flush_rx_buffer = serial2RxFlush;
-    modbus_stream.flush_tx_buffer = serial2TxFlush;
-    modbus_stream.get_rx_buffer_count = serial2RxCount;
-    modbus_stream.get_tx_buffer_count = serial2TxCount;
-    modbus_stream.set_baud_rate = serial2SetBaudRate;
-
-    bool modbus = modbus_init(&modbus_stream);
-
 #if SPINDLE_HUANYANG > 0
-    if(modbus)
-        huanyang_init(&modbus_stream);
+    huanyang_init(modbus_init(serial2Init(115200), NULL));
 #endif
 
+#if BLUETOOTH_ENABLE
+#if USB_SERIAL_CDC
+    bluetooth_init(serialInit(115200));
+#else
+    bluetooth_init(serial2Init(115200));
+#endif
 #endif
 
     my_plugin_init();
@@ -1921,7 +1969,7 @@ void PPI_TIMER_IRQHandler (void)
 
 #endif
 
-#ifdef SPINDLE_SYNC_ENABLE
+#if SPINDLE_SYNC_ENABLE
 
 void RPM_COUNTER_IRQHandler (void)
 {
@@ -1945,7 +1993,7 @@ void RPM_COUNTER_IRQHandler (void)
 
 #endif
 
-#if DRIVER_IRQMASK & (1<<0)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<0)
 
 void EXTI0_IRQHandler(void)
 {
@@ -1963,21 +2011,24 @@ void EXTI0_IRQHandler(void)
         } else
   #endif
 #elif defined(KEYPAD_ENABLED) && KEYPAD_STROBE_BIT & (1<<0)
-        keypad_keyclick_handler(BITBAND_PERI(KEYPAD_PORT->IDR, KEYPAD_STROBE_PIN) == 0);
-#else
+        keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
+#elif LIMIT_MASK & (1<<0)
         if(hal.driver_cap.software_debounce) {
             debounce.limits = On;
             DEBOUNCE_TIMER->EGR = TIM_EGR_UG;
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
             hal.limits.interrupt_callback(limitsGetState());
+#elif AUXINPUT_MASK & (1<<0)
+        ioports_event(ifg);
 #endif
+
     }
 }
 
 #endif
 
-#if DRIVER_IRQMASK & (1<<1)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<1)
 
 void EXTI1_IRQHandler(void)
 {
@@ -1994,20 +2045,22 @@ void EXTI1_IRQHandler(void)
         } else
   #endif
         hal.control.interrupt_callback(systemGetState());
-#else
+#elif LIMIT_MASK & (1<<1)
         if(hal.driver_cap.software_debounce) {
             debounce.limits = On;
             DEBOUNCE_TIMER->EGR = TIM_EGR_UG;
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
             hal.limits.interrupt_callback(limitsGetState());
+#elif AUXINPUT_MASK & (1<<1)
+        ioports_event(ifg);
 #endif
     }
 }
 
 #endif
 
-#if DRIVER_IRQMASK & (1<<2)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<2)
 
 void EXTI2_IRQHandler(void)
 {
@@ -2022,22 +2075,24 @@ void EXTI2_IRQHandler(void)
             DEBOUNCE_TIMER->EGR = TIM_EGR_UG;
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
-  #endif
+ #endif
         hal.control.interrupt_callback(systemGetState());
-#else
+#elif LIMIT_MASK & (1<<2)
         if(hal.driver_cap.software_debounce) {
             debounce.limits = On;
             DEBOUNCE_TIMER->EGR = TIM_EGR_UG;
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
             hal.limits.interrupt_callback(limitsGetState());
+#elif AUXINPUT_MASK & (1<<2)
+        ioports_event(ifg);
 #endif
     }
 }
 
 #endif
 
-#if DRIVER_IRQMASK & (1<<3)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<3)
 
 void EXTI3_IRQHandler(void)
 {
@@ -2054,20 +2109,22 @@ void EXTI3_IRQHandler(void)
         } else
   #endif
           hal.control.interrupt_callback(systemGetState());
-#else
+#elif LIMIT_MASK & (1<<3)
         if(hal.driver_cap.software_debounce) {
             debounce.limits = On;
             DEBOUNCE_TIMER->EGR = TIM_EGR_UG;
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
             hal.limits.interrupt_callback(limitsGetState());
+#elif AUXINPUT_MASK & (1<<3)
+        ioports_event(ifg);
 #endif
     }
 }
 
 #endif
 
-#if DRIVER_IRQMASK & (1<<4)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<4)
 
 void EXTI4_IRQHandler(void)
 {
@@ -2084,20 +2141,22 @@ void EXTI4_IRQHandler(void)
         } else
   #endif
         hal.control.interrupt_callback(systemGetState());
-#else
+#elif LIMIT_MASK & (1<<4)
         if(hal.driver_cap.software_debounce) {
             debounce.limits = On;
             DEBOUNCE_TIMER->EGR = TIM_EGR_UG;
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
             hal.limits.interrupt_callback(limitsGetState());
+#elif AUXINPUT_MASK & (1<<4)
+        ioports_event(ifg);
 #endif
     }
 }
 
 #endif
 
-#if DRIVER_IRQMASK & (0x03E0)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (0x03E0)
 
 void EXTI9_5_IRQHandler(void)
 {
@@ -2128,12 +2187,16 @@ void EXTI9_5_IRQHandler(void)
                 hal.limits.interrupt_callback(limitsGetState());
         }
 #endif
+#if AUXINPUT_MASK & 0x03E0
+        if(ifg & aux_irq)
+            ioports_event(ifg & aux_irq);
+#endif
     }
 }
 
 #endif
 
-#if DRIVER_IRQMASK & (0xFC00)
+#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (0xFC00)
 
 void EXTI15_10_IRQHandler(void)
 {
@@ -2177,7 +2240,11 @@ void EXTI15_10_IRQHandler(void)
 #endif
 #if KEYPAD_ENABLE
         if(ifg & KEYPAD_STROBE_BIT)
-            keypad_keyclick_handler(BITBAND_PERI(KEYPAD_PORT->IDR, KEYPAD_STROBE_PIN) == 0);
+            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
+#endif
+#if AUXINPUT_MASK & 0xFC00
+        if(ifg & aux_irq)
+            ioports_event(ifg & aux_irq);
 #endif
     }
 }

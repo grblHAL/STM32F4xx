@@ -1,6 +1,6 @@
 /*
 
-  serial.h - low level functions for transmitting bytes via the serial port
+  serial.h - stream interface for serial ports
 
   Part of grblHAL
 
@@ -21,34 +21,20 @@
 
 */
 
+#pragma once
+
 #include <stdint.h>
 #include <stdbool.h>
 
 #include "driver.h"
 
-#define RX_BUFFER_HWM 900
-#define RX_BUFFER_LWM 300
+#define UART_PORT GPIOD
+#define UART_TX_PIN 8
+#define UART_RX_PIN 9
 
-void serialInit (void);
-int16_t serialGetC (void);
-bool serialPutC (const char c);
-void serialWriteS (const char *s);
-uint16_t serialRxFree (void);
-void serialRxFlush (void);
-void serialRxCancel (void);
-bool serialSuspendInput (bool suspend);
-
+const io_stream_t *serialInit (uint32_t baud_rate);
 #ifdef SERIAL2_MOD
-void serial2Init(uint32_t baud_rate);
-bool serial2SetBaudRate (uint32_t baud_rate);
-uint16_t serial2RxFree (void);
-void serial2RxFlush (void);
-void serial2RxCancel (void);
-uint16_t serial2RxCount (void);
-uint16_t serial2TxCount (void);
-void serial2TxFlush (void);
-void serial2Write (const char *s, uint16_t length);
-bool serial2PutC (const char c);
-int16_t serial2GetC (void);
-void serialSelect (bool mpg);
+const io_stream_t *serial2Init(uint32_t baud_rate);
 #endif
+
+/*EOF*/

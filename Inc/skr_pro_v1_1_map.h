@@ -17,12 +17,16 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if N_ABC_MOTORS > 3
+#error "Axis configuration is not supported!"
+#endif
+
 #if TRINAMIC_ENABLE
-#error Trinamic plugin not supported!
+#error "Trinamic plugin not supported!"
 #endif
 
 #ifndef STM32F407xx
-#error This board has STM32F407 processor, select a corresponding build!
+#error "This board has STM32F407 processor, select a corresponding build!"
 #endif
 
 #define BOARD_NAME "BTT SKR PRO v1.1"
@@ -39,21 +43,6 @@
 #define X_STEP_BIT                  (1<<X_STEP_PIN)
 #define Y_STEP_BIT                  (1<<Y_STEP_PIN)
 #define Z_STEP_BIT                  (1<<Z_STEP_PIN)
-#if N_AXIS > 3
-#define A_STEP_PORT                 GPIOE
-#define A_STEP_PIN                  14                  // E0
-#define A_STEP_BIT                  (1<<A_STEP_PIN)
-#endif
-#if N_AXIS > 4
-#define B_STEP_PORT                 GPIOD
-#define B_STEP_PIN                  15                  // E1
-#define B_STEP_BIT                  (1<<B_STEP_PIN)
-#endif
-#if N_AXIS > 5
-#define C_STEP_PORT                 GPIOD
-#define C_STEP_PIN                  13                  // E2
-#define C_STEP_BIT                  (1<<C_STEP_PIN)
-#endif
 #define STEP_OUTMODE                GPIO_BITBAND
 //#define STEP_PINMODE                PINMODE_OD // Uncomment for open drain outputs
 
@@ -67,51 +56,20 @@
 #define X_DIRECTION_BIT             (1<<X_DIRECTION_PIN)
 #define Y_DIRECTION_BIT             (1<<Y_DIRECTION_PIN)
 #define Z_DIRECTION_BIT             (1<<Z_DIRECTION_PIN)
-#if N_AXIS > 3
-#define A_DIRECTION_PORT            GPIOA
-#define A_DIRECTION_PIN             0
-#define A_DIRECTION_BIT             (1<<A_DIRECTION_PIN)
-#endif
-#if N_AXIS > 4
-#define B_DIRECTION_PORT            GPIOE
-#define B_DIRECTION_PIN             7
-#define B_DIRECTION_BIT             (1<<B_DIRECTION_PIN)
-#endif
-#if N_AXIS > 5
-#define C_DIRECTION_PORT            GPIOG
-#define C_DIRECTION_PIN             9
-#define C_DIRECTION_BIT             (1<<C_DIRECTION_PIN)
-#endif
 #define DIRECTION_OUTMODE           GPIO_BITBAND
 //#define DIRECTION_PINMODE           PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pin.
-#define X_STEPPERS_DISABLE_PORT     GPIOF
-#define X_STEPPERS_DISABLE_PIN      2
-#define Y_STEPPERS_DISABLE_PORT     GPIOD
-#define Y_STEPPERS_DISABLE_PIN      7
-#define Z_STEPPERS_DISABLE_PORT     GPIOC
-#define Z_STEPPERS_DISABLE_PIN      0
-#define X_STEPPERS_DISABLE_BIT      (1<<X_STEPPERS_DISABLE_PIN)
-#define Y_STEPPERS_DISABLE_BIT      (1<<Y_STEPPERS_DISABLE_PIN)
-#define Z_STEPPERS_DISABLE_BIT      (1<<Z_STEPPERS_DISABLE_PIN)
-#if N_AXIS > 3
-#define A_STEPPERS_DISABLE_PORT     GPIOC
-#define A_STEPPERS_DISABLE_PIN      3
-#define A_STEPPERS_DISABLE_BIT      (1<<A_STEPPERS_DISABLE_PIN)
-#endif
-#if N_AXIS > 4
-#define B_STEPPERS_DISABLE_PORT     GPIOA
-#define B_STEPPERS_DISABLE_PIN      3
-#define B_STEPPERS_DISABLE_BIT      (1<<B_STEPPERS_DISABLE_PIN)
-#endif
-#if N_AXIS > 5
-#define C_STEPPERS_DISABLE_PORT     GPIOF
-#define C_STEPPERS_DISABLE_PIN      0
-#define C_STEPPERS_DISABLE_BIT      (1<<C_STEPPERS_DISABLE_PIN)
-#endif
-//#define STEPPERS_DISABLE_PINMODE   PINMODE_OD // Uncomment for open drain outputs
-
+#define X_ENABLE_PORT               GPIOF
+#define X_ENABLE_PIN                2
+#define Y_ENABLE_PORT               GPIOD
+#define Y_ENABLE_PIN                7
+#define Z_ENABLE_PORT               GPIOC
+#define Z_ENABLE_PIN                0
+#define X_ENABLE_BIT                (1<<X_ENABLE_PIN)
+#define Y_ENABLE_BIT                (1<<Y_ENABLE_PIN)
+#define Z_ENABLE_BIT                (1<<Z_ENABLE_PIN)
+//#define STEPPERS_ENABLE_PINMODE   PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
 #define X_LIMIT_PORT                GPIOB
@@ -123,31 +81,46 @@
 #define X_LIMIT_BIT                 (1<<X_LIMIT_PIN)
 #define Y_LIMIT_BIT                 (1<<Y_LIMIT_PIN)
 #define Z_LIMIT_BIT                 (1<<Z_LIMIT_PIN)
-#if N_AXIS > 3
-#define A_LIMIT_PORT                GPIOE
-#define A_LIMIT_PIN                 15                          // E0- Limit
-#define A_LIMIT_BIT                 (1<<A_LIMIT_PIN)
-#endif
-#if N_AXIS > 4
-#define B_LIMIT_PORT                GPIOE
-#define B_LIMIT_PIN                 10                          // E1- Limit
-#define B_LIMIT_BIT                 (1<<B_LIMIT_PIN)
-#endif
-#if N_AXIS > 5
-#define C_LIMIT_PORT                GPIOG
-#define C_LIMIT_PIN                 5                           // E2- Limit
-#define C_LIMIT_BIT                 (1<<C_LIMIT_PIN)
-#endif
-#if N_AXIS == 6
-#define LIMIT_MASK                  (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT|B_LIMIT_BIT|C_LIMIT_BIT)
-#elif N_AXIS == 5
-#define LIMIT_MASK                  (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT|B_LIMIT_BIT)
-#elif N_AXIS == 4
-#define LIMIT_MASK                  (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT)
-#else
-#define LIMIT_MASK                  (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT)
-#endif
 #define LIMIT_INMODE                GPIO_BITBAND
+
+// Define ganged axis or A axis step pulse and step direction output pins.
+#if N_ABC_MOTORS > 0
+#define M3_AVAILABLE                // E0
+#define M3_STEP_PORT                GPIOE
+#define M3_STEP_PIN                 14
+#define M3_DIRECTION_PORT           GPIOA
+#define M3_DIRECTION_PIN            0
+#define M3_LIMIT_PORT               GPIOE
+#define M3_LIMIT_PIN                10
+#define M3_ENABLE_PORT              GPIOC
+#define M3_ENABLE_PIN               3
+#endif
+
+// Define ganged axis or B axis step pulse and step direction output pins.
+#if N_ABC_MOTORS > 1
+#define M4_AVAILABLE                // E1
+#define M4_STEP_PORT                GPIOD
+#define M4_STEP_PIN                 15
+#define M4_DIRECTION_PORT           GPIOE
+#define M4_DIRECTION_PIN            7
+#define M4_LIMIT_PORT               GPIOE
+#define M4_LIMIT_PIN                19
+#define M4_ENABLE_PORT              GPIOA
+#define M4_ENABLE_PIN               3
+#endif
+
+// Define ganged axis or B axis step pulse and step direction output pins.
+#if N_ABC_MOTORS == 3
+#define M5_AVAILABLE                // E2
+#define M5_STEP_PORT                GPIOD
+#define M5_STEP_PIN                 13
+#define M5_DIRECTION_PORT           GPIOG
+#define M5_DIRECTION_PIN            9
+#define M5_LIMIT_PORT               GPIOG
+#define M5_LIMIT_PIN                5
+#define M5_ENABLE_PORT              GPIOF
+#define M5_ENABLE_PIN               0
+#endif
 
   // Define spindle enable and spindle direction output pins.
 #define SPINDLE_ENABLE_PORT         GPIOE

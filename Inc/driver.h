@@ -31,17 +31,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "main.h"
-#include "grbl/hal.h"
-#include "grbl/grbl.h"
-#include "grbl/nuts_bolts.h"
-#include "grbl/crossbar.h"
+#define ESTOP_ENABLE 0
 
 #ifndef OVERRIDE_MY_MACHINE
 #include "my_machine.h"
 #endif
 
+#include "main.h"
+#include "grbl/driver_opts.h"
+
 #define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
+
+#define DIGITAL_IN(port, pin) BITBAND_PERI(port->IDR, pin)
+#define DIGITAL_OUT(port, pin, on) { BITBAND_PERI(port->ODR, pin) = on; }
 
 #define timer(p) timerN(p)
 #define timerN(p) TIM ## p
@@ -50,42 +52,7 @@
 #define timerHANDLER(p) timerh(p)
 #define timerh(p) TIM ## p ## _IRQHandler
 
-// Configuration
-// Set value to 1 to enable, 0 to disable
-
-#ifndef USB_SERIAL_CDC
-#define USB_SERIAL_CDC      0 // for UART comms
-#endif
-#ifndef ESTOP_ENABLE
-#define ESTOP_ENABLE        0
-#endif
-#ifndef SDCARD_ENABLE
-#define SDCARD_ENABLE       0
-#endif
-#ifndef KEYPAD_ENABLE
-#define KEYPAD_ENABLE       0
-#endif
-#ifndef ODOMETER_ENABLE
-#define ODOMETER_ENABLE     0
-#endif
-#ifndef PPI_ENABLE
-#define PPI_ENABLE       	0
-#endif
-#ifndef EEPROM_ENABLE
-#define EEPROM_ENABLE       0
-#endif
-#ifndef EEPROM_IS_FRAM
-#define EEPROM_IS_FRAM      0
-#endif
-#ifndef TRINAMIC_ENABLE
-#define TRINAMIC_ENABLE     0
-#endif
-#ifndef TRINAMIC_I2C
-#define TRINAMIC_I2C        0
-#endif
-#ifndef TRINAMIC_DEV
-#define TRINAMIC_DEV        0
-#endif
+// Configuration, do not change here
 
 #define CNC_BOOSTERPACK     0
 
@@ -204,16 +171,8 @@
 #define VFD_SPINDLE 0
 #endif
 
-#ifdef MODBUS_ENABLE
+#if MODBUS_ENABLE || BLUETOOTH_ENABLE
 #define SERIAL2_MOD
-#endif
-
-#ifndef I2C_PORT
-#define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
-#endif
-
-#ifndef SPI_PORT
-#define SPI_PORT 1
 #endif
 
 #if TRINAMIC_ENABLE
@@ -222,7 +181,7 @@
     #define TRINAMIC_MIXED_DRIVERS 1
   #endif
   #if TRINAMIC_ENABLE == 2209
-    #ifdef MODBUS_ENABLE
+    #if MODBUS_ENABLE
       #error "Cannot use TMC2209 drivers with Modbus spindle!"
     #else
       #define SERIAL2_MOD
@@ -240,89 +199,12 @@
 #error SD card plugin not supported!
 #endif
 
-#ifndef X_STEP_PORT
-#define X_STEP_PORT STEP_PORT
-#endif
-#ifndef X2_STEP_PORT
-#define X2_STEP_PORT STEP_PORT
-#endif
-#ifndef Y_STEP_PORT
-#define Y_STEP_PORT STEP_PORT
-#endif
-#ifndef Y2_STEP_PORT
-#define Y2_STEP_PORT STEP_PORT
-#endif
-#ifndef Z_STEP_PORT
-#define Z_STEP_PORT STEP_PORT
-#endif
-#ifndef Z2_STEP_PORT
-#define Z2_STEP_PORT STEP_PORT
-#endif
-#ifndef A_STEP_PORT
-#define A_STEP_PORT STEP_PORT
-#endif
-#ifndef B_STEP_PORT
-#define B_STEP_PORT STEP_PORT
-#endif
-#ifndef C_STEP_PORT
-#define C_STEP_PORT STEP_PORT
+#ifndef I2C_PORT
+#define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
 #endif
 
-#ifndef X_DIRECTION_PORT
-#define X_DIRECTION_PORT DIRECTION_PORT
-#endif
-#ifndef X2_DIRECTION_PORT
-#define X2_DIRECTION_PORT DIRECTION_PORT
-#endif
-#ifndef Y_DIRECTION_PORT
-#define Y_DIRECTION_PORT DIRECTION_PORT
-#endif
-#ifndef Y2_DIRECTION_PORT
-#define Y2_DIRECTION_PORT DIRECTION_PORT
-#endif
-#ifndef Z_DIRECTION_PORT
-#define Z_DIRECTION_PORT DIRECTION_PORT
-#endif
-#ifndef Z2_DIRECTION_PORT
-#define Z2_DIRECTION_PORT DIRECTION_PORT
-#endif
-
-#ifndef A_DIRECTION_PORT
-#define A_DIRECTION_PORT DIRECTION_PORT
-#endif
-#ifndef B_DIRECTION_PORT
-#define B_DIRECTION_PORT DIRECTION_PORT
-#endif
-#ifndef C_DIRECTION_PORT
-#define C_DIRECTION_PORT DIRECTION_PORT
-#endif
-
-#ifndef X_LIMIT_PORT
-#define X_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef X2_LIMIT_PORT
-#define X2_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef Y_LIMIT_PORT
-#define Y_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef Y2_LIMIT_PORT
-#define Y2_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef Z_LIMIT_PORT
-#define Z_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef Z2_LIMIT_PORT
-#define Z2_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef A_LIMIT_PORT
-#define A_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef B_LIMIT_PORT
-#define B_LIMIT_PORT LIMIT_PORT
-#endif
-#ifndef C_LIMIT_PORT
-#define C_LIMIT_PORT LIMIT_PORT
+#ifndef SPI_PORT
+#define SPI_PORT 1
 #endif
 
 #ifndef STEP_PINMODE
@@ -333,8 +215,8 @@
 #define DIRECTION_PINMODE PINMODE_OUTPUT
 #endif
 
-#ifndef STEPPERS_DISABLE_PINMODE
-#define STEPPERS_DISABLE_PINMODE PINMODE_OUTPUT
+#ifndef STEPPERS_ENABLE_PINMODE
+#define STEPPERS_ENABLE_PINMODE PINMODE_OUTPUT
 #endif
 
 #ifndef RESET_PORT
@@ -350,14 +232,21 @@
 #define SAFETY_DOOR_PORT CONTROL_PORT
 #endif
 
+#ifndef AUXINPUT_MASK
+#define AUXINPUT_MASK 0
+#endif
+
 typedef struct {
     pin_function_t id;
     GPIO_TypeDef *port;
     uint8_t pin;
+    uint32_t bit;
     pin_group_t group;
     volatile bool active;
     volatile bool debounce;
     pin_irq_mode_t irq_mode;
+    pin_mode_t cap;
+    ioport_interrupt_callback_ptr interrupt_callback;
 } input_signal_t;
 
 typedef struct {
@@ -379,8 +268,11 @@ typedef struct {
 bool driver_init (void);
 void Driver_IncTick (void);
 #ifdef HAS_BOARD_INIT
-void board_init(pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
-
+void board_init (void);
+#endif
+#ifdef HAS_IOPORTS
+void ioports_init(pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
+void ioports_event (uint32_t bit);
 #endif
 
 #endif // __DRIVER_H__

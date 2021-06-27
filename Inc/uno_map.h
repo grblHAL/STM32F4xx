@@ -19,8 +19,12 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if N_ABC_MOTORS
+#error "Axis configuration is not supported!"
+#endif
+
 #if TRINAMIC_ENABLE
-#error Trinamic plugin not supported!
+#error "Trinamic plugin not supported!"
 #endif
 
 #define BOARD_NAME "Generic Uno"
@@ -55,11 +59,10 @@
 //#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_DISABLE_PORT   GPIOA // D8
-#define STEPPERS_DISABLE_PIN    9
-#define STEPPERS_DISABLE_BIT    (1<<STEPPERS_DISABLE_PIN)
-#define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
-//#define STEPPERS_DISABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
+#define STEPPERS_ENABLE_PORT    GPIOA // D8
+#define STEPPERS_ENABLE_PIN     9
+#define STEPPERS_ENABLE_BIT     (1<<STEPPERS_ENABLE_PIN)
+#define STEPPERS_ENABLE_MASK    STEPPERS_ENABLE_BIT//#define STEPPERS_ENABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
 #define X_LIMIT_PORT            GPIOC // D9

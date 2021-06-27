@@ -19,6 +19,10 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if N_ABC_MOTORS > 1
+#error "Axis configuration is not supported!"
+#endif
+
 #define BOARD_NAME "CNC BoosterPack"
 
 #ifdef EEPROM_ENABLE
@@ -40,13 +44,6 @@
 #define X_STEP_BIT              (1<<X_STEP_PIN)
 #define Y_STEP_BIT              (1<<Y_STEP_PIN)
 #define Z_STEP_BIT              (1<<Z_STEP_PIN)
-#if N_AXIS > 3
-#define A_STEP_PIN              3
-#define A_STEP_BIT              (1<<A_STEP_PIN)
-#define STEP_MASK               (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT|A_STEP_BIT) // All step bits
-#else
-#define STEP_MASK               (X_STEP_BIT|Y_STEP_BIT|Z_STEP_BIT) // All step bits
-#endif
 #define STEP_OUTMODE            GPIO_MAP
 //#define STEP_PINMODE            PINMODE_OD // Uncomment for open drain outputs
 
@@ -58,22 +55,15 @@
 #define X_DIRECTION_BIT         (1<<X_DIRECTION_PIN)
 #define Y_DIRECTION_BIT         (1<<Y_DIRECTION_PIN)
 #define Z_DIRECTION_BIT         (1<<Z_DIRECTION_PIN)
-#if N_AXIS > 3
-#define A_DIRECTION_PIN         7
-#define A_DIRECTION_BIT         (1<<A_DIRECTION_PIN)
-#define DIRECTION_MASK          (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT|A_DIRECTION_BIT) // All direction bits
-#else
-#define DIRECTION_MASK          (X_DIRECTION_BIT|Y_DIRECTION_BIT|Z_DIRECTION_BIT) // All direction bits
-#endif
 #define DIRECTION_OUTMODE       GPIO_MAP
 //#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_DISABLE_PORT   GPIOA
-#define STEPPERS_DISABLE_PIN    15
-#define STEPPERS_DISABLE_BIT    (1<<STEPPERS_DISABLE_PIN)
-#define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
-//#define STEPPERS_DISABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
+#define STEPPERS_ENABLE_PORT   GPIOA
+#define STEPPERS_ENABLE_PIN    15
+#define STEPPERS_ENABLE_BIT    (1<<STEPPERS_ENABLE_PIN)
+#define STEPPERS_ENABLE_MASK   STEPPERS_ENABLE_BIT
+//#define STEPPERS_ENABLE_PINMODE PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
 #define LIMIT_PORT              GPIOB
@@ -83,14 +73,20 @@
 #define X_LIMIT_BIT             (1<<X_LIMIT_PIN)
 #define Y_LIMIT_BIT             (1<<Y_LIMIT_PIN)
 #define Z_LIMIT_BIT             (1<<Z_LIMIT_PIN)
-#if N_AXIS > 3
-#define A_LIMIT_PIN             15
-#define A_LIMIT_BIT             (1<<A_LIMIT_PIN)
-#define LIMIT_MASK              (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT|A_LIMIT_BIT) // All limit bits
-#else
-#define LIMIT_MASK              (X_LIMIT_BIT|Y_LIMIT_BIT|Z_LIMIT_BIT) // All limit bits
-#endif
 #define LIMIT_INMODE            GPIO_SHIFT12
+
+// Define ganged axis or A axis step pulse and step direction output pins.
+#if N_ABC_MOTORS == 1
+#define M3_AVAILABLE
+#define M3_STEP_PORT            STEP_PORT
+#define M3_STEP_PIN             3
+#define M3_DIRECTION_PORT       DIRECTION_PORT
+#define M3_DIRECTION_PIN        7
+#if N_AUTO_SQUARED
+#define M3_LIMIT_PORT           LIMIT_PORT
+#define M3_LIMIT_PIN            15
+#endif
+#endif
 
   // Define spindle enable and spindle direction output pins.
 #define SPINDLE_ENABLE_PORT     GPIOB
@@ -129,7 +125,6 @@
 #define CONTROL_MASK            (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT)
 #endif
 #define CONTROL_INMODE          GPIO_SHIFT6
-
 
 // Define probe switch input pin.
 #define PROBE_PORT              GPIOA

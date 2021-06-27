@@ -37,20 +37,10 @@ static bool use_tx2data = false;
 static stream_rx_buffer_t rxbuf = {0};
 static stream_block_tx_buffer_t txbuf = {0};
 
-// NOTE: USB interrupt priority should be set lower than stepper/step timer to avoid jitter
-// It is set in HAL_PCD_MspInit() in usbd_conf.c
-void usbInit (void)
-{
-    MX_USB_DEVICE_Init();
-
-    txbuf.s = txbuf.data;
-    txbuf.max_length = BLOCK_TX_BUFFER_SIZE;
-}
-
 //
 // Returns number of free characters in the input buffer
 //
-uint16_t usbRxFree (void)
+static uint16_t usbRxFree (void)
 {
     uint16_t tail = rxbuf.tail, head = rxbuf.head;
     return RX_BUFFER_SIZE - BUFCOUNT(head, tail, RX_BUFFER_SIZE);
@@ -59,7 +49,7 @@ uint16_t usbRxFree (void)
 //
 // Flushes the input buffer
 //
-void usbRxFlush (void)
+static void usbRxFlush (void)
 {
     rxbuf.head = rxbuf.tail = 0;
 }
@@ -67,7 +57,7 @@ void usbRxFlush (void)
 //
 // Flushes and adds a CAN character to the input buffer
 //
-void usbRxCancel (void)
+static void usbRxCancel (void)
 {
     rxbuf.data[rxbuf.head] = ASCII_CAN;
     rxbuf.tail = rxbuf.head;
@@ -105,7 +95,7 @@ static inline bool usb_write (void)
 //
 // Writes a single character to the USB output stream, blocks if buffer full
 //
-bool usbPutC (const char c)
+static bool usbPutC (const char c)
 {
     static uint8_t buf[1];
 
@@ -123,7 +113,7 @@ bool usbPutC (const char c)
 // Writes a null terminated string to the USB output stream, blocks if buffer full
 // Buffers string up to EOL (LF) before transmitting
 //
-void usbWriteS (const char *s)
+static void usbWriteS (const char *s)
 {
     size_t length = strlen(s);
 
@@ -145,7 +135,7 @@ void usbWriteS (const char *s)
 //
 // usbGetC - returns -1 if no data available
 //
-int16_t usbGetC (void)
+static int16_t usbGetC (void)
 {
     uint16_t bptr = rxbuf.tail;
 
@@ -158,9 +148,33 @@ int16_t usbGetC (void)
     return (int16_t)data;
 }
 
-bool usbSuspendInput (bool suspend)
+static bool usbSuspendInput (bool suspend)
 {
     return stream_rx_suspend(&rxbuf, suspend);
+}
+
+// NOTE: USB interrupt priority should be set lower than stepper/step timer to avoid jitter
+// It is set in HAL_PCD_MspInit() in usbd_conf.c
+const io_stream_t *usbInit (void)
+{
+    static const io_stream_t stream = {
+        .type = StreamType_Serial,
+        .read = usbGetC,
+        .write = usbWriteS,
+        .write_char = usbPutC,
+        .write_all = usbWriteS,
+        .get_rx_buffer_free = usbRxFree,
+        .reset_read_buffer = usbRxFlush,
+        .cancel_read_buffer = usbRxCancel,
+        .suspend_read = usbSuspendInput
+    };
+
+    MX_USB_DEVICE_Init();
+
+    txbuf.s = txbuf.data;
+    txbuf.max_length = BLOCK_TX_BUFFER_SIZE;
+
+    return &stream;
 }
 
 // NOTE: add a call to this function as the first line CDC_Receive_FS() in usbd_cdc_if.c
