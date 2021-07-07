@@ -54,14 +54,6 @@
 #include "bluetooth/bluetooth.h"
 #endif
 
-#if KEYPAD_ENABLE
-#include "keypad/keypad.h"
-#endif
-
-#if ODOMETER_ENABLE
-#include "odometer/odometer.h"
-#endif
-
 #if PPI_ENABLE
 #include "laser/ppi.h"
 #endif
@@ -257,9 +249,9 @@ static output_signal_t outputpin[] = {
     { .id = Output_SpindleDir,      .port = SPINDLE_DIRECTION_PORT, .pin = SPINDLE_DIRECTION_PIN,   .group = PinGroup_SpindleControl },
 #endif
 #endif
-    { .id = Output_CoolantMist,     .port = COOLANT_FLOOD_PORT,     .pin = COOLANT_FLOOD_PIN,       .group = PinGroup_Coolant },
+    { .id = Output_CoolantFlood,    .port = COOLANT_FLOOD_PORT,     .pin = COOLANT_FLOOD_PIN,       .group = PinGroup_Coolant },
 #ifdef COOLANT_MIST_PIN
-    { .id = Output_CoolantFlood,    .port = COOLANT_MIST_PORT,      .pin = COOLANT_MIST_PIN,        .group = PinGroup_Coolant },
+    { .id = Output_CoolantMist,     .port = COOLANT_MIST_PORT,      .pin = COOLANT_MIST_PIN,        .group = PinGroup_Coolant },
 #endif
 #ifdef SD_CS_PORT
     { .id = Output_SdCardCS,        .port = SD_CS_PORT,             .pin = SD_CS_PIN,               .group = PinGroup_SdCard },
@@ -790,17 +782,17 @@ inline static limit_signals_t limitsGetState()
   #endif
 #elif LIMIT_INMODE == GPIO_MAP
     uint32_t bits = LIMIT_PORT->IDR;
-    signals.min.x = (bits & X_LIMIT_PIN) != 0;
-    signals.min.y = (bits & Y_LIMIT_PIN) != 0;
-    signals.min.z = (bits & Z_LIMIT_PIN) != 0;
+    signals.min.x = !!(bits & X_LIMIT_BIT);
+    signals.min.y = !!(bits & Y_LIMIT_BIT);
+    signals.min.z = !!(bits & Z_LIMIT_BIT);
   #ifdef A_LIMIT_PIN
-    signals.min.a = (bits & A_LIMIT_PIN) != 0;
+    signals.min.a = !!(bits & A_LIMIT_BIT);
   #endif
   #ifdef B_LIMIT_PIN
-    signals.min.b = (bits & B_LIMIT_PIN) != 0;
+    signals.min.b = !!(bits & B_LIMIT_BIT);
   #endif
   #ifdef C_LIMIT_PIN
-    signals.min.c = (bits & C_LIMIT_PIN) != 0;
+    signals.min.c = !!(bits & C_LIMIT_BIT);
   #endif
 #else
     signals.min.value = (uint8_t)((LIMIT_PORT->IDR & LIMIT_MASK) >> LIMIT_INMODE);
@@ -861,14 +853,14 @@ static control_signals_t systemGetState (void)
 #elif CONTROL_INMODE == GPIO_MAP
     uint32_t bits = CONTROL_PORT->IDR;
 #if ESTOP_ENABLE
-    signals.e_stop = (bits & RESET_BIT) != 0;
+    signals.e_stop = !!(bits & RESET_BIT);
 #else
-    signals.reset = (bits & RESET_BIT) != 0;
+    signals.reset = !!(bits & RESET_BIT);
 #endif
-    signals.feed_hold = (bits & FEED_HOLD_BIT) != 0;
-    signals.cycle_start = (bits & CYCLE_START_BIT) != 0;
+    signals.feed_hold = !!(bits & FEED_HOLD_BIT);
+    signals.cycle_start = !!(bits & CYCLE_START_BIT);
   #ifdef SAFETY_DOOR_PIN
-    signals.safety_door_ajar = (bits & SAFETY_DOOR_BIT) != 0;
+    signals.safety_door_ajar = !!(bits & SAFETY_DOOR_BIT);
   #endif
 #else
     signals.value = (uint8_t)((CONTROL_PORT->IDR & CONTROL_MASK) >> CONTROL_INMODE);
@@ -1439,7 +1431,7 @@ void settings_changed (settings_t *settings)
                 input->cap.pull_mode = (PullMode_Up|PullMode_Down);
                 if(!(input->bit & DRIVER_IRQMASK)) {
                     aux_irq |= input->bit;
-                    input->cap.irq_mode = (IRQ_Mode_Rising|IRQ_Mode_Falling);
+                    input->cap.irq_mode = (IRQ_Mode_Rising|IRQ_Mode_Falling|IRQ_Mode_Change);
                     // Map interrupt to pin
                     uint32_t extireg = SYSCFG->EXTICR[input->pin >> 2] & ~(0b1111 << ((input->pin & 0b11) << 2));
                     extireg |= ((uint32_t)(GPIO_GET_INDEX(input->port)) << ((input->pin & 0b11) << 2));
@@ -1525,6 +1517,7 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info)
         pin.function = inputpin[i].id;
         pin.group = inputpin[i].group;
         pin.port = low_level ? (void *)inputpin[i].port : (void *)port2char(inputpin[i].port);
+        pin.description = inputpin[i].description;
         pin.mode.pwm = pin.group == PinGroup_SpindlePWM;
 
         pin_info(&pin);
@@ -1538,6 +1531,7 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info)
         pin.function = outputpin[i].id;
         pin.group = outputpin[i].group;
         pin.port = low_level ? (void *)outputpin[i].port : (void *)port2char(outputpin[i].port);
+        pin.description = outputpin[i].description;
 
         pin_info(&pin);
     };
@@ -1713,7 +1707,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210627";
+    hal.driver_version = "210705";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1862,14 +1856,6 @@ bool driver_init (void)
     enet_init();
 #endif
 
-#if TRINAMIC_ENABLE
-    trinamic_init();
-#endif
-
-#if KEYPAD_ENABLE
-    keypad_init();
-#endif
-
 #if SPINDLE_HUANYANG > 0
     huanyang_init(modbus_init(serial2Init(115200), NULL));
 #endif
@@ -1882,11 +1868,7 @@ bool driver_init (void)
 #endif
 #endif
 
-    my_plugin_init();
-
-#if ODOMETER_ENABLE
-    odometer_init(); // NOTE: this *must* be last plugin to be initialized as it claims storage at the end of NVS.
-#endif
+#include "grbl/plugins_init.h"
 
     // No need to move version check before init.
     // Compiler will fail any signature mismatch for existing entries.
