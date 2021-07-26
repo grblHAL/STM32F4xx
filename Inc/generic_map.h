@@ -123,7 +123,7 @@
 
 #if KEYPAD_ENABLE
 #define KEYPAD_PORT             GPIOB
-#define KEYPAD_STROBE_PIN       15
+#define KEYPAD_STROBE_PIN       7
 #define KEYPAD_STROBE_BIT       (1<<KEYPAD_STROBE_PIN)
 #endif
 

@@ -167,34 +167,36 @@ void TMC_SPI_DriverInit (axes_signals_t axisflags)
 
 #include "serial.h"
 
+static io_stream_t tmc_uart;
+
 TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read_datagram_t *dgr)
 {
     static TMC_uart_write_datagram_t wdgr = {0};
     volatile uint32_t dly = 50, ms = hal.get_elapsed_ticks();
 
-    serial2Write((char *)dgr->data, sizeof(TMC_uart_read_datagram_t));
+    tmc_uart.write_n((char *)dgr->data, sizeof(TMC_uart_read_datagram_t));
 
-    while(serial2TxCount());
+    while(tmc_uart.get_tx_buffer_count());
 
     while(--dly);
 
-    serial2RxFlush();
+    tmc_uart.reset_read_buffer();
 
     // Wait for response with 2ms timeout
-    while(serial2RxCount() < 8) {
+    while(tmc_uart.get_rx_buffer_count() < 8) {
         if(hal.get_elapsed_ticks() - ms >= 2)
             break;
     }
 
-    if(serial2RxCount() >= 8) {
-        wdgr.data[0] = serial2GetC();
-        wdgr.data[1] = serial2GetC();
-        wdgr.data[2] = serial2GetC();
-        wdgr.data[3] = serial2GetC();
-        wdgr.data[4] = serial2GetC();
-        wdgr.data[5] = serial2GetC();
-        wdgr.data[6] = serial2GetC();
-        wdgr.data[7] = serial2GetC();
+    if(tmc_uart.get_rx_buffer_count() >= 8) {
+        wdgr.data[0] = tmc_uart.read();
+        wdgr.data[1] = tmc_uart.read();
+        wdgr.data[2] = tmc_uart.read();
+        wdgr.data[3] = tmc_uart.read();
+        wdgr.data[4] = tmc_uart.read();
+        wdgr.data[5] = tmc_uart.read();
+        wdgr.data[6] = tmc_uart.read();
+        wdgr.data[7] = tmc_uart.read();
     } else
         wdgr.msg.addr.value = 0xFF;
 
@@ -206,7 +208,7 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
 
 void tmc_uart_write (trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
 {
-    serial2Write((char *)dgr->data, sizeof(TMC_uart_write_datagram_t));
+    tmc_uart.write_n((char *)dgr->data, sizeof(TMC_uart_write_datagram_t));
 }
 
 #endif
@@ -220,9 +222,9 @@ void board_init (void)
     };
 
     spi_init();
-    GPIO_Init.Pin = TRINAMIC_CS_BIT;
-    HAL_GPIO_Init(TRINAMIC_CS_PORT, &GPIO_Init);
-    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 1;
+//    GPIO_Init.Pin = TRINAMIC_CS_BIT;
+//    HAL_GPIO_Init(TRINAMIC_CS_PORT, &GPIO_Init);
+//    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 1;
 
     uint_fast8_t idx = N_AXIS;
     do {
@@ -234,7 +236,7 @@ void board_init (void)
 #endif
 
 #if TRINAMIC_ENABLE == 2209
-    serial2Init(230400);
+    memcpy(&tmc_uart, serial2Init(230400), sizeof(io_stream_t));
 #endif
 }
 

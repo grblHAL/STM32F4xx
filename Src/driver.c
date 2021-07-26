@@ -111,8 +111,8 @@ static input_signal_t inputpin[] = {
 #ifdef PROBE_PIN
     { .id = Input_Probe,          .port = PROBE_PORT,         .pin = PROBE_PIN,           .group = PinGroup_Probe },
 #endif
-#ifdef KEYINTR_PIN
-    { .id = Input_KeypadStrobe,   .port = KEYINTR_PORT,       .pin = KEYINTR_PIN,         .group = PinGroup_Keypad },
+#ifdef KEYPAD_STROBE_PIN
+    { .id = Input_KeypadStrobe,   .port = KEYPAD_PORT,        .pin = KEYPAD_STROBE_PIN,   .group = PinGroup_Keypad },
 #endif
 #ifdef MODE_SWITCH_PIN
     { .id = Input_ModeSelect,     .port = MODE_PORT,          .pin = MODE_SWITCH_PIN,     .group = PinGroup_MPG },
@@ -180,13 +180,13 @@ static output_signal_t outputpin[] = {
     { .id = Output_StepC,           .port = C_STEP_PORT,            .pin = C_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef X2_STEP_PIN
-    { .id = Output_StepX,           .port = X2_STEP_PORT,           .pin = X2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepX_2,         .port = X2_STEP_PORT,           .pin = X2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef Y2_STEP_PIN
-    { .id = Output_StepY,           .port = Y2_STEP_PORT,           .pin = Y2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepY_2,         .port = Y2_STEP_PORT,           .pin = Y2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
 #ifdef Z2_STEP_PIN
-    { .id = Output_StepZ,           .port = Z2_STEP_PORT,           .pin = Z2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+    { .id = Output_StepZ_2,         .port = Z2_STEP_PORT,           .pin = Z2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
     { .id = Output_DirX,            .port = X_DIRECTION_PORT,       .pin = X_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
     { .id = Output_DirY,            .port = Y_DIRECTION_PORT,       .pin = Y_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
@@ -201,13 +201,13 @@ static output_signal_t outputpin[] = {
     { .id = Output_DirC,            .port = C_DIRECTION_PORT,       .pin = C_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef X2_DIRECTION_PIN
-    { .id = Output_DirX,            .port = X2_DIRECTION_PORT,      .pin = X2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirX_2,          .port = X2_DIRECTION_PORT,      .pin = X2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef Y2_DIRECTION_PIN
-    { .id = Output_DirY,            .port = Y2_DIRECTION_PORT,      .pin = Y2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirY_2,          .port = Y2_DIRECTION_PORT,      .pin = Y2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef Z2_DIRECTION_PIN
-    { .id = Output_DirZ,            .port = Z2_DIRECTION_PORT,      .pin = Z2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+    { .id = Output_DirZ_2,          .port = Z2_DIRECTION_PORT,      .pin = Z2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #if !TRINAMIC_ENABLE
 #ifdef STEPPERS_ENABLE_PORT
@@ -337,8 +337,7 @@ static bool selectStream (const io_stream_t *stream)
     if(!hal.stream.write_all)
         hal.stream.write_all = hal.stream.write;
 
-    if(!hal.stream.enqueue_realtime_command)
-        hal.stream.enqueue_realtime_command = protocol_enqueue_realtime_command;
+    hal.stream.set_enqueue_rt_handler(protocol_enqueue_realtime_command);
 
     if(hal.stream.disable)
         hal.stream.disable(false);
@@ -1707,7 +1706,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210705";
+    hal.driver_version = "210726";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1992,7 +1991,7 @@ void EXTI0_IRQHandler(void)
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
   #endif
-#elif defined(KEYPAD_ENABLED) && KEYPAD_STROBE_BIT & (1<<0)
+#elif defined(KEYPAD_ENABLE) && KEYPAD_STROBE_BIT & (1<<0)
         keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
 #elif LIMIT_MASK & (1<<0)
         if(hal.driver_cap.software_debounce) {
@@ -2169,6 +2168,10 @@ void EXTI9_5_IRQHandler(void)
                 hal.limits.interrupt_callback(limitsGetState());
         }
 #endif
+#if KEYPAD_ENABLE && (KEYPAD_STROBE_BIT & 0x03E0)
+        if(ifg & KEYPAD_STROBE_BIT)
+            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
+#endif
 #if AUXINPUT_MASK & 0x03E0
         if(ifg & aux_irq)
             ioports_event(ifg & aux_irq);
@@ -2220,7 +2223,7 @@ void EXTI15_10_IRQHandler(void)
                 hal.limits.interrupt_callback(limitsGetState());
         }
 #endif
-#if KEYPAD_ENABLE
+#if KEYPAD_ENABLE && (KEYPAD_STROBE_BIT & 0xFC00)
         if(ifg & KEYPAD_STROBE_BIT)
             keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
 #endif

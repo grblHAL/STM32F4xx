@@ -26,7 +26,8 @@
 #if USB_SERIAL_CDC
 
 #include "serial.h"
-#include "../grbl/grbl.h"
+#include "grbl/hal.h"
+#include "grbl/protocol.h"
 
 #include "main.h"
 #include "usbd_cdc_if.h"
@@ -36,6 +37,7 @@ static char txdata2[BLOCK_TX_BUFFER_SIZE]; // Secondary TX buffer (for double bu
 static bool use_tx2data = false;
 static stream_rx_buffer_t rxbuf = {0};
 static stream_block_tx_buffer_t txbuf = {0};
+static enqueue_realtime_command_ptr enqueue_realtime_command = protocol_enqueue_realtime_command;
 
 //
 // Returns number of free characters in the input buffer
@@ -43,6 +45,7 @@ static stream_block_tx_buffer_t txbuf = {0};
 static uint16_t usbRxFree (void)
 {
     uint16_t tail = rxbuf.tail, head = rxbuf.head;
+
     return RX_BUFFER_SIZE - BUFCOUNT(head, tail, RX_BUFFER_SIZE);
 }
 
@@ -51,7 +54,7 @@ static uint16_t usbRxFree (void)
 //
 static void usbRxFlush (void)
 {
-    rxbuf.head = rxbuf.tail = 0;
+    rxbuf.tail = rxbuf.head;
 }
 
 //
@@ -61,7 +64,7 @@ static void usbRxCancel (void)
 {
     rxbuf.data[rxbuf.head] = ASCII_CAN;
     rxbuf.tail = rxbuf.head;
-    rxbuf.head = (rxbuf.tail + 1) & (RX_BUFFER_SIZE - 1);
+    rxbuf.head = BUFNEXT(rxbuf.head, rxbuf);
 }
 
 //
@@ -137,13 +140,13 @@ static void usbWriteS (const char *s)
 //
 static int16_t usbGetC (void)
 {
-    uint16_t bptr = rxbuf.tail;
+    uint_fast16_t tail = rxbuf.tail;    // Get buffer pointer
 
-    if(bptr == rxbuf.head)
-        return -1; // no data available else EOF
+    if(tail == rxbuf.head)
+        return -1; // no data available
 
-    char data = rxbuf.data[bptr++];             // Get next character, increment tmp pointer
-    rxbuf.tail = bptr & (RX_BUFFER_SIZE - 1);   // and update pointer
+    char data = rxbuf.data[tail];       // Get next character
+    rxbuf.tail = BUFNEXT(tail, rxbuf);  // and update pointer
 
     return (int16_t)data;
 }
@@ -151,6 +154,16 @@ static int16_t usbGetC (void)
 static bool usbSuspendInput (bool suspend)
 {
     return stream_rx_suspend(&rxbuf, suspend);
+}
+
+static enqueue_realtime_command_ptr usbSetRtHandler (enqueue_realtime_command_ptr handler)
+{
+    enqueue_realtime_command_ptr prev = enqueue_realtime_command;
+
+    if(handler)
+        enqueue_realtime_command = handler;
+
+    return prev;
 }
 
 // NOTE: USB interrupt priority should be set lower than stepper/step timer to avoid jitter
@@ -166,7 +179,8 @@ const io_stream_t *usbInit (void)
         .get_rx_buffer_free = usbRxFree,
         .reset_read_buffer = usbRxFlush,
         .cancel_read_buffer = usbRxCancel,
-        .suspend_read = usbSuspendInput
+        .suspend_read = usbSuspendInput,
+        .set_enqueue_rt_handler = usbSetRtHandler
     };
 
     MX_USB_DEVICE_Init();
@@ -181,21 +195,16 @@ const io_stream_t *usbInit (void)
 void usbBufferInput (uint8_t *data, uint32_t length)
 {
     while(length--) {
-
-        uint_fast16_t next_head = (rxbuf.head + 1)  & (RX_BUFFER_SIZE - 1); // Get and increment buffer pointer
-
-        if(rxbuf.tail == next_head) {                                       // If buffer full
-            rxbuf.overflow = 1;                                             // flag overflow
-        } else {
-            if(*data == CMD_TOOL_ACK && !rxbuf.backup) {
-                stream_rx_backup(&rxbuf);
-                hal.stream.read = usbGetC; // restore normal input
-            } else if(!hal.stream.enqueue_realtime_command(*data)) {        // Check and strip realtime commands,
-                rxbuf.data[rxbuf.head] = *data;                             // if not add data to buffer
-                rxbuf.head = next_head;                                     // and update pointer
+        if(!enqueue_realtime_command(*data)) {                  // Check and strip realtime commands,
+            uint16_t next_head = BUFNEXT(rxbuf.head, rxbuf);    // Get and increment buffer pointer
+            if(next_head == rxbuf.tail)                         // If buffer full
+                rxbuf.overflow = 1;                             // flag overflow
+            else {
+                rxbuf.data[rxbuf.head] = *data;                 // if not add data to buffer
+                rxbuf.head = next_head;                         // and update pointer
             }
         }
-        data++;                                                             // next
+        data++;                                                 // next...
     }
 }
 
