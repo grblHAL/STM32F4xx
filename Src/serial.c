@@ -536,7 +536,7 @@ void UART2_IRQHandler (void)
 {
     if(UART2->SR & USART_SR_RXNE) {
         uint32_t data = UART2->DR;
-        if(!enqueue_realtime_command((char)data)) {             // Check and strip realtime commands...
+        if(!enqueue_realtime_command2((char)data)) {            // Check and strip realtime commands...
             uint16_t next_head = BUFNEXT(rxbuf2.head, rxbuf2);  // Get and increment buffer pointer
             if(next_head == rxbuf2.tail)                        // If buffer full
                 rxbuf2.overflow = 1;                            // flag overflow
@@ -552,7 +552,7 @@ void UART2_IRQHandler (void)
         UART2->DR = txbuf2.data[tail];              // Send next character
         txbuf2.tail = tail = BUFNEXT(tail, txbuf2); // and increment pointer
         if(tail == txbuf2.head)                     // If buffer empty then
-            USART->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
+            UART2->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
    }
 }
 #endif

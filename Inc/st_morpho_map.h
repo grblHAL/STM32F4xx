@@ -62,7 +62,7 @@
 #define DIRECTION_OUTMODE       GPIO_MAP
 //#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
-// Define stepper driver enable/disable output pin.a2
+// Define stepper driver enable/disable output pins.
 
 #define X_ENABLE_PORT           GPIOA
 #define X_ENABLE_PIN            1

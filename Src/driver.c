@@ -209,7 +209,7 @@ static output_signal_t outputpin[] = {
 #ifdef Z2_DIRECTION_PIN
     { .id = Output_DirZ_2,          .port = Z2_DIRECTION_PORT,      .pin = Z2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
-#if !TRINAMIC_ENABLE
+#if !TRINAMIC_MOTOR_ENABLE
 #ifdef STEPPERS_ENABLE_PORT
     { .id = Output_StepperEnable,   .port = STEPPERS_ENABLE_PORT,   .pin = STEPPERS_ENABLE_PIN,     .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
@@ -349,9 +349,7 @@ static bool selectStream (const io_stream_t *stream)
 static void stepperEnable (axes_signals_t enable)
 {
     enable.mask ^= settings.steppers.enable_invert.mask;
-#if TRINAMIC_ENABLE && TRINAMIC_I2C
-    axes_signals_t tmc_enable = trinamic_stepper_enable(enable);
-#else
+#if !TRINAMIC_MOTOR_ENABLE
   #ifdef STEPPERS_ENABLE_PORT
     BITBAND_PERI(STEPPERS_ENABLE_PORT->ODR, STEPPERS_ENABLE_PIN) = enable.x;
   #else
@@ -741,15 +739,11 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
 // Enable/disable limit pins interrupt
 static void limitsEnable (bool on, bool homing)
 {
-    if(on && settings.limits.flags.hard_enabled) {
+    if(on) {
         EXTI->PR |= LIMIT_MASK;     // Clear any pending limit interrupts
         EXTI->IMR |= LIMIT_MASK;    // and enable
     } else
         EXTI->IMR &= ~LIMIT_MASK;
-
-#if TRINAMIC_ENABLE
-    trinamic_homing(homing);
-#endif
 }
 
 // Returns limit state as an axes_signals_t variable.
@@ -1183,7 +1177,6 @@ static uint32_t getElapsedTicks (void)
 // Configures peripherals when settings are initialized or changed
 void settings_changed (settings_t *settings)
 {
-
 #ifdef SPINDLE_PWM_PIN
     hal.driver_cap.variable_spindle = settings->spindle.rpm_min < settings->spindle.rpm_max;
 #endif
@@ -1440,6 +1433,7 @@ void settings_changed (settings_t *settings)
 
             GPIO_Init.Pin = 1 << input->pin;
             GPIO_Init.Pull = pullup ? GPIO_PULLUP : GPIO_NOPULL;
+
             switch(input->irq_mode) {
                 case IRQ_Mode_Rising:
                     GPIO_Init.Mode = GPIO_MODE_IT_RISING;
@@ -1492,6 +1486,8 @@ void settings_changed (settings_t *settings)
             HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 2);
             HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
         }
+
+        hal.limits.enable(settings->limits.flags.hard_enabled, false);
     }
 }
 
@@ -1706,7 +1702,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210726";
+    hal.driver_version = "210806";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1721,6 +1717,7 @@ bool driver_init (void)
     hal.stepper.enable = stepperEnable;
     hal.stepper.cycles_per_tick = stepperCyclesPerTick;
     hal.stepper.pulse_start = stepperPulseStart;
+    hal.stepper.motor_iterator = motor_iterator;
 
 #ifdef SQUARING_ENABLED
     hal.stepper.get_auto_squared = getAutoSquaredAxes;
@@ -1992,7 +1989,7 @@ void EXTI0_IRQHandler(void)
         } else
   #endif
 #elif defined(KEYPAD_ENABLE) && KEYPAD_STROBE_BIT & (1<<0)
-        keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
+        keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_PIN) == 0);
 #elif LIMIT_MASK & (1<<0)
         if(hal.driver_cap.software_debounce) {
             debounce.limits = On;
@@ -2170,7 +2167,7 @@ void EXTI9_5_IRQHandler(void)
 #endif
 #if KEYPAD_ENABLE && (KEYPAD_STROBE_BIT & 0x03E0)
         if(ifg & KEYPAD_STROBE_BIT)
-            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
+            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_PIN) == 0);
 #endif
 #if AUXINPUT_MASK & 0x03E0
         if(ifg & aux_irq)
@@ -2225,7 +2222,7 @@ void EXTI15_10_IRQHandler(void)
 #endif
 #if KEYPAD_ENABLE && (KEYPAD_STROBE_BIT & 0xFC00)
         if(ifg & KEYPAD_STROBE_BIT)
-            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_BIT) == 0);
+            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_PIN) == 0);
 #endif
 #if AUXINPUT_MASK & 0xFC00
         if(ifg & aux_irq)

@@ -174,21 +174,24 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
     static TMC_uart_write_datagram_t wdgr = {0};
     volatile uint32_t dly = 50, ms = hal.get_elapsed_ticks();
 
+
+//    tmc_uart.reset_write_buffer();
     tmc_uart.write_n((char *)dgr->data, sizeof(TMC_uart_read_datagram_t));
 
     while(tmc_uart.get_tx_buffer_count());
 
     while(--dly);
 
+    tmc_uart.disable(false);
     tmc_uart.reset_read_buffer();
 
     // Wait for response with 2ms timeout
     while(tmc_uart.get_rx_buffer_count() < 8) {
-        if(hal.get_elapsed_ticks() - ms >= 2)
+        if(hal.get_elapsed_ticks() - ms >= 3)
             break;
     }
 
-    if(tmc_uart.get_rx_buffer_count() >= 8) {
+    if((tmc_uart.get_rx_buffer_count()) >= 8) {
         wdgr.data[0] = tmc_uart.read();
         wdgr.data[1] = tmc_uart.read();
         wdgr.data[2] = tmc_uart.read();
@@ -200,7 +203,9 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
     } else
         wdgr.msg.addr.value = 0xFF;
 
-    dly = 150;
+    tmc_uart.disable(true);
+
+    dly = 5000;
     while(--dly);
 
     return &wdgr;
@@ -209,6 +214,7 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
 void tmc_uart_write (trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
 {
     tmc_uart.write_n((char *)dgr->data, sizeof(TMC_uart_write_datagram_t));
+    while(tmc_uart.get_tx_buffer_count());
 }
 
 #endif
@@ -237,6 +243,9 @@ void board_init (void)
 
 #if TRINAMIC_ENABLE == 2209
     memcpy(&tmc_uart, serial2Init(230400), sizeof(io_stream_t));
+
+    tmc_uart.disable(true);
+    tmc_uart.set_enqueue_rt_handler(stream_buffer_all);
 #endif
 }
 
