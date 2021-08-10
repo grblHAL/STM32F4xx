@@ -94,7 +94,7 @@
 #define M3_DIRECTION_PIN        12
 #define M3_LIMIT_PORT           GPIOC
 #define M3_LIMIT_PIN            11
-#define M3_ENABLE_PORT          GPIOA
+#define M3_ENABLE_PORT          GPIOB
 #define M3_ENABLE_PIN           6
 #endif
 

@@ -209,6 +209,9 @@ static output_signal_t outputpin[] = {
 #ifdef Z2_DIRECTION_PIN
     { .id = Output_DirZ_2,          .port = Z2_DIRECTION_PORT,      .pin = Z2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
+#ifdef STEPPERS_POWER_PORT
+    { .id = Output_StepperPower,    .port = STEPPERS_POWER_PORT,    .pin = STEPPERS_POWER_PIN,      .group = PinGroup_StepperPower },
+#endif
 #if !TRINAMIC_MOTOR_ENABLE
 #ifdef STEPPERS_ENABLE_PORT
     { .id = Output_StepperEnable,   .port = STEPPERS_ENABLE_PORT,   .pin = STEPPERS_ENABLE_PIN,     .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
@@ -240,7 +243,28 @@ static output_signal_t outputpin[] = {
 #ifdef Z2_ENABLE_PIN
     { .id = Output_StepperEnableZ,  .port = Z2_ENABLE_PORT,         .pin = Z2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
-#endif // TRINAMIC_ENABLE
+#endif // TRINAMIC_MOTOR_ENABLE
+#ifdef MOTOR_CS_PIN
+    { .id = Output_MotorChipSelect,     .port = MOTOR_CS_PORT,      .pin = MOTOR_CS_PIN,            .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CSX_PIN
+    { .id = Output_MotorChipSelectX,    .port = MOTOR_CSX_PORT,     .pin = MOTOR_CSX_PIN,           .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CSY_PIN
+    { .id = Output_MotorChipSelectY,    .port = MOTOR_CSY_PORT,     .pin = MOTOR_CSY_PIN,           .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CSZ_PIN
+    { .id = Output_MotorChipSelectZ,    .port = MOTOR_CSZ_PORT,     .pin = MOTOR_CSZ_PIN,           .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CSM3_PIN
+    { .id = Output_MotorChipSelectM3,   .port = MOTOR_CSM3_PORT,    .pin = MOTOR_CSM3_PIN,          .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CSM4_PIN
+    { .id = Output_MotorChipSelectM4,   .port = MOTOR_CSM4_PORT,    .pin = MOTOR_CSM4_PIN,          .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CSM5_PIN
+    { .id = Output_MotorChipSelectM5,   .port = MOTOR_CSM5_PORT,    .pin = MOTOR_CSM5_PIN,          .group = PinGroup_MotorChipSelect },
+#endif
 #if !VFD_SPINDLE
 #ifdef SPINDLE_ENABLE_PIN
     { .id = Output_SpindleOn,       .port = SPINDLE_ENABLE_PORT,    .pin = SPINDLE_ENABLE_PIN,      .group = PinGroup_SpindleControl },
@@ -1558,6 +1582,9 @@ static bool driver_setup (settings_t *settings)
         GPIO_Init.Pin = 1 << outputpin[i].pin;
         GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
         HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
+
+        if(outputpin[i].group == PinGroup_MotorChipSelect)
+            DIGITAL_OUT(outputpin[i].port, outputpin[i].pin, 1);
     }
 
     GPIO_Init.Mode = GPIO_MODE_OUTPUT_PP;
@@ -1702,7 +1729,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210806";
+    hal.driver_version = "210810";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
