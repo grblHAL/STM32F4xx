@@ -25,8 +25,8 @@
 #error "Trinamic plugin not supported!"
 #endif
 
-#ifndef STM32F407xx
-#error "This board has STM32F407 processor, select a corresponding build!"
+#if !defined(STM32F407xx) || HSE_VALUE == 8000000
+#error "This board has STM32F407 processor with a 25MHz crystal, select a corresponding build!"
 #endif
 
 #define BOARD_NAME "BTT SKR PRO v1.1"

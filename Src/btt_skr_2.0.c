@@ -1,9 +1,9 @@
 /*
-  btt_skr_2.c - driver code for STM32F407xx ARM processors
+  btt_skr_2.0.c - driver code for STM32F407xx ARM processors
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2021 fitch22
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,12 +23,9 @@
 
 #if defined(BOARD_BTT_SKR_20)
 
-//#include "chip.h"
-
 #if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
 
 #include "trinamic/common.h"
-
 
 #define spi_get_byte() sw_spi_xfer(0)
 #define spi_put_byte(d) sw_spi_xfer(d)
@@ -120,9 +117,9 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
 
 void board_init (void)
 {
-#if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
-
     GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+#if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
 
     // Set all output pins: push-pull, no pull-up, slow
     GPIO_InitStruct.Pin = TMC_MOSI_BIT;
@@ -193,7 +190,7 @@ void board_init (void)
     GPIO_InitStruct.Pin = SAFE_PWR_BIT;
     HAL_GPIO_Init(SAFE_PWR_PORT, &GPIO_InitStruct);
     HAL_GPIO_WritePin(SAFE_PWR_PORT, SAFE_PWR_BIT, GPIO_PIN_SET);
-    HAL_Delay(100);	// need a little time for the power to come up and driver to come out of reset
+    hal.delay_ms(100, NULL);	// need a little time for the power to come up and driver to come out of reset
 }
 
 #endif  // BOARD_BTT_SKR_20

@@ -1,7 +1,9 @@
 /*
-  skr_2_map.h - driver code for STM32F407 ARM processors
+  btt_skr_2.0_map.h - driver code for STM32F407 ARM processors
 
   Part of grblHAL
+
+  Copyright (c) 2021 fitch22
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,20 +23,12 @@
 #error "BTT SKR-2 supports 5 motors max."
 #endif
 
-#if TRINAMIC_ENABLE == 2130
-#include "trinamic\tmc2130.h"
+#if TRINAMIC_ENABLE && N_GANGED > 0
+#error "BTT SKR-2 does not support ganged motors with Trinamic drivers."
 #endif
 
-#if TRINAMIC_ENABLE == 5160
-#include "trinamic\tmc5160.h"
-#endif
-
-#if TRINAMIC_ENABLE == 2209
-#include "trinamic\tmc2209.h"
-#endif
-
-#ifndef STM32F407xx
-#error "This board has STM32F407 processor, select a corresponding build!"
+#if !defined(STM32F407xx) || HSE_VALUE != 8000000
+#error "This board has STM32F407 processor with a 8MHz crystal, select a corresponding build!"
 #endif
 
 #define BOARD_NAME "BTT SKR-2"

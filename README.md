@@ -8,7 +8,9 @@ See the Wiki-page for [compiling grblHAL](https://github.com/grblHAL/core/wiki/C
 
 ---
 
-2021-05-28: Added support for [BTT SKR PRO](https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html)
+2021-08-10: Added support for [BTT SKR 2](https://www.bigtree-tech.com/products/bigtreetech-skr-2.html), this is based on a STM32F407 processor with a 8MHz crystal.
+
+2021-05-28: Added support for [BTT SKR PRO](https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html), this is based on a STM32F407 processor with a 25MHz crystal.
 
 ---
 
@@ -60,4 +62,4 @@ CNC breakout boards:
 [CNC breakout for Nucleo-64](https://github.com/terjeio/CNC_Breakout_Nucleo64) by Terje Io.
 
 ---
-2021-04-14
+2021-08-10
