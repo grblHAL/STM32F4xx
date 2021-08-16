@@ -30,12 +30,9 @@
 #define spi_get_byte() sw_spi_xfer(0)
 #define spi_put_byte(d) sw_spi_xfer(d)
 
-static uint16_t cs_pin[N_AXIS];
-static GPIO_TypeDef *cs_port[N_AXIS];
-
 static struct {
     GPIO_TypeDef *port;
-    uint16_t bit;
+    uint16_t pin;
 } cs[TMC_N_MOTORS_MAX];
 
 // XXXXX replace with something better...
@@ -71,7 +68,7 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *data
 {
     TMC_spi_status_t status;
 
-    DIGITAL_OUT(cs_port[driver.axis], cs_pin[driver.axis], 0);
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 0);
 
     datagram->payload.value = 0;
 
@@ -82,9 +79,9 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *data
     spi_put_byte(0);
     spi_put_byte(0);
 
-    DIGITAL_OUT(cs_port[driver.axis], cs_pin[driver.axis], 1);
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 1);
     delay();
-    DIGITAL_OUT(cs_port[driver.axis], cs_pin[driver.axis], 0);
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 0);
 
     status = spi_put_byte(datagram->addr.value);
     datagram->payload.data[3] = spi_get_byte();
@@ -92,7 +89,7 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *data
     datagram->payload.data[1] = spi_get_byte();
     datagram->payload.data[0] = spi_get_byte();
 
-    DIGITAL_OUT(cs_port[driver.axis], cs_pin[driver.axis], 1);
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 1);
 
     return status;
 }
@@ -101,7 +98,7 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
 {
     TMC_spi_status_t status;
 
-    DIGITAL_OUT(cs_port[driver.axis], cs_pin[driver.axis], 0);
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 0);
 
     datagram->addr.write = 1;
     status = spi_put_byte(datagram->addr.value);
@@ -110,37 +107,37 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
     spi_put_byte(datagram->payload.data[1]);
     spi_put_byte(datagram->payload.data[0]);
 
-    DIGITAL_OUT(cs_port[driver.axis], cs_pin[driver.axis], 1);
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 1);
 
     return status;
 }
 
 #endif
 
-static void add_cs_pin (xbar_t *pin)
+static void add_cs_pin (xbar_t *gpio)
 {
-    if(pin->group == PinGroup_MotorChipSelect) {
-        switch(pin->function) {
+    if(gpio->group == PinGroup_MotorChipSelect) {
+        switch(gpio->function) {
 
             case Output_MotorChipSelectX:
-                cs[X_AXIS].bit = pin->bit;
-                cs[X_AXIS].port = (GPIO_TypeDef *)pin->port;
+                cs[X_AXIS].port = (GPIO_TypeDef *)gpio->port;
+                cs[X_AXIS].pin = gpio->pin;
                 break;
             case Output_MotorChipSelectY:
-                cs[Y_AXIS].bit = pin->bit;
-                cs[Y_AXIS].port = (GPIO_TypeDef *)pin->port;
+                cs[Y_AXIS].port = (GPIO_TypeDef *)gpio->port;
+                cs[Y_AXIS].pin = gpio->pin;
                 break;
             case Output_MotorChipSelectZ:
-                cs[Z_AXIS].bit = pin->bit;
-                cs[Z_AXIS].port = (GPIO_TypeDef *)pin->port;
+                cs[Z_AXIS].port = (GPIO_TypeDef *)gpio->port;
+                cs[Z_AXIS].pin = gpio->pin;
                 break;
             case Output_MotorChipSelectM3:
-                cs[3].bit = pin->bit;
-                cs[3].port = (GPIO_TypeDef *)pin->port;
+                cs[3].port = (GPIO_TypeDef *)gpio->port;
+                cs[3].pin = gpio->pin;
                 break;
             case Output_MotorChipSelectM4:
-                cs[4].bit = pin->bit;
-                cs[5].port = (GPIO_TypeDef *)pin->port;
+                cs[4].port = (GPIO_TypeDef *)gpio->port;
+                cs[4].pin = gpio->pin;
                 break;
 
             default:
@@ -148,9 +145,9 @@ static void add_cs_pin (xbar_t *pin)
         }
     }
 
-    if(pin->group == PinGroup_StepperPower) {
-		if(pin->function == Output_StepperPower) {
-			DIGITAL_OUT((GPIO_TypeDef *)(pin->port), pin->pin, 1);
+    if(gpio->group == PinGroup_StepperPower) {
+		if(gpio->function == Output_StepperPower) {
+			DIGITAL_OUT((GPIO_TypeDef *)gpio->port, gpio->pin, 1);
 			HAL_Delay(100);
 		}
     }
@@ -206,23 +203,6 @@ static void if_init(axes_signals_t enabled)
         GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
         GPIO_InitStruct.Pull = GPIO_PULLUP;
         HAL_GPIO_Init(TRINAMIC_MISO_PORT, &GPIO_InitStruct);
-
-        // Save pin and port information
-        // XXXXX This may be redundant with enumerate_pins
-        cs_pin[X_AXIS] = MOTOR_CSX_PIN;
-        cs_port[X_AXIS] = MOTOR_CSX_PORT;
-        cs_pin[Y_AXIS] = MOTOR_CSY_PIN;
-        cs_port[Y_AXIS] = MOTOR_CSY_PORT;
-        cs_pin[Z_AXIS] = MOTOR_CSZ_PIN;
-        cs_port[Z_AXIS] = MOTOR_CSZ_PORT;
-#ifdef A_AXIS
-        cs_pin[A_AXIS] = MOTOR_CSM3_PIN;
-        cs_port[A_AXIS] = MOTOR_CSM3_PORT;
-#endif
-#ifdef B_AXIS
-        cs_bit[B_AXIS] = MOTOR_CSM4_PIN;
-        cs_port[B_AXIS] = MOTOR_CSM4_PORT;
-#endif
 
         hal.enumerate_pins(true, add_cs_pin);
     }
