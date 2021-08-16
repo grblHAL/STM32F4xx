@@ -112,8 +112,11 @@
 #define M4_STEP_PIN                 11
 #define M4_DIRECTION_PORT           GPIOD
 #define M4_DIRECTION_PIN            10
-#define M4_LIMIT_PORT               GPIOA
-#define M4_LIMIT_PIN                0
+// The normal limit pin for E1 is PCA0, but bit 0 already has an interrupt (Z_LIMIT_PIN).
+// PC15 is normally used for PWRDET but is used for M4_LIMIT_PIN instead.
+// If using TMC drivers, jumper from PWRDET connector pin 3 to DIAG pin on driver.
+#define M4_LIMIT_PORT               GPIOC                       // orig GPIOA
+#define M4_LIMIT_PIN                15                          // orig 0
 #define M4_ENABLE_PORT              GPIOD
 #define M4_ENABLE_PIN               13
 #endif
@@ -140,21 +143,20 @@
 #define COOLANT_MIST_BIT            (1<<COOLANT_MIST_PIN)
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT                  GPIOC
-#define RESET_PIN                   2                           // E0 Limit
+// These are all available on EXP2 along with electrical RESET* (EXP2-8)
+#define CONTROL_PORT                GPIOA
+#define RESET_PIN                   4                           // Exp2-4
 #define RESET_BIT                   (1<<RESET_PIN)
 
-#define FEED_HOLD_PORT              GPIOE
-#define FEED_HOLD_PIN               6                           // RGB
+#define FEED_HOLD_PIN               5                           // Exp2-2
 #define FEED_HOLD_BIT               (1<<FEED_HOLD_PIN)
 
-#define CYCLE_START_PORT            GPIOE
-#define CYCLE_START_PIN             5                           // Servos
+#define CYCLE_START_PIN             6                           // Exp2-1
 #define CYCLE_START_BIT             (1<<CYCLE_START_PIN)
 
 #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
-#define SAFETY_DOOR_PORT            GPIOB
-#define SAFETY_DOOR_PIN             1                           // EXP1 - PB1, pin 8
+#define SAFETY_DOOR_PORT            GPIOA
+#define SAFETY_DOOR_PIN             7                           // EXP2-6
 #define SAFETY_DOOR_BIT             (1<<SAFETY_DOOR_PIN)
 #define CONTROL_MASK                (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT|SAFETY_DOOR_BIT)
 #else
@@ -181,13 +183,14 @@
 #define TRINAMIC_SCK_PORT           GPIOE
 #define TRINAMIC_SCK_PIN            15
 #define TRINAMIC_SCK_BIT            (1 << TRINAMIC_SCK_PIN)
-#define TRINAMIC_MISO_PORT          GPIOA
 
 // BigTreeTech used PA14 (SWCLK) as MOT_MISO.
 // For debugging, change this to PA6 (on EXP2) and jumper directly to MISO pins on TMC2130s.
 #ifdef DEBUG
-#define TRINAMIC_MISO_PIN           6		// temporary EXP2-1 to use while debugging.  real one is PA14
+#define TRINAMIC_MISO_PORT          GPIOE
+#define TRINAMIC_MISO_PIN           7		// temporary EXP2-3 to use while debugging.  real one is PA14
 #else
+#define TRINAMIC_MISO_PORT          GPIOA
 #define TRINAMIC_MISO_PIN           14
 #endif
 #define TRINAMIC_MISO_BIT           (1 << TRINAMIC_MISO_PIN)
