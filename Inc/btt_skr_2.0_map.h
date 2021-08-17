@@ -37,6 +37,11 @@
 #define I2C_PORT 1      // GPIOB, SCL_PIN = 8, SDA_PIN = 9
 //#define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
 
+// If we want to debug, we need to use USART1
+#if defined(DEBUG) && defined(USB_SERIAL_CDC)
+#undef USB_SERIAL_CDC
+#endif
+
 // Define step pulse output pins.
 #define X_STEP_PORT                 GPIOE
 #define X_STEP_PIN                  2                   // X
@@ -107,8 +112,11 @@
 #define M4_STEP_PIN                 11
 #define M4_DIRECTION_PORT           GPIOD
 #define M4_DIRECTION_PIN            10
-#define M4_LIMIT_PORT               GPIOA
-#define M4_LIMIT_PIN                0
+// The normal limit pin for E1 is PCA0, but bit 0 already has an interrupt (Z_LIMIT_PIN).
+// PC15 is normally used for PWRDET but is used for M4_LIMIT_PIN instead.
+// If using TMC drivers, jumper from PWRDET connector pin 3 to DIAG pin on driver.
+#define M4_LIMIT_PORT               GPIOC                       // orig GPIOA
+#define M4_LIMIT_PIN                15                          // orig 0
 #define M4_ENABLE_PORT              GPIOD
 #define M4_ENABLE_PIN               13
 #endif
@@ -135,21 +143,20 @@
 #define COOLANT_MIST_BIT            (1<<COOLANT_MIST_PIN)
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT                  GPIOC
-#define RESET_PIN                   2                           // E0 Limit
+// These are all available on EXP2 along with electrical RESET* (EXP2-8)
+#define CONTROL_PORT                GPIOA
+#define RESET_PIN                   4                           // Exp2-4
 #define RESET_BIT                   (1<<RESET_PIN)
 
-#define FEED_HOLD_PORT              GPIOE
-#define FEED_HOLD_PIN               6                           // RGB
+#define FEED_HOLD_PIN               5                           // Exp2-2
 #define FEED_HOLD_BIT               (1<<FEED_HOLD_PIN)
 
-#define CYCLE_START_PORT            GPIOE
-#define CYCLE_START_PIN             5                           // Servos
+#define CYCLE_START_PIN             6                           // Exp2-1
 #define CYCLE_START_BIT             (1<<CYCLE_START_PIN)
 
 #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
-#define SAFETY_DOOR_PORT            GPIOB
-#define SAFETY_DOOR_PIN             1                           // EXP1 - PB1, pin 8
+#define SAFETY_DOOR_PORT            GPIOA
+#define SAFETY_DOOR_PIN             7                           // EXP2-6
 #define SAFETY_DOOR_BIT             (1<<SAFETY_DOOR_PIN)
 #define CONTROL_MASK                (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT|SAFETY_DOOR_BIT)
 #else
@@ -170,43 +177,50 @@
 
 // The BTT SKR-2 uses software SPI
 // MISO pin is also SWCLK from JTAG port, so can't debug with Trinamic SPI drivers:-(
-#define TMC_MOSI_PORT               GPIOE
-#define TMC_MOSI_PIN                14
-#define TMC_MOSI_BIT                (1 << TMC_MOSI_PIN)
-#define TMC_SCK_PORT                GPIOE
-#define TMC_SCK_PIN                 15
-#define TMC_SCK_BIT                 (1 << TMC_SCK_PIN)
-#define TMC_MISO_PORT               GPIOA
+#define TRINAMIC_MOSI_PORT          GPIOE
+#define TRINAMIC_MOSI_PIN           14
+#define TRINAMIC_MOSI_BIT           (1 << TRINAMIC_MOSI_PIN)
+#define TRINAMIC_SCK_PORT           GPIOE
+#define TRINAMIC_SCK_PIN            15
+#define TRINAMIC_SCK_BIT            (1 << TRINAMIC_SCK_PIN)
 
 // BigTreeTech used PA14 (SWCLK) as MOT_MISO.
 // For debugging, change this to PA6 (on EXP2) and jumper directly to MISO pins on TMC2130s.
 #ifdef DEBUG
-#define TMC_MISO_PIN                6		// temporary EXP2-1 to use while debugging.  real one is PA14
+#define TRINAMIC_MISO_PORT          GPIOE
+#define TRINAMIC_MISO_PIN           7		// temporary EXP2-3 to use while debugging.  real one is PA14
 #else
-#define TMC_MISO_PIN                14
+#define TRINAMIC_MISO_PORT          GPIOA
+#define TRINAMIC_MISO_PIN           14
 #endif
-#define TMC_MISO_BIT                (1 << TMC_MISO_PIN)
+#define TRINAMIC_MISO_BIT           (1 << TRINAMIC_MISO_PIN)
 
 // The CS pins are also the UART pins for 1 wire serial Trinamic drivers (2208, 2209)
-#define TMC_CSX_PORT                GPIOE
-#define TMC_CSX_PIN                 0
-#define TMC_CSX_BIT                 (1 << TMC_CSX_PIN)
-#define TMC_CSY_PORT                GPIOD
-#define TMC_CSY_PIN                 3
-#define TMC_CSY_BIT                 (1 << TMC_CSY_PIN)
-#define TMC_CSZ_PORT                GPIOD
-#define TMC_CSZ_PIN                 0
-#define TMC_CSZ_BIT                 (1 << TMC_CSZ_PIN)
-#define TMC_CSA_PORT                GPIOC
-#define TMC_CSA_PIN                 6
-#define TMC_CSA_BIT                 (1 << TMC_CSA_PIN)
-#define TMC_CSB_PORT                GPIOD
-#define TMC_CSB_PIN                 12
-#define TMC_CSB_BIT                 (1 << TMC_CSB_PIN)
+#define MOTOR_CSX_PORT              GPIOE
+#define MOTOR_CSX_PIN               0
+#define MOTOR_CSX_BIT               (1 << MOTOR_CSX_PIN)
+#define MOTOR_CSY_PORT              GPIOD
+#define MOTOR_CSY_PIN               3
+#define MOTOR_CSY_BIT               (1 << MOTOR_CSY_PIN)
+#define MOTOR_CSZ_PORT              GPIOD
+#define MOTOR_CSZ_PIN               0
+#define MOTOR_CSZ_BIT               (1 << MOTOR_CSZ_PIN)
+
+#ifdef  M3_AVAILABLE
+#define MOTOR_CSM3_PORT             GPIOC
+#define MOTOR_CSM3_PIN              6
+#define MOTOR_CSM3_BIT              (1 << MOTOR_CSM3_PIN)
+#endif
+
+#ifdef  M4_AVAILABLE
+#define MOTOR_CSM4_PORT             GPIOD
+#define MOTOR_CSM4_PIN              12
+#define MOTOR_CSM4_BIT              (1 << MOTOR_CSM4_PIN)
+#endif
 
 // Safe Power Control
-#define SAFE_PWR_PORT               GPIOC
-#define SAFE_PWR_PIN                13
-#define SAFE_PWR_BIT                (1 << SAFE_PWR_PIN)
+#define STEPPERS_POWER_PORT         GPIOC
+#define STEPPERS_POWER_PIN          13
+#define STEPPERS_POWER_BIT          (1 << STEPPERS_POWER_PIN)
 
 // EOF

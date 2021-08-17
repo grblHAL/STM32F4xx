@@ -136,6 +136,24 @@ static void SystemClock_Config(void)
 
   #endif
 
+#elif defined(STM32F407xx)
+
+    /** Configure the main internal regulator output voltage  */
+   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
+    RCC_OscInitStruct.PLL.PLLN = 336;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+    RCC_OscInitStruct.PLL.PLLQ = 7;
+
+    #define FLASH_LATENCY FLASH_LATENCY_5
+    #define APB1CLKDIV RCC_HCLK_DIV4
+    #define APB2CLKDIV RCC_HCLK_DIV2
+
 #else // STM32F401 and STM32F407
 
     /** Configure the main internal regulator output voltage  */
