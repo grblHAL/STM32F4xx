@@ -33,69 +33,67 @@
 
 #if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
 
-static axes_signals_t tmc;
-static uint32_t n_axis;
-static TMC_spi_datagram_t datagram[N_AXIS];
+static struct {
+    GPIO_TypeDef *port;
+    uint32_t pin;
+} cs;
+
+static uint_fast8_t n_motors;
+static TMC_spi_datagram_t datagram[TMC_N_MOTORS_MAX];
 
 TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
 {
     static TMC_spi_status_t status = 0;
 
     uint8_t res;
-    uint_fast8_t idx = N_AXIS, ridx = 0;
+    uint_fast8_t idx = n_motors;
     uint32_t f_spi = spi_set_speed(SPI_BAUDRATEPRESCALER_32);
     volatile uint32_t dly = 100;
 
-    datagram[driver.axis].addr.value = reg->addr.value;
-    datagram[driver.axis].addr.write = 0;
+    datagram[driver.seq].addr.value = reg->addr.value;
+    datagram[driver.seq].addr.write = 0;
 
-    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 0;
+    DIGITAL_OUT(cs.port, cs.pin, 0);
 
     do {
-        if(bit_istrue(tmc.mask, bit(--idx))) {
-            spi_put_byte(datagram[idx].addr.value);
-            spi_put_byte(0);
-            spi_put_byte(0);
-            spi_put_byte(0);
-            spi_put_byte(0);
-        }
+        spi_put_byte(datagram[--idx].addr.value);
+        spi_put_byte(0);
+        spi_put_byte(0);
+        spi_put_byte(0);
+        spi_put_byte(0);
     } while(idx);
 
     while(--dly);
 
-    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 1;
+    DIGITAL_OUT(cs.port, cs.pin, 1);
 
     dly = 50;
     while(--dly);
 
-    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 0;
+    DIGITAL_OUT(cs.port, cs.pin, 0);
 
-    idx = N_AXIS;
+    idx = n_motors;
     do {
-        ridx++;
-        if(bit_istrue(tmc.mask, bit(--idx))) {
+        res = spi_put_byte(datagram[--idx].addr.value);
 
-            res = spi_put_byte(datagram[idx].addr.value);
-
-            if(N_AXIS - ridx == driver.axis) {
-                status = res;
-                reg->payload.data[3] = spi_get_byte();
-                reg->payload.data[2] = spi_get_byte();
-                reg->payload.data[1] = spi_get_byte();
-                reg->payload.data[0] = spi_get_byte();
-            } else {
-                spi_get_byte();
-                spi_get_byte();
-                spi_get_byte();
-                spi_get_byte();
-            }
+        if(idx == driver.seq) {
+            status = res;
+            reg->payload.data[3] = spi_get_byte();
+            reg->payload.data[2] = spi_get_byte();
+            reg->payload.data[1] = spi_get_byte();
+            reg->payload.data[0] = spi_get_byte();
+        } else {
+            spi_get_byte();
+            spi_get_byte();
+            spi_get_byte();
+            spi_get_byte();
         }
     } while(idx);
 
     dly = 100;
     while(--dly);
 
-    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 1;
+    DIGITAL_OUT(cs.port, cs.pin, 1);
 
     dly = 50;
     while(--dly);
@@ -110,38 +108,32 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
     TMC_spi_status_t status = 0;
 
     uint8_t res;
-    uint_fast8_t idx = N_AXIS, ridx = 0;
+    uint_fast8_t idx = n_motors;
     uint32_t f_spi = spi_set_speed(SPI_BAUDRATEPRESCALER_32);
     volatile uint32_t dly = 100;
 
-    memcpy(&datagram[driver.axis], reg, sizeof(TMC_spi_datagram_t));
-    datagram[driver.axis].addr.write = 1;
+    memcpy(&datagram[driver.seq], reg, sizeof(TMC_spi_datagram_t));
+    datagram[driver.seq].addr.write = 1;
 
-    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 0;
+    DIGITAL_OUT(cs.port, cs.pin, 0);
 
     do {
-        ridx++;
-        if(bit_istrue(tmc.mask, bit(--idx))) {
+        res = spi_put_byte(datagram[--idx].addr.value);
+        spi_put_byte(datagram[idx].payload.data[3]);
+        spi_put_byte(datagram[idx].payload.data[2]);
+        spi_put_byte(datagram[idx].payload.data[1]);
+        spi_put_byte(datagram[idx].payload.data[0]);
 
-            res = spi_put_byte(datagram[idx].addr.value);
-            spi_put_byte(datagram[idx].payload.data[3]);
-            spi_put_byte(datagram[idx].payload.data[2]);
-            spi_put_byte(datagram[idx].payload.data[1]);
-            spi_put_byte(datagram[idx].payload.data[0]);
-
-            if(N_AXIS - ridx == driver.axis)
-                status = res;
-
-            if(idx == driver.axis) {
-                datagram[idx].addr.idx = 0; //TMC_SPI_STATUS_REG;
-                datagram[idx].addr.write = 0;
-            }
+        if(idx == driver.seq) {
+            status = res;
+            datagram[idx].addr.idx = 0; // TMC_SPI_STATUS_REG;
+            datagram[idx].addr.write = 0;
         }
     } while(idx);
 
     while(--dly);
 
-    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 1;
+    DIGITAL_OUT(cs.port, cs.pin, 1);
 
     dly = 50;
     while(--dly);
@@ -151,14 +143,18 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
     return status;
 }
 
-void TMC_SPI_DriverInit (axes_signals_t axisflags)
+static void add_cs_pin (xbar_t *gpio)
 {
-    tmc = axisflags;
-    n_axis = 0;
-    while(axisflags.mask) {
-        n_axis += (axisflags.mask & 0x01);
-        axisflags.mask >>= 1;
+    if(gpio->function == Output_MotorChipSelect) {
+        cs.pin = gpio->pin;
+        cs.port = (GPIO_TypeDef *)gpio->port;
     }
+}
+
+static void if_init (uint8_t motors, axes_signals_t axisflags)
+{
+    n_motors = motors;
+    hal.enumerate_pins(true, add_cs_pin);
 }
 
 #endif
@@ -173,7 +169,6 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
 {
     static TMC_uart_write_datagram_t wdgr = {0};
     volatile uint32_t dly = 50, ms = hal.get_elapsed_ticks();
-
 
 //    tmc_uart.reset_write_buffer();
     tmc_uart.write_n((char *)dgr->data, sizeof(TMC_uart_read_datagram_t));
@@ -224,28 +219,25 @@ void board_init (void)
 #if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
 
     trinamic_driver_if_t driver = {
-        .on_drivers_init = TMC_SPI_DriverInit
+        .on_drivers_init = if_init
     };
 
     spi_init();
-//    GPIO_Init.Pin = TRINAMIC_CS_BIT;
-//    HAL_GPIO_Init(TRINAMIC_CS_PORT, &GPIO_Init);
-//    BITBAND_PERI(TRINAMIC_CS_PORT->ODR, TRINAMIC_CS_PIN) = 1;
 
-    uint_fast8_t idx = N_AXIS;
+    uint_fast8_t idx = TMC_N_MOTORS_MAX;
     do {
         datagram[--idx].addr.idx = 0; //TMC_SPI_STATUS_REG;
     } while(idx);
 
     trinamic_if_init(&driver);
 
-#endif
+#elif TRINAMIC_ENABLE == 2209
 
-#if TRINAMIC_ENABLE == 2209
     memcpy(&tmc_uart, serial2Init(230400), sizeof(io_stream_t));
 
     tmc_uart.disable(true);
     tmc_uart.set_enqueue_rt_handler(stream_buffer_all);
+
 #endif
 }
 

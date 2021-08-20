@@ -31,6 +31,7 @@
 #include "grbl/limits.h"
 #include "grbl/protocol.h"
 #include "grbl/motor_pins.h"
+#include "grbl/pin_bits_masks.h"
 
 #ifdef I2C_PORT
 #include "i2c.h"
@@ -72,12 +73,20 @@
   #endif
 #endif
 
-#if KEYPAD_ENABLE == 0
+#if !KEYPAD_ENABLE
 #define KEYPAD_STROBE_BIT 0
 #endif
 
 #if !SPINDLE_SYNC_ENABLE
 #define SPINDLE_INDEX_BIT 0
+#endif
+
+#if !SAFETY_DOOR_ENABLE
+#define SAFETY_DOOR_BIT 0
+#endif
+
+#if CONTROL_MASK != (RESET_BIT+FEED_HOLD_BIT+CYCLE_START_BIT+SAFETY_DOOR_BIT)
+#error Interrupt enabled input pins must have unique pin numbers!
 #endif
 
 #define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|KEYPAD_STROBE_BIT|SPINDLE_INDEX_BIT)
@@ -375,28 +384,28 @@ static void stepperEnable (axes_signals_t enable)
     enable.mask ^= settings.steppers.enable_invert.mask;
 #if !TRINAMIC_MOTOR_ENABLE
   #ifdef STEPPERS_ENABLE_PORT
-    BITBAND_PERI(STEPPERS_ENABLE_PORT->ODR, STEPPERS_ENABLE_PIN) = enable.x;
+    DIGITAL_OUT(STEPPERS_ENABLE_PORT, STEPPERS_ENABLE_PIN, enable.x);
   #else
-    BITBAND_PERI(X_ENABLE_PORT->ODR, X_ENABLE_PIN) = enable.x;
-   #ifdef X2_DIRECTION_PIN
-    BITBAND_PERI(X2_DIRECTION_PORT->ODR, X2_DIRECTION_PIN) = enable.x;
+    DIGITAL_OUT(X_ENABLE_PORT, X_ENABLE_PIN, enable.x);
+   #ifdef X2_ENABLE_PIN
+    DIGITAL_OUT(X2_ENABLE_PORT, X2_ENABLE_PIN, enable.x);
    #endif
-    BITBAND_PERI(Y_ENABLE_PORT->ODR, Y_ENABLE_PIN) = enable.y;
-   #ifdef Y2_DIRECTION_PIN
-    BITBAND_PERI(Y2_DIRECTION_PORT->ODR, Y2_DIRECTION_PIN) = enable.y;
+    DIGITAL_OUT(Y_ENABLE_PORT, Y_ENABLE_PIN, enable.y);
+   #ifdef Y2_ENABLE_PIN
+    DIGITAL_OUT(Y2_ENABLE_PORT, Y2_ENABLE_PIN, enable.y);
    #endif
-    BITBAND_PERI(Z_ENABLE_PORT->ODR, Z_ENABLE_PIN) = enable.z;
-   #ifdef Z2_DIRECTION_PIN
-    BITBAND_PERI(Z2_DIRECTION_PORT->ODR, Z2_DIRECTION_PIN) = enable.z;
+    DIGITAL_OUT(Z_ENABLE_PORT, Z_ENABLE_PIN, enable.z);
+   #ifdef Z2_ENABLE_PIN
+    DIGITAL_OUT(Z2_ENABLE_PORT, Z2_ENABLE_PIN, enable.z);
    #endif
    #ifdef A_ENABLE_PORT
-    BITBAND_PERI(A_ENABLE_PORT->ODR, A_ENABLE_PIN) = enable.a;
+    DIGITAL_OUT(A_ENABLE_PORT, A_ENABLE_PIN, enable.a);
    #endif
    #ifdef B_ENABLE_PORT
-    BITBAND_PERI(B_ENABLE_PORT->ODR, B_ENABLE_PIN) = enable.b;
+    DIGITAL_OUT(B_ENABLE_PORT, B_ENABLE_PIN, enable.b);
    #endif
    #ifdef C_ENABLE_PORT
-    BITBAND_PERI(C_ENABLE_PORT->ODR, C_ENABLE_PIN) = enable.c;
+    DIGITAL_OUT(C_ENABLE_PORT, C_ENABLE_PIN, enable.c);
    #endif
   #endif
 #endif
@@ -437,34 +446,51 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
 #if STEP_OUTMODE == GPIO_BITBAND
     step_outbits_1.mask = (step_outbits_1.mask & motors_1.mask) ^ settings.steppers.step_invert.mask;
 
-    BITBAND_PERI(X_STEP_PORT->ODR, X_STEP_PIN) = step_outbits_1.x;
-    BITBAND_PERI(Y_STEP_PORT->ODR, Y_STEP_PIN) = step_outbits_1.y;
-    BITBAND_PERI(Z_STEP_PORT->ODR, Z_STEP_PIN) = step_outbits_1.z;
-
+    DIGITAL_OUT(X_STEP_PORT, X_STEP_PIN, step_outbits_1.x);
+ #ifdef X2_STEP_PIN
+    DIGITAL_OUT(X2_STEP_PORT, X2_STEP_PIN, step_outbits_2.x);
+ #endif
+    DIGITAL_OUT(Y_STEP_PORT, Y_STEP_PIN, step_outbits_1.y);
+ #ifdef Y2_STEP_PIN
+    DIGITAL_OUT(Y2_STEP_PORT, Y2_STEP_PIN, step_outbits_2.y);
+ #endif
+    DIGITAL_OUT(Z_STEP_PORT, Z_STEP_PIN, step_outbits_1.z);
+ #ifdef Z2_STEP_PIN
+    DIGITAL_OUT(Z2_STEP_PORT, Z2_STEP_PIN, step_outbits_2.z);
+ #endif
  #ifdef A_AXIS
-    BITBAND_PERI(A_STEP_PORT->ODR, A_STEP_PIN) = step_outbits_1.a;
+    DIGITAL_OUT(A_STEP_PORT, A_STEP_PIN, step_outbits_1.a);
  #endif
  #ifdef B_AXIS
-    BITBAND_PERI(B_STEP_PORT->ODR, B_STEP_PIN) = step_outbits_1.b;
+    DIGITAL_OUT(B_STEP_PORT, B_STEP_PIN, step_outbits_1.b);
  #endif
  #ifdef C_AXIS
-    BITBAND_PERI(C_STEP_PORT->ODR, C_STEP_PIN) = step_outbits_1.c;
+    DIGITAL_OUT(C_STEP_PORT, C_STEP_PIN, step_outbits_1.c);
  #endif
 
 #elif STEP_OUTMODE == GPIO_MAP
     STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits_1.value & motors_1.mask];
-#else
-    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | (((step_outbits_1.mask & motors_1.mask) ^ settings.steppers.step_invert.mask) << STEP_OUTMODE);
-#endif
+ #ifdef X2_STEP_PIN
+    DIGITAL_OUT(X2_STEP_PORT, X2_STEP_PIN, step_outbits_2.x);
+ #endif
+ #ifdef Y2_STEP_PIN
+    DIGITAL_OUT(Y2_STEP_PORT, Y2_STEP_PIN, step_outbits_2.y);
+ #endif
+ #ifdef Z2_STEP_PIN
+    DIGITAL_OUT(Z2_STEP_PORT, Z2_STEP_PIN, step_outbits_2.z);
+ #endif
 
-#ifdef X2_STEP_PIN
-    BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits_2.x;
-#endif
-#ifdef Y2_STEP_PIN
-    BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits_2.y;
-#endif
-#ifdef Z2_STEP_PIN
-    BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits_2.z;
+#else // STEP_OUTMODE == GPIO_SHIFTx
+    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | (((step_outbits_1.mask & motors_1.mask) ^ settings.steppers.step_invert.mask) << STEP_OUTMODE);
+ #ifdef X2_STEP_PIN
+    DIGITAL_OUT(X2_STEP_PORT, X2_STEP_PIN, step_outbits_2.x);
+ #endif
+ #ifdef Y2_STEP_PIN
+    DIGITAL_OUT(Y2_STEP_PORT, Y2_STEP_PIN, step_outbits_2.y);
+ #endif
+ #ifdef Z2_STEP_PIN
+    DIGITAL_OUT(Z2_STEP_PORT, Z2_STEP_PIN, step_outbits_2.z);
+ #endif
 #endif
 }
 
@@ -500,52 +526,50 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
 {
 #if STEP_OUTMODE == GPIO_BITBAND
     step_outbits.mask ^= settings.steppers.step_invert.mask;
-    BITBAND_PERI(X_STEP_PORT->ODR, X_STEP_PIN) = step_outbits.x;
+    DIGITAL_OUT(X_STEP_PORT, X_STEP_PIN, step_outbits.x);
   #ifdef X2_STEP_PIN
-    BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits.x;
+    DIGITAL_OUT(X2_STEP_PORT, X2_STEP_PIN, step_outbits.x);
   #endif
-    BITBAND_PERI(Y_STEP_PORT->ODR, Y_STEP_PIN) = step_outbits.y;
+    DIGITAL_OUT(Y_STEP_PORT, Y_STEP_PIN, step_outbits.y);
   #ifdef Y2_STEP_PIN
-    BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits.y;
+    DIGITAL_OUT(Y2_STEP_PORT, Y2_STEP_PIN, step_outbits.y);
   #endif
-    BITBAND_PERI(Z_STEP_PORT->ODR, Z_STEP_PIN) = step_outbits.z;
+    DIGITAL_OUT(Z_STEP_PORT, Z_STEP_PIN, step_outbits.z);
   #ifdef Z2_STEP_PIN
-    BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits.z;
+    DIGITAL_OUT(Z2_STEP_PORT, Z2_STEP_PIN, step_outbits.z);
   #endif
   #ifdef A_AXIS
-    BITBAND_PERI(A_STEP_PORT->ODR, A_STEP_PIN) = step_outbits.a;
+    DIGITAL_OUT(A_STEP_PORT, A_STEP_PIN, step_outbits.a);
   #endif
   #ifdef B_AXIS
-    BITBAND_PERI(B_STEP_PORT->ODR, B_STEP_PIN) = step_outbits.b;
+    DIGITAL_OUT(B_STEP_PORT, B_STEP_PIN, step_outbits.b);
   #endif
   #ifdef C_AXIS
-    BITBAND_PERI(C_STEP_PORT->ODR, C_STEP_PIN) = step_outbits.c;
+    DIGITAL_OUT(C_STEP_PORT->ODR, C_STEP_PIN, step_outbits.c);
   #endif
 #elif STEP_OUTMODE == GPIO_MAP
     STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits.value];
- #if N_GANGED
   #ifdef X2_STEP_PIN
-    BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits.x ^ settings.steppers.step_invert.x;
+    DIGITAL_OUT(X2_STEP_PORT, X2_STEP_PIN, step_outbits.x ^ settings.steppers.step_invert.x);
   #endif
   #ifdef Y2_STEP_PIN
-    BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits.y ^ settings.steppers.step_invert.y;
+    DIGITAL_OUT(Y2_STEP_PORT, Y2_STEP_PIN, step_outbits.y ^ settings.steppers.step_invert.y);
   #endif
   #ifdef Z2_STEP_PIN
-    BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits.z ^ settings.steppers.step_invert.z;
+    DIGITAL_OUT(Z2_STEP_PORT, Z2_STEP_PIN, step_outbits.z ^ settings.steppers.step_invert.z);
   #endif
- #endif
-#else
+#else // STEP_OUTMODE == GPIO_SHIFTx
  #if N_GANGED
    step_outbits.mask ^= settings.steppers.step_invert.mask;
    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | (step_outbits.mask << STEP_OUTMODE);
   #ifdef X2_STEP_PIN
-   BITBAND_PERI(X2_STEP_PORT->ODR, X2_STEP_PIN) = step_outbits.x;
+   DIGITAL_OUT(X2_STEP_PORT, X2_STEP_PIN, step_outbits.x);
   #endif
-  #ifdef Y2_STEP_PIN
-   BITBAND_PERI(Y2_STEP_PORT->ODR, Y2_STEP_PIN) = step_outbits.y;
+  #ifdef Y2_SIN
+   DIGITAL_OUT(Y2_STEP_PORT, Y2_STEP_PIN, step_outbits.y);
   #endif
   #ifdef Z2_STEP_PIN
-   BITBAND_PERI(Z2_STEP_PORT->ODR, Z2_STEP_PIN) = step_outbits.z;
+   DIGITAL_OUT(Z2_STEP_PORT, Z2_STEP_PIN, step_outbits.z);
   #endif
  #else
    STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | ((step_outbits.value << STEP_OUTMODE) ^ settings.steppers.step_invert.value);
@@ -561,52 +585,50 @@ inline static __attribute__((always_inline)) void stepperSetDirOutputs (axes_sig
 {
 #if DIRECTION_OUTMODE == GPIO_BITBAND
     dir_outbits.mask ^= settings.steppers.dir_invert.mask;
-    BITBAND_PERI(X_DIRECTION_PORT->ODR, X_DIRECTION_PIN) = dir_outbits.x;
-    BITBAND_PERI(Y_DIRECTION_PORT->ODR, Y_DIRECTION_PIN) = dir_outbits.y;
-    BITBAND_PERI(Z_DIRECTION_PORT->ODR, Z_DIRECTION_PIN) = dir_outbits.z;
+    DIGITAL_OUT(X_DIRECTION_PORT, X_DIRECTION_PIN, dir_outbits.x);
+    DIGITAL_OUT(Y_DIRECTION_PORT, Y_DIRECTION_PIN, dir_outbits.y);
+    DIGITAL_OUT(Z_DIRECTION_PORT, Z_DIRECTION_PIN, dir_outbits.z);
 #ifdef X2_DIRECTION_PIN
-    BITBAND_PERI(X2_DIRECTION_PORT->ODR, X2_DIRECTION_PIN) = dir_outbits.x;
+    DIGITAL_OUT(X2_DIRECTION_PORT, X2_DIRECTION_PIN, dir_outbits.x);
 #endif
 #ifdef Y2_DIRECTION_PIN
-    BITBAND_PERI(Y2_DIRECTION_PORT->ODR, Y2_DIRECTION_PIN) = dir_outbits.y;
+    DIGITAL_OUT(Y2_DIRECTION_PORT, Y2_DIRECTION_PIN, dir_outbits.y);
 #endif
 #ifdef Z2_DIRECTION_PIN
-    BITBAND_PERI(Z2_DIRECTION_PORT->ODR, Z2_DIRECTION_PIN) = dir_outbits.z;
+    DIGITAL_OUT(Z2_DIRECTION_PORT, Z2_DIRECTION_PIN, dir_outbits.z);
 #endif
 #ifdef A_AXIS
-    BITBAND_PERI(A_DIRECTION_PORT->ODR, A_DIRECTION_PIN) = dir_outbits.a;
+    DIGITAL_OUT(A_DIRECTION_PORT, A_DIRECTION_PIN, dir_outbits.a);
 #endif
 #ifdef B_AXIS
-    BITBAND_PERI(B_DIRECTION_PORT->ODR, B_DIRECTION_PIN) = dir_outbits.b;
+    DIGITAL_OUT(B_DIRECTION_PORT, B_DIRECTION_PIN, dir_outbits.b);
 #endif
 #ifdef C_AXIS
-    BITBAND_PERI(C_DIRECTION_PORT->ODR, C_DIRECTION_PIN) = dir_outbits.c;
+    DIGITAL_OUT(C_DIRECTION_PORT, C_DIRECTION_PIN, dir_outbits.c);
 #endif
 #elif DIRECTION_OUTMODE == GPIO_MAP
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | dir_outmap[dir_outbits.value];
- #if N_GANGED
   #ifdef X2_DIRECTION_PIN
-    BITBAND_PERI(X2_DIRECTION_PORT->ODR, X2_DIRECTION_PIN) = dir_outbits.x ^ settings.steppers.dir_invert.x;
+    DIGITAL_OUT(X2_DIRECTION_PORT, X2_DIRECTION_PIN, dir_outbits.x ^ settings.steppers.dir_invert.x);
   #endif
   #ifdef Y2_DIRECTION_PIN
-    BITBAND_PERI(Y2_DIRECTION_PORT->ODR, Y2_DIRECTION_PIN) = dir_outbits.y ^ settings.steppers.dir_invert.y;
+    DIGITAL_OUT(Y2_DIRECTION_PORT, Y2_DIRECTION_PIN, dir_outbits.y ^ settings.steppers.dir_invert.y);
   #endif
   #ifdef Z2_DIRECTION_PIN
-    BITBAND_PERI(Z2_DIRECTION_PORT->ODR, Z2_DIRECTION_PIN) = dir_outbits.z ^ settings.steppers.dir_invert.z;
+    DIGITAL_OUT(Z2_DIRECTION_PORT, Z2_DIRECTION_PIN, dir_outbits.z ^ settings.steppers.dir_invert.z);
   #endif
- #endif
-#else
+#else // DIRECTION_OUTMODE = SHIFTx
  #if N_GANGED
     dir_outbits.mask ^= settings.steppers.dir_invert.mask;
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | (dir_outbits.mask << DIRECTION_OUTMODE);
   #ifdef X2_DIRECTION_PIN
-    BITBAND_PERI(X2_DIRECTION_PORT->ODR, X2_DIRECTION_PIN) = dir_outbits.x;
+    DIGITAL_OUT(X2_DIRECTION_PORT, X2_DIRECTION_PIN, dir_outbits.x);
   #endif
   #ifdef Y2_DIRECTION_PIN
-    BITBAND_PERI(Y2_DIRECTION_PORT->ODR, Y2_DIRECTION_PIN) = dir_outbits.y;
+    DIGITAL_OUT(Y2_DIRECTION_PORT, Y2_DIRECTION_PIN, dir_outbits.y);
   #endif
   #ifdef Z2_DIRECTION_PIN
-    BITBAND_PERI(Z2_DIRECTION_PORT->ODR, Z2_DIRECTION_PIN) = dir_outbits.z;
+    DIGITAL_OUT(Z2_DIRECTION_PORT, Z2_DIRECTION_PIN, dir_outbits.z);
   #endif
  #else
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | ((dir_outbits.mask ^ settings.steppers.dir_invert.mask) << DIRECTION_OUTMODE);
@@ -858,14 +880,14 @@ static control_signals_t systemGetState (void)
 
 #if CONTROL_INMODE == GPIO_BITBAND
 #if ESTOP_ENABLE
-    signals.e_stop = BITBAND_PERI(CONTROL_PORT_ESTOP->IDR, RESET_PIN);
+    signals.e_stop = DIGITAL_IN(RESET_PORT, RESET_PIN);
 #else
-    signals.reset = BITBAND_PERI(RESET_PORT->IDR, RESET_PIN);
+    signals.reset = DIGITAL_IN(RESET_PORT, RESET_PIN);
 #endif
-    signals.feed_hold = BITBAND_PERI(FEED_HOLD_PORT->IDR, FEED_HOLD_PIN);
-    signals.cycle_start = BITBAND_PERI(CYCLE_START_PORT->IDR, CYCLE_START_PIN);
+    signals.feed_hold = DIGITAL_IN(FEED_HOLD_PORT, FEED_HOLD_PIN);
+    signals.cycle_start = DIGITAL_IN(CYCLE_START_PORT, CYCLE_START_PIN);
   #ifdef SAFETY_DOOR_PIN
-    signals.safety_door_ajar = BITBAND_PERI(SAFETY_DOOR_PORT->IDR, SAFETY_DOOR_PIN);
+    signals.safety_door_ajar = DIGITAL_IN(SAFETY_DOOR_PORT, SAFETY_DOOR_PIN);
   #endif
 #elif CONTROL_INMODE == GPIO_MAP
     uint32_t bits = CONTROL_PORT->IDR;
@@ -914,7 +936,7 @@ probe_state_t probeGetState (void)
     probe_state_t state = {0};
 
     state.connected = probe.connected;
-    state.triggered = !!(PROBE_PORT->IDR & PROBE_BIT) ^ probe.inverted;
+    state.triggered = DIGITAL_IN(PROBE_PORT, PROBE_PIN) ^ probe.inverted;
 
     return state;
 }
@@ -928,14 +950,14 @@ probe_state_t probeGetState (void)
 inline static void spindle_off (void)
 {
 #ifdef SPINDLE_ENABLE_PIN
-    BITBAND_PERI(SPINDLE_ENABLE_PORT->ODR, SPINDLE_ENABLE_PIN) = settings.spindle.invert.on;
+    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, settings.spindle.invert.on);
 #endif
 }
 
 inline static void spindle_on (void)
 {
 #ifdef SPINDLE_ENABLE_PIN
-    BITBAND_PERI(SPINDLE_ENABLE_PORT->ODR, SPINDLE_ENABLE_PIN) = !settings.spindle.invert.on;
+    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, !settings.spindle.invert.on);
 #endif
 #if SPINDLE_SYNC_ENABLE
     spindleDataReset();
@@ -946,7 +968,7 @@ inline static void spindle_dir (bool ccw)
 {
 #ifdef SPINDLE_DIRECTION_PIN
     if(hal.driver_cap.spindle_dir)
-        BITBAND_PERI(SPINDLE_DIRECTION_PORT->ODR, SPINDLE_DIRECTION_PIN) = ccw ^ settings.spindle.invert.ccw;
+        DIGITAL_OUT(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN, ccw ^ settings.spindle.invert.ccw);
 #endif
 }
 
@@ -963,6 +985,8 @@ static void spindleSetState (spindle_state_t state, float rpm)
 
 // Variable spindle control functions
 
+#ifdef SPINDLE_PWM_TIMER_N
+
 // Sets spindle speed
 static void spindle_set_speed (uint_fast16_t pwm_value)
 {
@@ -971,18 +995,29 @@ static void spindle_set_speed (uint_fast16_t pwm_value)
         if(settings.spindle.flags.pwm_action == SpindleAction_DisableWithZeroSPeed)
             spindle_off();
         if(spindle_pwm.always_on) {
-            SPINDLE_PWM_TIMER->CCR1 = spindle_pwm.off_value;
+            SPINDLE_PWM_TIMER_CCR = spindle_pwm.off_value;
+#if SPINDLE_PWM_TIMER_N == 1
             SPINDLE_PWM_TIMER->BDTR |= TIM_BDTR_MOE;
+#endif
+            SPINDLE_PWM_TIMER_CCR = pwm_value;
         } else
+#if SPINDLE_PWM_TIMER_N == 1
             SPINDLE_PWM_TIMER->BDTR &= ~TIM_BDTR_MOE; // Set PWM output low
+#else
+            SPINDLE_PWM_TIMER_CCR = 0;
+#endif
     } else {
         if(!pwmEnabled)
             spindle_on();
         pwmEnabled = true;
-        SPINDLE_PWM_TIMER->CCR1 = pwm_value;
+        SPINDLE_PWM_TIMER_CCR = pwm_value;
+#if SPINDLE_PWM_TIMER_N == 1
         SPINDLE_PWM_TIMER->BDTR |= TIM_BDTR_MOE;
+#endif
     }
 }
+
+#endif // SPINDLE_PWM_PORT
 
 #ifdef SPINDLE_PWM_DIRECT
 
@@ -1027,10 +1062,10 @@ static spindle_state_t spindleGetState (void)
     spindle_state_t state = {settings.spindle.invert.mask};
 
 #ifdef SPINDLE_ENABLE_PIN
-    state.on = (SPINDLE_ENABLE_PORT->IDR & SPINDLE_ENABLE_BIT) != 0;
+    state.on = DIGITAL_IN(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN);
 #endif
 #ifdef SPINDLE_DIRECTION_PIN
-    state.ccw = hal.driver_cap.spindle_dir && (SPINDLE_DIRECTION_PORT->IDR & SPINDLE_DIRECTION_BIT) != 0;
+    state.ccw = hal.driver_cap.spindle_dir && DIGITAL_IN(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN);
 #endif
     state.value ^= settings.spindle.invert.mask;
 
@@ -1147,9 +1182,9 @@ static void spindleDataReset (void)
 static void coolantSetState (coolant_state_t mode)
 {
     mode.value ^= settings.coolant_invert.mask;
-    BITBAND_PERI(COOLANT_FLOOD_PORT->ODR, COOLANT_FLOOD_PIN) = mode.flood;
+    DIGITAL_OUT(COOLANT_FLOOD_PORT, COOLANT_FLOOD_PIN, mode.flood);
 #ifdef COOLANT_MIST_PIN
-    BITBAND_PERI(COOLANT_MIST_PORT->ODR, COOLANT_MIST_PIN) = mode.mist;
+    DIGITAL_OUT(COOLANT_MIST_PORT, COOLANT_MIST_PIN, mode.mist);
 #endif
 }
 
@@ -1229,6 +1264,8 @@ void settings_changed (settings_t *settings)
 
             hal.spindle.set_state = spindleSetStateVariable;
 
+  #ifdef SPINDLE_PWM_TIMER_N
+
             SPINDLE_PWM_TIMER->CR1 &= ~TIM_CR1_CEN;
 
             uint32_t prescaler = settings->spindle.pwm_freq > 4000.0f ? 1 : (settings->spindle.pwm_freq > 200.0f ? 12 : 25);
@@ -1245,36 +1282,28 @@ void settings_changed (settings_t *settings)
 
             TIM_Base_SetConfig(SPINDLE_PWM_TIMER, &timerInitStructure);
 
-            SPINDLE_PWM_TIMER->CCER &= ~TIM_CCER_CC1E;
-            SPINDLE_PWM_TIMER->CCMR1 &= ~(TIM_CCMR1_OC1M|TIM_CCMR1_CC1S);
-            SPINDLE_PWM_TIMER->CCMR1 |= TIM_CCMR1_OC1M_1|TIM_CCMR1_OC1M_2;
-            SPINDLE_PWM_TIMER->CCR1 = 0;
+            SPINDLE_PWM_TIMER->CCER &= ~SPINDLE_PWM_CCER_EN;
+            SPINDLE_PWM_TIMER_CCMR &= ~SPINDLE_PWM_CCMR_OCM_CLR;
+            SPINDLE_PWM_TIMER_CCMR |= SPINDLE_PWM_CCMR_OCM_SET;
+            SPINDLE_PWM_TIMER_CCR = 0;
+        #if SPINDLE_PWM_TIMER_N == 1
             SPINDLE_PWM_TIMER->BDTR |= TIM_BDTR_OSSR|TIM_BDTR_OSSI;
-#if defined(SPINDLE_PWM_PIN) && SPINDLE_PWM_PIN == 7
+        #endif
             if(settings->spindle.invert.pwm) {
-                SPINDLE_PWM_TIMER->CCER |= TIM_CCER_CC1NP;
-                SPINDLE_PWM_TIMER->CR2 |= TIM_CR2_OIS1N;
+                SPINDLE_PWM_TIMER->CCER |= SPINDLE_PWM_CCER_POL;
+                SPINDLE_PWM_TIMER->CR2 |= SPINDLE_PWM_CR2_OIS;
             } else {
-                SPINDLE_PWM_TIMER->CCER &= ~TIM_CCER_CC1NP;
-                SPINDLE_PWM_TIMER->CR2 &= ~TIM_CR2_OIS1N;
+                SPINDLE_PWM_TIMER->CCER &= ~SPINDLE_PWM_CCER_POL;
+                SPINDLE_PWM_TIMER->CR2 &= ~SPINDLE_PWM_CR2_OIS;
             }
-            SPINDLE_PWM_TIMER->CCER |= TIM_CCER_CC1NE;
-#else
-            if(settings->spindle.invert.pwm) {
-                SPINDLE_PWM_TIMER->CCER |= TIM_CCER_CC1P;
-                SPINDLE_PWM_TIMER->CR2 |= TIM_CR2_OIS1;
-            } else {
-                SPINDLE_PWM_TIMER->CCER &= ~TIM_CCER_CC1P;
-                SPINDLE_PWM_TIMER->CR2 &= ~TIM_CR2_OIS1;
-            }
-            SPINDLE_PWM_TIMER->CCER |= TIM_CCER_CC1E;
-#endif
+            SPINDLE_PWM_TIMER->CCER |= SPINDLE_PWM_CCER_EN;
             SPINDLE_PWM_TIMER->CR1 |= TIM_CR1_CEN;
 
+  #endif // SPINDLE_PWM_TIMER_N
         } else
             hal.spindle.set_state = spindleSetState;
 
-#endif
+#endif // VFD_SPINDLE
 
 #if SPINDLE_SYNC_ENABLE
 
@@ -1629,32 +1658,21 @@ static bool driver_setup (settings_t *settings)
 
   // Spindle init
 
-#if !VFD_SPINDLE && defined(SPINDLE_PWM_PIN)
+#if !VFD_SPINDLE && defined(SPINDLE_PWM_TIMER_N)
 
     if(hal.driver_cap.variable_spindle) {
-        GPIO_Init.Pin = SPINDLE_PWM_BIT;
+        GPIO_Init.Pin = (1<<SPINDLE_PWM_PIN);
         GPIO_Init.Mode = GPIO_MODE_AF_PP;
         GPIO_Init.Pull = GPIO_NOPULL;
-        GPIO_Init.Alternate = GPIO_AF1_TIM1;
+        GPIO_Init.Alternate = SPINDLE_PWM_AF;
         HAL_GPIO_Init(SPINDLE_PWM_PORT, &GPIO_Init);
-        GPIO_Init.Alternate = 0;
     }
 
 #endif
 
- // Coolant init
-
-    BITBAND_PERI(COOLANT_FLOOD_PORT->ODR, COOLANT_FLOOD_PIN) = 1;
-    BITBAND_PERI(COOLANT_FLOOD_PORT->ODR, COOLANT_FLOOD_PIN) = 0;
-
-#ifdef COOLANT_MIST_PIN
-    BITBAND_PERI(COOLANT_MIST_PORT->ODR, COOLANT_MIST_PIN) = 1;
-    BITBAND_PERI(COOLANT_MIST_PORT->ODR, COOLANT_MIST_PIN) = 0;
-#endif
-
 #if SDCARD_ENABLE
 
-    BITBAND_PERI(SD_CS_PORT->ODR, SD_CS_PIN) = 1;
+    DIGITAL_OUT(SD_CS_PORT, SD_CS_PIN, 1);
 
     sdcard_init();
 
@@ -1696,7 +1714,11 @@ static bool driver_setup (settings_t *settings)
 
 #endif
 
+#if N_AXIS > 3
+    IOInitDone = settings->version == 20;
+#else
     IOInitDone = settings->version == 19;
+#endif
 
     hal.settings_changed(settings);
     hal.spindle.set_state((spindle_state_t){0}, 0.0f);
@@ -1729,7 +1751,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210810";
+    hal.driver_version = "210819";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1820,7 +1842,7 @@ bool driver_init (void)
 
 #if !VFD_SPINDLE && !PLASMA_ENABLE
     hal.driver_cap.spindle_dir = On;
-  #ifdef SPINDLE_PWM_PIN
+  #ifdef SPINDLE_PWM_TIMER_N
     hal.driver_cap.variable_spindle = On;
     hal.driver_cap.spindle_pwm_invert = On;
   #endif
@@ -2266,7 +2288,7 @@ void Driver_IncTick (void)
 #ifdef Z_LIMIT_POLL
     static bool z_limit_state = false;
     if(settings.limits.flags.hard_enabled) {
-        bool z_limit = BITBAND_PERI(Z_LIMIT_PORT->IDR, Z_LIMIT_PIN) ^ settings.limits.invert.z;
+        bool z_limit = DIGITAL_IN(Z_LIMIT_PORT, Z_LIMIT_PIN) ^ settings.limits.invert.z;
         if(z_limit_state != z_limit) {
             if((z_limit_state = z_limit)) {
                 if(hal.driver_cap.software_debounce) {

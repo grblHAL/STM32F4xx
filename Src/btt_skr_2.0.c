@@ -112,8 +112,6 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
     return status;
 }
 
-#endif
-
 static void add_cs_pin (xbar_t *gpio)
 {
     if(gpio->group == PinGroup_MotorChipSelect) {
@@ -146,60 +144,35 @@ static void add_cs_pin (xbar_t *gpio)
     }
 
     if(gpio->group == PinGroup_StepperPower) {
-		if(gpio->function == Output_StepperPower) {
-			DIGITAL_OUT((GPIO_TypeDef *)gpio->port, gpio->pin, 1);
-			HAL_Delay(100);
-		}
+        if(gpio->function == Output_StepperPower) {
+            DIGITAL_OUT((GPIO_TypeDef *)gpio->port, gpio->pin, 1);
+            HAL_Delay(100);
+        }
     }
 }
 
-#if TRINAMIC_ENABLE == 2209
-#endif
-
-static void if_init(axes_signals_t enabled)
+static void if_init(uint8_t motors, axes_signals_t enabled)
 {
     static bool init_ok = false;
+
+    UNUSED(motors);
 
     if(!init_ok) {
         GPIO_InitTypeDef GPIO_InitStruct = {0};
 
         // Set all output pins: push-pull, no pull-up, slow
-        GPIO_InitStruct.Pin = TRINAMIC_MOSI_BIT;
+        GPIO_InitStruct.Pin = 1 << TRINAMIC_MOSI_PIN;
         GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
         HAL_GPIO_Init(TRINAMIC_MOSI_PORT, &GPIO_InitStruct);
 
-        GPIO_InitStruct.Pin = TRINAMIC_SCK_BIT;
+        GPIO_InitStruct.Pin = 1 << TRINAMIC_SCK_PIN;
         HAL_GPIO_Init(TRINAMIC_SCK_PORT, &GPIO_InitStruct);
         DIGITAL_OUT(TRINAMIC_SCK_PORT, TRINAMIC_SCK_PIN, 1);
 
-        GPIO_InitStruct.Pin = MOTOR_CSX_BIT;
-        HAL_GPIO_Init(MOTOR_CSX_PORT, &GPIO_InitStruct);
-        DIGITAL_OUT(MOTOR_CSX_PORT, MOTOR_CSX_PIN, 1);
-
-        GPIO_InitStruct.Pin = MOTOR_CSY_BIT;
-        HAL_GPIO_Init(MOTOR_CSY_PORT, &GPIO_InitStruct);
-        DIGITAL_OUT(MOTOR_CSY_PORT, MOTOR_CSY_PIN, 1);
-
-        GPIO_InitStruct.Pin = MOTOR_CSZ_BIT;
-        HAL_GPIO_Init(MOTOR_CSZ_PORT, &GPIO_InitStruct);
-        DIGITAL_OUT(MOTOR_CSZ_PORT, MOTOR_CSZ_PIN, 1);
-
-#ifdef A_AXIS
-        GPIO_InitStruct.Pin = MOTOR_CSM3_BIT;
-        HAL_GPIO_Init(MOTOR_CSM3_PORT, &GPIO_InitStruct);
-        DIGITAL_OUT(MOTOR_CSM3_PORT, MOTOR_CSM3_PIN, 1);
-#endif
-
-#ifdef B_AXIS
-        GPIO_InitStruct.Pin = MOTOR_CSM4_BIT;
-        HAL_GPIO_Init(MOTOR_CSM4_PORT, &GPIO_InitStruct);
-        DIGITAL_OUT(MOTOR_CSM4_PORT, MOTOR_CSM4_PIN, 1);
-#endif
-
         // Set the input pin: input with pull-up
-        GPIO_InitStruct.Pin = TRINAMIC_MISO_BIT;
+        GPIO_InitStruct.Pin = 1 << TRINAMIC_MISO_PIN;
         GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
         GPIO_InitStruct.Pull = GPIO_PULLUP;
         HAL_GPIO_Init(TRINAMIC_MISO_PORT, &GPIO_InitStruct);
@@ -207,6 +180,11 @@ static void if_init(axes_signals_t enabled)
         hal.enumerate_pins(true, add_cs_pin);
     }
 }
+
+#endif
+
+#if TRINAMIC_ENABLE == 2209
+#endif
 
 void board_init (void)
 {

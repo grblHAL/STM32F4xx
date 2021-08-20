@@ -49,9 +49,6 @@
 #define Y_STEP_PIN                  5                   // Y
 #define Z_STEP_PORT                 GPIOA
 #define Z_STEP_PIN                  15                  // Z
-#define X_STEP_BIT                  (1<<X_STEP_PIN)
-#define Y_STEP_BIT                  (1<<Y_STEP_PIN)
-#define Z_STEP_BIT                  (1<<Z_STEP_PIN)
 #define STEP_OUTMODE                GPIO_BITBAND
 //#define STEP_PINMODE                PINMODE_OD // Uncomment for open drain outputs
 
@@ -62,9 +59,6 @@
 #define Y_DIRECTION_PIN             4
 #define Z_DIRECTION_PORT            GPIOA
 #define Z_DIRECTION_PIN             8
-#define X_DIRECTION_BIT             (1<<X_DIRECTION_PIN)
-#define Y_DIRECTION_BIT             (1<<Y_DIRECTION_PIN)
-#define Z_DIRECTION_BIT             (1<<Z_DIRECTION_PIN)
 #define DIRECTION_OUTMODE           GPIO_BITBAND
 //#define DIRECTION_PINMODE           PINMODE_OD // Uncomment for open drain outputs
 
@@ -75,9 +69,6 @@
 #define Y_ENABLE_PIN                6
 #define Z_ENABLE_PORT               GPIOD
 #define Z_ENABLE_PIN                1
-#define X_ENABLE_BIT                (1<<X_ENABLE_PIN)
-#define Y_ENABLE_BIT                (1<<Y_ENABLE_PIN)
-#define Z_ENABLE_BIT                (1<<Z_ENABLE_PIN)
 //#define STEPPERS_ENABLE_PINMODE   PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
@@ -87,9 +78,6 @@
 #define Y_LIMIT_PIN                 3                           // Y- Limit
 #define Z_LIMIT_PORT                GPIOC
 #define Z_LIMIT_PIN                 0                           // Z- Limit
-#define X_LIMIT_BIT                 (1<<X_LIMIT_PIN)
-#define Y_LIMIT_BIT                 (1<<Y_LIMIT_PIN)
-#define Z_LIMIT_BIT                 (1<<Z_LIMIT_PIN)
 #define LIMIT_INMODE                GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
@@ -124,50 +112,35 @@
   // Define spindle enable and spindle direction output pins.
 #define SPINDLE_ENABLE_PORT         GPIOB
 #define SPINDLE_ENABLE_PIN          6                           // FAN1
-#define SPINDLE_ENABLE_BIT          (1<<SPINDLE_ENABLE_PIN)
 #define SPINDLE_DIRECTION_PORT      GPIOB
 #define SPINDLE_DIRECTION_PIN       5                           // FAN2
-#define SPINDLE_DIRECTION_BIT       (1<<SPINDLE_DIRECTION_PIN)
 
 // Define spindle PWM output pin.
-#define SPINDLE_PWM_PORT            GPIOB
+#define SPINDLE_PWM_PORT_BASE       GPIOB_BASE
 #define SPINDLE_PWM_PIN             0                           // EXP1 - PB0, pin 9
-#define SPINDLE_PWM_BIT             (1<<SPINDLE_PWM_PIN)
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB
 #define COOLANT_FLOOD_PIN           3                           // HEAT0
-#define COOLANT_FLOOD_BIT           (1<<COOLANT_FLOOD_PIN)
 #define COOLANT_MIST_PORT           GPIOB
 #define COOLANT_MIST_PIN            4                           // HEAT1
-#define COOLANT_MIST_BIT            (1<<COOLANT_MIST_PIN)
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // These are all available on EXP2 along with electrical RESET* (EXP2-8)
 #define CONTROL_PORT                GPIOA
 #define RESET_PIN                   4                           // Exp2-4
-#define RESET_BIT                   (1<<RESET_PIN)
-
 #define FEED_HOLD_PIN               5                           // Exp2-2
-#define FEED_HOLD_BIT               (1<<FEED_HOLD_PIN)
-
 #define CYCLE_START_PIN             6                           // Exp2-1
-#define CYCLE_START_BIT             (1<<CYCLE_START_PIN)
 
-#ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+#if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOA
 #define SAFETY_DOOR_PIN             7                           // EXP2-6
-#define SAFETY_DOOR_BIT             (1<<SAFETY_DOOR_PIN)
-#define CONTROL_MASK                (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT|SAFETY_DOOR_BIT)
-#else
-#define CONTROL_MASK                (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT)
 #endif
-#define CONTROL_INMODE GPIO_BITBAND
+#define CONTROL_INMODE              GPIO_BITBAND
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOE
 #define PROBE_PIN                   4                       // BLTouch PE4
-#define PROBE_BIT                   (1<<PROBE_PIN)
 
 // XXXXX
 // SKR-2 has SD/MMC interface and does not work in SPI mode
@@ -179,10 +152,8 @@
 // MISO pin is also SWCLK from JTAG port, so can't debug with Trinamic SPI drivers:-(
 #define TRINAMIC_MOSI_PORT          GPIOE
 #define TRINAMIC_MOSI_PIN           14
-#define TRINAMIC_MOSI_BIT           (1 << TRINAMIC_MOSI_PIN)
 #define TRINAMIC_SCK_PORT           GPIOE
 #define TRINAMIC_SCK_PIN            15
-#define TRINAMIC_SCK_BIT            (1 << TRINAMIC_SCK_PIN)
 
 // BigTreeTech used PA14 (SWCLK) as MOT_MISO.
 // For debugging, change this to PA6 (on EXP2) and jumper directly to MISO pins on TMC2130s.
@@ -193,34 +164,27 @@
 #define TRINAMIC_MISO_PORT          GPIOA
 #define TRINAMIC_MISO_PIN           14
 #endif
-#define TRINAMIC_MISO_BIT           (1 << TRINAMIC_MISO_PIN)
 
 // The CS pins are also the UART pins for 1 wire serial Trinamic drivers (2208, 2209)
 #define MOTOR_CSX_PORT              GPIOE
 #define MOTOR_CSX_PIN               0
-#define MOTOR_CSX_BIT               (1 << MOTOR_CSX_PIN)
 #define MOTOR_CSY_PORT              GPIOD
 #define MOTOR_CSY_PIN               3
-#define MOTOR_CSY_BIT               (1 << MOTOR_CSY_PIN)
 #define MOTOR_CSZ_PORT              GPIOD
 #define MOTOR_CSZ_PIN               0
-#define MOTOR_CSZ_BIT               (1 << MOTOR_CSZ_PIN)
 
 #ifdef  M3_AVAILABLE
 #define MOTOR_CSM3_PORT             GPIOC
 #define MOTOR_CSM3_PIN              6
-#define MOTOR_CSM3_BIT              (1 << MOTOR_CSM3_PIN)
 #endif
 
 #ifdef  M4_AVAILABLE
 #define MOTOR_CSM4_PORT             GPIOD
 #define MOTOR_CSM4_PIN              12
-#define MOTOR_CSM4_BIT              (1 << MOTOR_CSM4_PIN)
 #endif
 
 // Safe Power Control
 #define STEPPERS_POWER_PORT         GPIOC
 #define STEPPERS_POWER_PIN          13
-#define STEPPERS_POWER_BIT          (1 << STEPPERS_POWER_PIN)
 
 // EOF

@@ -154,7 +154,7 @@ static void SystemClock_Config(void)
     #define APB1CLKDIV RCC_HCLK_DIV4
     #define APB2CLKDIV RCC_HCLK_DIV2
 
-#else // STM32F401 and STM32F407
+#else // STM32F401
 
     /** Configure the main internal regulator output voltage  */
    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);

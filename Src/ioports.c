@@ -52,6 +52,17 @@ static const setting_detail_t aux_settings[] = {
 //    { Settings_IoPort_OD_Enable, Group_AuxPorts, "I/O Port outputs as open drain", NULL, Format_Bitfield, "Port 0,Port 1,Port 2,Port 3,Port 4,Port 5,Port 6,Port 7", NULL, NULL }
 };
 
+#ifndef NO_SETTINGS_DESCRIPTIONS
+
+static const setting_descr_t aux_settings_descr[] = {
+    { Settings_IoPort_InvertIn, "Invert IOPort inputs." },
+//    { Settings_IoPort_Pullup_Disable, "Disable IOPort input pullups." },
+    { Settings_IoPort_InvertOut, "Invert IOPort output." },
+//    { Settings_IoPort_OD_Enable, "Set IOPort outputs as open drain (OD)." }
+};
+
+#endif
+
 static void aux_settings_load (void);
 
 static setting_details_t details = {
@@ -59,6 +70,10 @@ static setting_details_t details = {
     .n_groups = sizeof(aux_groups) / sizeof(setting_group_detail_t),
     .settings = aux_settings,
     .n_settings = sizeof(aux_settings) / sizeof(setting_detail_t),
+#ifndef NO_SETTINGS_DESCRIPTIONS
+    .descriptions = aux_settings_descr,
+    .n_descriptions = sizeof(aux_settings_descr) / sizeof(setting_descr_t),
+#endif
     .load = aux_settings_load,
     .save = settings_write_global
 };

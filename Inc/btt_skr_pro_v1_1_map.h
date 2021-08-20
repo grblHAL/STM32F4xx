@@ -40,9 +40,6 @@
 #define Y_STEP_PIN                  11                  // Y
 #define Z_STEP_PORT                 GPIOE
 #define Z_STEP_PIN                  13                  // Z
-#define X_STEP_BIT                  (1<<X_STEP_PIN)
-#define Y_STEP_BIT                  (1<<Y_STEP_PIN)
-#define Z_STEP_BIT                  (1<<Z_STEP_PIN)
 #define STEP_OUTMODE                GPIO_BITBAND
 //#define STEP_PINMODE                PINMODE_OD // Uncomment for open drain outputs
 
@@ -53,9 +50,6 @@
 #define Y_DIRECTION_PIN             8
 #define Z_DIRECTION_PORT            GPIOC
 #define Z_DIRECTION_PIN             2
-#define X_DIRECTION_BIT             (1<<X_DIRECTION_PIN)
-#define Y_DIRECTION_BIT             (1<<Y_DIRECTION_PIN)
-#define Z_DIRECTION_BIT             (1<<Z_DIRECTION_PIN)
 #define DIRECTION_OUTMODE           GPIO_BITBAND
 //#define DIRECTION_PINMODE           PINMODE_OD // Uncomment for open drain outputs
 
@@ -66,9 +60,6 @@
 #define Y_ENABLE_PIN                7
 #define Z_ENABLE_PORT               GPIOC
 #define Z_ENABLE_PIN                0
-#define X_ENABLE_BIT                (1<<X_ENABLE_PIN)
-#define Y_ENABLE_BIT                (1<<Y_ENABLE_PIN)
-#define Z_ENABLE_BIT                (1<<Z_ENABLE_PIN)
 //#define STEPPERS_ENABLE_PINMODE   PINMODE_OD // Uncomment for open drain outputs
 
 // Define homing/hard limit switch input pins.
@@ -78,9 +69,6 @@
 #define Y_LIMIT_PIN                 12                          // Y- Limit
 #define Z_LIMIT_PORT                GPIOG
 #define Z_LIMIT_PIN                 8                           // Z- Limit
-#define X_LIMIT_BIT                 (1<<X_LIMIT_PIN)
-#define Y_LIMIT_BIT                 (1<<Y_LIMIT_PIN)
-#define Z_LIMIT_BIT                 (1<<Z_LIMIT_PIN)
 #define LIMIT_INMODE                GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
@@ -125,52 +113,38 @@
   // Define spindle enable and spindle direction output pins.
 #define SPINDLE_ENABLE_PORT         GPIOE
 #define SPINDLE_ENABLE_PIN          5                           // FAN1
-#define SPINDLE_ENABLE_BIT          (1<<SPINDLE_ENABLE_PIN)
 #define SPINDLE_DIRECTION_PORT      GPIOE
 #define SPINDLE_DIRECTION_PIN       6                           // FAN2
-#define SPINDLE_DIRECTION_BIT       (1<<SPINDLE_DIRECTION_PIN)
 
 // Define spindle PWM output pin.
-#define SPINDLE_PWM_PORT            GPIOA
+#define SPINDLE_PWM_PORT_BASE       GPIOA_BASE
 #define SPINDLE_PWM_PIN             8                           // EXT1 - PA8
-#define SPINDLE_PWM_BIT             (1<<SPINDLE_PWM_PIN)
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB
 #define COOLANT_FLOOD_PIN           1                           // HEAT0
-#define COOLANT_FLOOD_BIT           (1<<COOLANT_FLOOD_PIN)
 #define COOLANT_MIST_PORT           GPIOD
 #define COOLANT_MIST_PIN            14                          // HEAT1
-#define COOLANT_MIST_BIT            (1<<COOLANT_MIST_PIN)
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #define RESET_PORT                  GPIOG
 #define RESET_PIN                   4                           // E0 Limit
-#define RESET_BIT                   (1<<RESET_PIN)
 #define FEED_HOLD_PORT              GPIOD
 #define FEED_HOLD_PIN               11                          // E1 Limit
-#define FEED_HOLD_BIT               (1<<FEED_HOLD_PIN)
 #define CYCLE_START_PORT            GPIOG
 #define CYCLE_START_PIN             2                           // E2 Limit
-#define CYCLE_START_BIT             (1<<CYCLE_START_PIN)
-#ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+#if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOG
 #define SAFETY_DOOR_PIN             6                           // EXP1 PG4
-#define SAFETY_DOOR_BIT             (1<<SAFETY_DOOR_PIN)
-#define CONTROL_MASK                (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT|SAFETY_DOOR_BIT)
-#else
-#define CONTROL_MASK                (RESET_BIT|FEED_HOLD_BIT|CYCLE_START_BIT)
 #endif
 #define CONTROL_INMODE GPIO_BITBAND
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOA
 #define PROBE_PIN                   1                       // BLTouch PA1
-#define PROBE_BIT                   (1<<PROBE_PIN)
 
 #if SDCARD_ENABLE
 #define SD_CS_PORT                  GPIOB
 #define SD_CS_PIN                   12
-#define SD_CS_BIT                   (1<<SD_CS_PIN)
 #define SPI_PORT                    2 // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15 (EXP2 Header)
 #endif
