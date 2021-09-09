@@ -30,6 +30,7 @@
 #define BOARD_NAME "Protoneer v3"
 #define I2C_PORT 1
 #define IS_NUCLEO_BOB
+//#define PROTONEER_SPINDLE_PWM // Uncomment to use PA5 (D13) as spindle PWM output instead of spindle direction
 
 // Define step pulse output pins.
 #define X_STEP_PORT             GPIOA // D2
@@ -78,10 +79,13 @@
 #ifndef M3_AVAILABLE
 #define SPINDLE_ENABLE_PORT     GPIOA // D12
 #define SPINDLE_ENABLE_PIN      6
+#ifdef PROTONEER_SPINDLE_PWM
+#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE // D13
+#define SPINDLE_PWM_PIN         5
+#else
 #define SPINDLE_DIRECTION_PORT  GPIOA // D13
 #define SPINDLE_DIRECTION_PIN   5
-#else
-// use A4 & A5?
+#endif
 #endif
 
 // Define flood and mist coolant enable output pins.

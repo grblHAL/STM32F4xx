@@ -125,6 +125,15 @@ static void usbWriteS (const char *s)
             return;
     }
 
+    while(length > txbuf.max_length) {
+        txbuf.length = txbuf.max_length;
+        memcpy(txbuf.s, s, txbuf.max_length);
+        if(!usb_write())
+            return;
+        length -= txbuf.max_length;
+        s += txbuf.max_length;
+    }
+
     memcpy(txbuf.s, s, length);
     txbuf.length += length;
     txbuf.s += length;
@@ -156,6 +165,11 @@ static bool usbSuspendInput (bool suspend)
     return stream_rx_suspend(&rxbuf, suspend);
 }
 
+static bool usbEnqueueRtCommand (char c)
+{
+    return enqueue_realtime_command(c);
+}
+
 static enqueue_realtime_command_ptr usbSetRtHandler (enqueue_realtime_command_ptr handler)
 {
     enqueue_realtime_command_ptr prev = enqueue_realtime_command;
@@ -176,6 +190,7 @@ const io_stream_t *usbInit (void)
         .write = usbWriteS,
         .write_char = usbPutC,
         .write_all = usbWriteS,
+        .enqueue_rt_command = usbEnqueueRtCommand,
         .get_rx_buffer_free = usbRxFree,
         .reset_read_buffer = usbRxFlush,
         .cancel_read_buffer = usbRxCancel,

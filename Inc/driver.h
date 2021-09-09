@@ -146,7 +146,12 @@
 #ifdef SPINDLE_PWM_PORT_BASE
 
 #if SPINDLE_PWM_PORT_BASE == GPIOA_BASE
-  #if SPINDLE_PWM_PIN == 7 // PA7 - TIM1_CH1N
+  #if SPINDLE_PWM_PIN == 5 // PA5 - TIM2_CH1
+    #define SPINDLE_PWM_TIMER_N     2
+    #define SPINDLE_PWM_TIMER_CH    1
+    #define SPINDLE_PWM_TIMER_INV   0
+    #define SPINDLE_PWM_TIMER_AF    1
+  #elif SPINDLE_PWM_PIN == 7 // PA7 - TIM1_CH1N
     #define SPINDLE_PWM_TIMER_N     1
     #define SPINDLE_PWM_TIMER_CH    1
     #define SPINDLE_PWM_TIMER_INV   1

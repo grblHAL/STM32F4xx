@@ -319,7 +319,7 @@ static probe_state_t probe = {
 static axes_signals_t motors_1 = {AXES_BITMASK}, motors_2 = {AXES_BITMASK};
 #endif
 
-#if !VFD_SPINDLE
+#if !VFD_SPINDLE && defined(SPINDLE_PWM_TIMER_N)
 static bool pwmEnabled = false;
 static spindle_pwm_t spindle_pwm;
 static void spindle_set_speed (uint_fast16_t pwm_value);
@@ -565,7 +565,7 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
   #ifdef X2_STEP_PIN
    DIGITAL_OUT(X2_STEP_PORT, X2_STEP_PIN, step_outbits.x);
   #endif
-  #ifdef Y2_SIN
+  #ifdef Y2_PIN
    DIGITAL_OUT(Y2_STEP_PORT, Y2_STEP_PIN, step_outbits.y);
   #endif
   #ifdef Z2_STEP_PIN
@@ -1017,8 +1017,6 @@ static void spindle_set_speed (uint_fast16_t pwm_value)
     }
 }
 
-#endif // SPINDLE_PWM_PORT
-
 #ifdef SPINDLE_PWM_DIRECT
 
 static uint_fast16_t spindleGetPWM (float rpm)
@@ -1055,6 +1053,8 @@ static void spindleSetStateVariable (spindle_state_t state, float rpm)
     spindle_data.rpm_programmed = spindle_data.rpm = rpm;
 #endif
 }
+
+#endif // SPINDLE_PWM_TIMER_N
 
 // Returns spindle state in a spindle_state_t variable
 static spindle_state_t spindleGetState (void)
@@ -1260,17 +1260,24 @@ void settings_changed (settings_t *settings)
 
 #if !VFD_SPINDLE
 
+  #ifdef SPINDLE_PWM_TIMER_N
+
         if(hal.driver_cap.variable_spindle) {
 
             hal.spindle.set_state = spindleSetStateVariable;
 
-  #ifdef SPINDLE_PWM_TIMER_N
-
             SPINDLE_PWM_TIMER->CR1 &= ~TIM_CR1_CEN;
 
-            uint32_t prescaler = settings->spindle.pwm_freq > 4000.0f ? 1 : (settings->spindle.pwm_freq > 200.0f ? 12 : 25);
+            RCC_ClkInitTypeDef clock;
+            uint32_t latency, prescaler = settings->spindle.pwm_freq > 4000.0f ? 1 : (settings->spindle.pwm_freq > 200.0f ? 12 : 25);
 
-            spindle_precompute_pwm_values(&spindle_pwm, SystemCoreClock / prescaler);
+            HAL_RCC_GetClockConfig(&clock, &latency);
+
+#if SPINDLE_PWM_TIMER_N == 1
+            spindle_precompute_pwm_values(&spindle_pwm, (HAL_RCC_GetPCLK2Freq() * (clock.APB2CLKDivider == 0 ? 1 : 2)) / prescaler);
+#else
+            spindle_precompute_pwm_values(&spindle_pwm, (HAL_RCC_GetPCLK1Freq() * (clock.APB1CLKDivider == 0 ? 1 : 2)) / prescaler);
+#endif
 
             TIM_Base_InitTypeDef timerInitStructure = {
                 .Prescaler = prescaler - 1,
@@ -1281,6 +1288,8 @@ void settings_changed (settings_t *settings)
             };
 
             TIM_Base_SetConfig(SPINDLE_PWM_TIMER, &timerInitStructure);
+
+//            RCC_DCKCFGR->
 
             SPINDLE_PWM_TIMER->CCER &= ~SPINDLE_PWM_CCER_EN;
             SPINDLE_PWM_TIMER_CCMR &= ~SPINDLE_PWM_CCMR_OCM_CLR;
@@ -1299,8 +1308,8 @@ void settings_changed (settings_t *settings)
             SPINDLE_PWM_TIMER->CCER |= SPINDLE_PWM_CCER_EN;
             SPINDLE_PWM_TIMER->CR1 |= TIM_CR1_CEN;
 
-  #endif // SPINDLE_PWM_TIMER_N
         } else
+#endif // SPINDLE_PWM_TIMER_N
             hal.spindle.set_state = spindleSetState;
 
 #endif // VFD_SPINDLE
@@ -1583,6 +1592,15 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info)
 
         pin_info(&pin);
     };
+
+#ifdef SPINDLE_PWM_TIMER_N
+    pin.pin = SPINDLE_PWM_PIN;
+    pin.function = Output_SpindlePWM;
+    pin.group = PinGroup_SpindlePWM;
+    pin.port = low_level ? (void *)SPINDLE_PWM_PORT : (void *)port2char(SPINDLE_PWM_PORT);
+    pin.description = NULL;
+    pin_info(&pin);
+#endif
 }
 
 // Initializes MCU peripherals for Grbl use
@@ -1751,7 +1769,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210819";
+    hal.driver_version = "210908";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1787,15 +1805,17 @@ bool driver_init (void)
 #if !VFD_SPINDLE
     hal.spindle.set_state = spindleSetState;
     hal.spindle.get_state = spindleGetState;
+ #ifdef SPINDLE_PWM_TIMER_N
   #ifdef SPINDLE_PWM_DIRECT
     hal.spindle.get_pwm = spindleGetPWM;
     hal.spindle.update_pwm = spindle_set_speed;
   #else
     hal.spindle.update_rpm = spindleUpdateRPM;
   #endif
-  #if PPI_ENABLE
+ #endif
+ #if PPI_ENABLE
     hal.spindle.pulse_on = spindlePulseOn;
-  #endif
+ #endif
 #endif
 
     hal.control.get_state = systemGetState;
