@@ -28,21 +28,19 @@
 #include "main.h"
 #include "grbl/hal.h"
 
-#define FLASH_SECTOR 1
-#define FLASH_SECTOR_ADDR 0x8004000
-
-static const uint8_t *flash_target = (uint8_t *)FLASH_SECTOR_ADDR;
+extern void *_EEPROM_Emul_Start;
+extern uint8_t _EEPROM_Emul_Sector;
 
 bool memcpy_from_flash (uint8_t *dest)
 {
-    memcpy(dest, flash_target, hal.nvs.size);
+    memcpy(dest, &_EEPROM_Emul_Start, hal.nvs.size);
 
     return true;
 }
 
 bool memcpy_to_flash (uint8_t *source)
 {
-    if (!memcmp(source, flash_target, hal.nvs.size))
+    if (!memcmp(source, &_EEPROM_Emul_Start, hal.nvs.size))
         return true;
 
     HAL_StatusTypeDef status;
@@ -51,7 +49,7 @@ bool memcpy_to_flash (uint8_t *source)
 
         static FLASH_EraseInitTypeDef erase = {
             .Banks = FLASH_BANK_1,
-            .Sector = FLASH_SECTOR,
+            .Sector = (uint32_t)&_EEPROM_Emul_Sector,
             .TypeErase = FLASH_TYPEERASE_SECTORS,
             .NbSectors = 1,
             .VoltageRange = FLASH_VOLTAGE_RANGE_3
@@ -62,7 +60,7 @@ bool memcpy_to_flash (uint8_t *source)
         status = HAL_FLASHEx_Erase(&erase, &error);
 
         uint16_t *data = (uint16_t *)source;
-        uint32_t address = (uint32_t)flash_target, remaining = (uint32_t)hal.nvs.size;
+        uint32_t address = (uint32_t)&_EEPROM_Emul_Start, remaining = (uint32_t)hal.nvs.size;
 
         while(remaining && status == HAL_OK) {
             status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, *data++);

@@ -46,6 +46,17 @@ NOTE: As of Sep, 2021, the PlatformIO environments for the BigTreeTech SKR board
 
 # Changelog
 
+2021-19-09: Added build option to build a [BTT SKR 2](https://www.bigtree-tech.com/products/bigtreetech-skr-2.html) bootloader compatible binary.
+
+This can be built by selecting _Release F407 8MHz 32K Bootloader_ from the build tool dropdown.  
+
+_NOTE:_ A build configuration for a debug version has not been added as a programmer/debugger is required and flashing a "normal" debug build is usually appropriate when debugging.
+This overwrites the bootloader that later has to be restored if a bootloader version is to be flashed again.
+Alternatively a build configuration has to be added or modified to set the vector table offset by adding the symbol `VECT_TAB_OFFSET` with value `0x8008000` and configuring it to use the correct loader script.
+
+Bootloader binaries for the SKR2 board can be found [here](https://github.com/GadgetAngel/BTT_SKR_13_14_14T_SD-DFU-Bootloader/tree/main/bootloader_bin/backed_up_original_bootloaders/SKR%20V2.0%20(SKR%202)).
+Be aware that the [Bootloader_and_Firmware](https://github.com/GadgetAngel/BTT_SKR_13_14_14T_SD-DFU-Bootloader/tree/main/bootloader_bin/backed_up_original_bootloaders/SKR%20V2.0%20(SKR%202)/Bootloader_and_Firmware) folder contains Marlin firmware, not grblHAL.
+
 2021-08-10: Added support for [BTT SKR 2](https://www.bigtree-tech.com/products/bigtreetech-skr-2.html), this is based on a STM32F407 processor with a 8MHz crystal.
 
 2021-05-28: Added support for [BTT SKR PRO](https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html), this is based on a STM32F407 processor with a 25MHz crystal.
@@ -58,11 +69,22 @@ Available driver options can be found [here](Inc/my_machine.h).
 Select the processor to build for from the build tool dropdown to build. The `.bin` created file can be found in the folder with the same name as the menu name when the build is completed.  
 ![Config](media/STM32F4xx_config.png)
 
+| Build configuration              | Targets                          | Linker script                |
+|----------------------------------|----------------------------------|------------------------------|
+| Release F401 Blackpill           | F401 Blackpill                   | STM32F401CCUX_FLASH.ld       | 
+| Release F407 25MHz               | BT SKR PRO                       | STM32F407VGTX_FLASH.ld       |
+| Release F407 8MHz                | BTT SKR 2.0, STM32F407 Discovery | STM32F407VGTX_FLASH.ld       |
+| Release F407 8MHz 32K Bootloader | BTT SKR 2.0                      | STM32F407VGTX_BL32K_FLASH.ld |
+| Release F411 Blackpill           | F411 Blackpill                   | STM32F411CEUX_FLASH.ld       |
+| Release F411 Nucleo64            | NUCLEO-F116RE                    | STM32F411CEUX_FLASH.ld       |
+| Release F446 8 MHz               | Generic                          | STM32F446RETX_FLASH.ld       |
+| Release F446 Nucleo64            | NUCLEO-F446RE                    | STM32F446RETX_FLASH.ld       |
+
 If the oscillator frequency is different from the default 25 MHz then add the symbol `HSE_VALUE` and set the value to the frequency in Hz. E.g. `8000000` for 8 Mhz.
 
 A method for flashing the Nucleo F411 and Nucleo F446 is to drop the `.bin` file on the NODE_F4xxRE flash drive. Note that the file can be dragged from the IDE _Project Explorer_.
 
-__NOTE:__ Internal flash page for parameters is not at the end of the flash memory due to size restrictions. This means each firmware upgrade will erase any saved parameters. 
+_NOTE:_ Internal flash page for parameters is not at the end of the flash memory due to size restrictions. This means each firmware upgrade will erase any saved parameters. 
 
 ---
 
@@ -100,4 +122,4 @@ CNC breakout boards:
 [CNC breakout for Nucleo-64](https://github.com/terjeio/CNC_Breakout_Nucleo64) by Terje Io.
 
 ---
-2021-08-10
+2021-09-19

@@ -39,8 +39,11 @@ MEMORY
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
   BOOT_FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 16K
   EEPROM_EMUL(xrw)      : ORIGIN = 0x8004000,   LENGTH = 16K
-  FLASH    (rx)    : ORIGIN = 0x8008000,   LENGTH = 1024K - 32K
+  FLASH    (rx)    : ORIGIN = 0x8008000,   LENGTH = 1024K - 16K - 16K
 }
+
+_EEPROM_Emul_Start = ORIGIN(EEPROM_EMUL);
+_EEPROM_Emul_Sector = 1;
 
 /* Sections */
 SECTIONS
@@ -51,7 +54,7 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
-  } >FLASH
+  } >BOOT_FLASH
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
