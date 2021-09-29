@@ -76,7 +76,7 @@ Select the processor to build for from the build tool dropdown to build. The `.b
 | Release F407 8MHz                | BTT SKR 2.0, STM32F407 Discovery | STM32F407VGTX_FLASH.ld       |
 | Release F407 8MHz 32K Bootloader | BTT SKR 2.0                      | STM32F407VGTX_BL32K_FLASH.ld |
 | Release F411 Blackpill           | F411 Blackpill                   | STM32F411CEUX_FLASH.ld       |
-| Release F411 Nucleo64            | NUCLEO-F116RE                    | STM32F411CEUX_FLASH.ld       |
+| Release F411 Nucleo64            | NUCLEO-F446RE                    | STM32F411CEUX_FLASH.ld       |
 | Release F446 8 MHz               | Generic                          | STM32F446RETX_FLASH.ld       |
 | Release F446 Nucleo64            | NUCLEO-F446RE                    | STM32F446RETX_FLASH.ld       |
 
