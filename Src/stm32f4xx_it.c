@@ -203,6 +203,7 @@ void SysTick_Handler(void)
 /**
   * @brief This function handles TIM7 global interrupt.
   */
+#if defined(BOARD_BTT_SKR_20) && (TRINAMIC_ENABLE == 2209)
 void TIM7_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM4_IRQn 0 */
@@ -213,6 +214,7 @@ void TIM7_IRQHandler(void)
 
   /* USER CODE END TIM4_IRQn 1 */
 }
+#endif
 
 /**
   * @brief This function handles USB On The Go FS global interrupt.
