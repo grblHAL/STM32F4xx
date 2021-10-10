@@ -195,7 +195,7 @@ g_pfnVectors:
   .word     0                                 /* Reserved                     */                   
   .word     0                                 /* Reserved                     */                   
   .word     0                                 /* Reserved                     */                   
-  .word     0                                 /* Reserved                     */
+  .word     TIM7_IRQHandler                   /* TIM7                         */
   .word     DMA2_Stream0_IRQHandler           /* DMA2 Stream 0                */                   
   .word     DMA2_Stream1_IRQHandler           /* DMA2 Stream 1                */                   
   .word     DMA2_Stream2_IRQHandler           /* DMA2 Stream 2                */                   
@@ -386,6 +386,9 @@ g_pfnVectors:
    .weak      SPI3_IRQHandler            
    .thumb_set SPI3_IRQHandler,Default_Handler
                      
+   .weak      TIM7_IRQHandler
+   .thumb_set TIM7_IRQHandler,Default_Handler
+
    .weak      DMA2_Stream0_IRQHandler               
    .thumb_set DMA2_Stream0_IRQHandler,Default_Handler
                
