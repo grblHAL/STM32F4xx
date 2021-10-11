@@ -1625,13 +1625,28 @@ static bool driver_setup (settings_t *settings)
      *************************/
 
     uint32_t i;
-    for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
-        GPIO_Init.Pin = 1 << outputpin[i].pin;
-        GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
-        HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
 
-        if(outputpin[i].group == PinGroup_MotorChipSelect)
+    // Switch on stepper driver power before enabling other output pins
+    for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
+        if(outputpin[i].group == PinGroup_StepperPower) {
+            GPIO_Init.Pin = 1 << outputpin[i].pin;
+            GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
+            HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
             DIGITAL_OUT(outputpin[i].port, outputpin[i].pin, 1);
+        }
+    }
+
+    hal.delay_ms(100, NULL);
+
+    for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
+        if(outputpin[i].group != PinGroup_StepperPower) {
+            GPIO_Init.Pin = 1 << outputpin[i].pin;
+            GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
+            HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
+
+            if(outputpin[i].group == PinGroup_MotorChipSelect)
+                DIGITAL_OUT(outputpin[i].port, outputpin[i].pin, 1);
+        }
     }
 
     GPIO_Init.Mode = GPIO_MODE_OUTPUT_PP;
@@ -1769,7 +1784,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210908";
+    hal.driver_version = "210930";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif

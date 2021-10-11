@@ -16,7 +16,7 @@
   Grbl is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more dewr_ptrs.
+  GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
@@ -586,13 +586,6 @@ static void add_cs_pin (xbar_t *gpio)
 
             default:
                 break;
-        }
-    }
-
-    if(gpio->group == PinGroup_StepperPower) {
-        if(gpio->function == Output_StepperPower) {
-            DIGITAL_OUT((GPIO_TypeDef *)gpio->port, gpio->pin, 1);
-            HAL_Delay(100);
         }
     }
 }

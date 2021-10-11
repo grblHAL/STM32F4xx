@@ -33,6 +33,11 @@
 //#define BOARD_BTT_SKR_20      // F407 based 3D Printer board
 //#define BOARD_MY_MACHINE      // Add my_machine_map.h before enabling this!
 
+// WARNING: BOARD_BTT_SKR_20 may fry your Trinamic drivers due to bad hardware design.
+//          The risk goes away if Q1 (HY1904C2) is shorted between source (S) and drain (D).
+//          See this issue for details: https://github.com/bigtreetech/SKR-2/issues/63
+//          Note: grblHAL does not check for reversed drivers.
+
 // Configuration
 // Uncomment to enable.
 
