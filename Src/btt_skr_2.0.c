@@ -147,9 +147,10 @@ static volatile bool active_out = false;
 static volatile bool output_pending = false;
 
 static uint8_t receive_buffer[RCV_BUF_SIZE];
-static volatile uint8_t wr_ptr = 0;;
-static volatile uint8_t rd_ptr = 0;;
+static volatile uint8_t wr_ptr = 0;
+static volatile uint8_t rd_ptr = 0;
 static bool buffer_overflow = false;
+static volatile uint8_t rx_irq_count = 0;
 
 static struct {
     GPIO_TypeDef *port;
@@ -431,9 +432,15 @@ static inline void pinMode(GPIO_TypeDef *port, uint16_t pin, bool mode)
 
 static void stop_listening(void)
 {
+	uint8_t count = rx_irq_count;
+
     while (active_out)    // wait for any output to complete
-      ;
-    setRXTX(false);       // switch back to TX
+		;
+	// Need to wait HALFDUPLEX_SWITCH_DELAY sample periods for TMC2209 to release it's transmitter
+	while ((rx_irq_count + 256 - count) % 256
+			< OVERSAMPLE * HALFDUPLEX_SWITCH_DELAY)
+		;
+	setRXTX(false); // safe to switch back to TX
     active_listener = false;
     active_in = false;
     disable_timer();      // turn off ints
@@ -441,13 +448,8 @@ static void stop_listening(void)
 
 static inline void setTX()
 {
-    DIGITAL_OUT(port, pin, 1);
-//   if (_inverse_logic) {
-//     LL_GPIO_ResetOutputPin(_transmitPinPort, _transmitPinNumber);
-//   } else {
-//     LL_GPIO_SetOutputPin(_transmitPinPort, _transmitPinNumber);
-//   }
-    pinMode(port, pin, true);
+	DIGITAL_OUT(port, pin, 1);
+	pinMode(port, pin, true);
 }
 
 static inline void setRX()
@@ -548,10 +550,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
     //HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);		// delete me when done debugging
 
-    if(active_out)
-    	send();
-    if(active_in)
-    	rcv();
+	if (active_out)
+		send();
+	if (active_in) {
+		rcv();
+		rx_irq_count++;
+	}
 }
 
 #endif  // TRINAMIC_ENABLE == 2209
@@ -633,9 +637,7 @@ void board_init (void)
 
 #if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160 || TRINAMIC_ENABLE == 2209
 
-    static trinamic_driver_if_t driver_if = {
-        .on_drivers_init = if_init
-    };
+	static trinamic_driver_if_t driver_if = { .on_drivers_init = if_init };
 
     trinamic_if_init(&driver_if);
 
