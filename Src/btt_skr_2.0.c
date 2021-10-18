@@ -125,7 +125,7 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
 #define START_DELAY             46          // delay in us * timer clock freq
 #define ABORT_TIMEOUT           5           // ms
 #define TWELVE_BIT_TIMES        1           // in ms rounded up (1 is smallest we can go)
-#define HALFDUPLEX_SWITCH_DELAY 5           // defined in bit-periods
+#define HALFDUPLEX_SWITCH_DELAY 4           // defined in bit-periods
 #define RCV_BUF_SIZE            16          // read packet is 8 bytes
 
 TIM_HandleTypeDef htim7;
@@ -396,9 +396,27 @@ static void stop_listening(void)
   uint8_t count = rx_irq_count;
 
   // Need to wait HALFDUPLEX_SWITCH_DELAY sample periods for TMC2209 to release it's transmitter
+  /*
+   * Some Notes are in order here:
+   * There are 20K pulldowns on the PDN_UART pin on the stepper driver board.
+   * These pulldowns are small enough to overpower the pull-up on the input to
+   * the STM32, and this is enough to cause a glitch as defined by TMC (<16 clocks).
+   * So, we know the TMC is driving a 1 since we detected a STOP already, we just
+   * want to turn our driver back on just before it turns its driver off so we don't
+   * get a glitch.  This is one advantage of the FYSETC stepper drivers over
+   * the BTT stepper drivers, they have 1K in series with the PDN_UART pin.
+   * Either way, we are not really fighting the PDN_UART pin since both
+   * the TMC2209 chip and the STM32 are driving high.
+   */
   while ((rx_irq_count + 256 - count) % 256 < HALFDUPLEX_SWITCH_DELAY)
     ;
-  setTX();
+  setTX();		// turn driver on just before the TMC driver goes off
+
+  // Wait one more bit period without which the TMC won't respond
+  while ((rx_irq_count + 256 - count) % 256 < (HALFDUPLEX_SWITCH_DELAY + 1))
+    ;
+
+  // Now we can wrap things up
   rx_busy = false;
   htim7.Instance->CR1 |= (TIM_CR1_UDIS); // Disable output event
 }
