@@ -123,7 +123,7 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
 
 #define SWS_BAUDRATE            100000      // 10us bit period, near upper limit @ 168MHz
 #define START_DELAY             46          // delay in us * timer clock freq
-#define ABORT_TIMEOUT           7           // ms
+#define ABORT_TIMEOUT           5           // ms
 #define TWELVE_BIT_TIMES        1           // in ms rounded up (1 is smallest we can go)
 #define HALFDUPLEX_SWITCH_DELAY 5           // defined in bit-periods
 #define RCV_BUF_SIZE            16          // read packet is 8 bytes
@@ -260,7 +260,7 @@ TMC_uart_write_datagram_t* tmc_uart_read(trinamic_motor_t driver, TMC_uart_read_
       if (--timeout == 0)
       {
         HAL_Delay(TWELVE_BIT_TIMES);
-        pinMode(port, pin, true); // turn on our driver
+        setTX();                  // turn on our driver
         return &bad;              // return {0}
       }
     }
@@ -285,7 +285,7 @@ TMC_uart_write_datagram_t* tmc_uart_read(trinamic_motor_t driver, TMC_uart_read_
         rx_busy = false;
         htim7.Instance->CR1 |= (TIM_CR1_UDIS);  // turn off interrupts
         HAL_Delay(TWELVE_BIT_TIMES);
-        pinMode(port, pin, true);               // turn on our driver
+        setTX();                                // turn on our driver
         return &bad;
       }
     }
@@ -431,7 +431,7 @@ static void MX_TIM7_Init(void)
   timer_clock_freq = HAL_RCC_GetPCLK1Freq() * (clock.APB1CLKDivider == 0 ? 1 : 2);
   period = ((uint16_t)((double)timer_clock_freq / SWS_BAUDRATE) + 0.5);
 
-  period_div_2 = (period / 2) + 0.5;                // save this for use by receive
+  period_div_2 = (period / 2.0f) + 0.5;         // save this for use by receive
 
   htim7.Instance = TIM7;
   htim7.Init.Prescaler = 0;
@@ -493,18 +493,22 @@ static void add_cs_pin (xbar_t *gpio)
       cs[X_AXIS].port = (GPIO_TypeDef *)gpio->port;
       cs[X_AXIS].pin = gpio->pin;
       break;
+
     case Output_MotorChipSelectY:
       cs[Y_AXIS].port = (GPIO_TypeDef *)gpio->port;
       cs[Y_AXIS].pin = gpio->pin;
       break;
+
     case Output_MotorChipSelectZ:
       cs[Z_AXIS].port = (GPIO_TypeDef *)gpio->port;
       cs[Z_AXIS].pin = gpio->pin;
       break;
+
     case Output_MotorChipSelectM3:
       cs[3].port = (GPIO_TypeDef *)gpio->port;
       cs[3].pin = gpio->pin;
       break;
+
     case Output_MotorChipSelectM4:
       cs[4].port = (GPIO_TypeDef *)gpio->port;
       cs[4].pin = gpio->pin;
