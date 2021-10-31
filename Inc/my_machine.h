@@ -23,7 +23,7 @@
 // If none is enabled pin mappings from generic_map.h will be used.
 //#define BOARD_CNC3040
 //#define BOARD_PROTONEER_3XX   // For use with Nucleo-F411RE and F446RE boards.
-//#define BOARD_GENERIC_UNO     // For use with Nucleo-F411RE and F446RE boards.
+// #define BOARD_GENERIC_UNO     // For use with Nucleo-F411RE and F446RE boards.
 //#define BOARD_CNC_BOOSTERPACK
 //#define BOARD_MORPHO_CNC      // For use with Nucleo-F411RE and F446RE boards. Work in progress.
 //#define BOARD_MORPHO_DAC_CNC  // For use with F446RE boards and a 32-bit I2S stereo DAC for X and Y output. **EXPERIMENTAL**
@@ -41,7 +41,7 @@
 // Configuration
 // Uncomment to enable.
 
-#if !(defined(NUCLEO_F411) || defined(NUCLEO_F446)) // The Nucleo-F411RE board has an off-chip UART to USB interface.
+#if !(defined(NUCLEO_F401) || defined(NUCLEO_F411)|| defined(NUCLEO_F446)) // The Nucleo-F411RE board has an off-chip UART to USB interface.
 #define USB_SERIAL_CDC       1 // Serial communication via native USB.
 #endif
 //#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires Bluetooth plugin.

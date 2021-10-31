@@ -39,7 +39,7 @@ static stream_tx_buffer_t txbuf2 = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue_realtime_command;
 #endif
 
-#if defined(NUCLEO_F411) || defined(NUCLEO_F446)
+#if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
 
   #define USART USART2
   #define USART_IRQHandler USART2_IRQHandler
@@ -158,7 +158,7 @@ static bool serialSuspendInput (bool suspend)
 
 static bool serialSetBaudRate (uint32_t baud_rate)
 {
-#if defined(NUCLEO_F411) || defined(NUCLEO_F446)
+#if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
     USART->CR1 = USART_CR1_RE|USART_CR1_TE;
     USART->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK1Freq(), baud_rate);
     USART->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
@@ -227,7 +227,7 @@ const io_stream_t *serialInit (uint32_t baud_rate)
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
 
-#if defined(NUCLEO_F411) || defined(NUCLEO_F446)
+#if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
 
     __HAL_RCC_USART2_CLK_ENABLE();
 
@@ -284,7 +284,7 @@ void USART_IRQHandler (void)
 
 #ifdef SERIAL2_MOD
 
-#if defined(NUCLEO_F411) || defined(NUCLEO_F446)
+#if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
 
 #define UART2 USART1
 #define UART2_IRQHandler USART1_IRQHandler
@@ -436,7 +436,7 @@ static bool serial2SuspendInput (bool suspend)
 
 static bool serial2SetBaudRate (uint32_t baud_rate)
 {
-#if defined(NUCLEO_F411) || defined(NUCLEO_F446)
+#if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
     UART2->CR1 = USART_CR1_RE|USART_CR1_TE;
     UART2->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), baud_rate);
     UART2->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
@@ -497,7 +497,7 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
         .set_enqueue_rt_handler = serial2SetRtHandler
     };
 
-#if defined(NUCLEO_F411) || defined(NUCLEO_F446)
+#if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
 
     __HAL_RCC_USART1_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
