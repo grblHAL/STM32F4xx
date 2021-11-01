@@ -298,6 +298,15 @@ static output_signal_t outputpin[] = {
 #ifdef AUXOUTPUT2_PORT
     { .id = Output_Aux2,            .port = AUXOUTPUT2_PORT,        .pin = AUXOUTPUT2_PIN,          .group = PinGroup_AuxOutput }
 #endif
+#ifdef AUXOUTPUT3_PORT
+    { .id = Output_Aux3,            .port = AUXOUTPUT3_PORT,        .pin = AUXOUTPUT3_PIN,          .group = PinGroup_AuxOutput }
+#endif
+#ifdef AUXOUTPUT4_PORT
+    { .id = Output_Aux4,            .port = AUXOUTPUT4_PORT,        .pin = AUXOUTPUT4_PIN,          .group = PinGroup_AuxOutput }
+#endif
+#ifdef AUXOUTPUT5_PORT
+    { .id = Output_Aux5,            .port = AUXOUTPUT5_PORT,        .pin = AUXOUTPUT5_PIN,          .group = PinGroup_AuxOutput }
+#endif
 };
 
 extern __IO uint32_t uwTick;
@@ -372,8 +381,11 @@ static bool selectStream (const io_stream_t *stream)
 
     hal.stream.set_enqueue_rt_handler(protocol_enqueue_realtime_command);
 
-    if(hal.stream.disable)
-        hal.stream.disable(false);
+    if(hal.stream.disable_rx)
+        hal.stream.disable_rx(false);
+
+    if(grbl.on_stream_changed)
+        grbl.on_stream_changed(hal.stream.type);
 
     return stream->type == hal.stream.type;
 }
@@ -1784,7 +1796,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "210930";
+    hal.driver_version = "211101";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1936,8 +1948,12 @@ bool driver_init (void)
     enet_init();
 #endif
 
-#if SPINDLE_HUANYANG > 0
-    huanyang_init(modbus_init(serial2Init(115200), NULL));
+#if MODBUS_ENABLE
+    modbus_init(serial2Init(115200), NULL);
+#endif
+
+#if SPINDLE_HUANYANG
+    huanyang_init();
 #endif
 
 #if BLUETOOTH_ENABLE
