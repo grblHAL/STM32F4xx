@@ -23,7 +23,7 @@
 // If none is enabled pin mappings from generic_map.h will be used.
 //#define BOARD_CNC3040
 //#define BOARD_PROTONEER_3XX   // For use with Nucleo-F411RE and F446RE boards.
-//#define BOARD_GENERIC_UNO     // For use with Nucleo-F411RE and F446RE boards.
+// #define BOARD_GENERIC_UNO     // For use with Nucleo-F411RE and F446RE boards.
 //#define BOARD_CNC_BOOSTERPACK
 //#define BOARD_MORPHO_CNC      // For use with Nucleo-F411RE and F446RE boards. Work in progress.
 //#define BOARD_MORPHO_DAC_CNC  // For use with F446RE boards and a 32-bit I2S stereo DAC for X and Y output. **EXPERIMENTAL**
@@ -41,13 +41,14 @@
 // Configuration
 // Uncomment to enable.
 
-#if !(defined(NUCLEO_F411) || defined(NUCLEO_F446)) // The Nucleo-F411RE board has an off-chip UART to USB interface.
+#if !(defined(NUCLEO_F401) || defined(NUCLEO_F411)|| defined(NUCLEO_F446)) // The Nucleo-F411RE board has an off-chip UART to USB interface.
 #define USB_SERIAL_CDC       1 // Serial communication via native USB.
 #endif
-//#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires Bluetooth plugin.
-//#define SPINDLE_HUANYANG     1 // Set to 1 or 2 for Huanyang VFD spindle. Requires spindle plugin. !! NOT TESTED !!
-//#define SDCARD_ENABLE        2 // Run gcode programs from SD card, requires sdcard plugin.
-//#define KEYPAD_ENABLE        1 // I2C keypad for jogging etc., requires keypad plugin.
+//#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires and claims one auxillary input pin.
+//#define SPINDLE_HUANYANG     1 // Set to 1 or 2 for Huanyang VFD spindle.
+//#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
+//#define SDCARD_ENABLE        2 // Run gcode programs from SD card.
+//#define KEYPAD_ENABLE        1 // I2C keypad for jogging etc..
 //#define ODOMETER_ENABLE      1 // Odometer plugin.
 //#define PPI_ENABLE           1 // Laser PPI plugin. To be completed.
 //#define LASER_COOLANT_ENABLE 1 // Laser coolant plugin. To be completed.

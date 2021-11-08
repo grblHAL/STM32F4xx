@@ -123,7 +123,7 @@
   #include "generic_map.h"
 #endif
 
-#if (defined(NUCLEO_F411) || defined(NUCLEO_F446)) && !defined(IS_NUCLEO_BOB)
+#if (defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)) && !defined(IS_NUCLEO_BOB)
 #warning "Board map is not for Nucleo based boards and firmware may not work!"
 #endif
 
@@ -265,6 +265,10 @@
 
 #if SPINDLE_HUANYANG
 #include "spindle/huanyang.h"
+#endif
+
+#if MODBUS_ENABLE
+#include "spindle/modbus.h"
 #endif
 
 #ifndef VFD_SPINDLE
