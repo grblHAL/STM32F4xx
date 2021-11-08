@@ -30,7 +30,7 @@
 //#define BOARD_BLACKPILL       // For use with F411 BlackPill, with optional auto square support for one axis
 //#define BOARD_MINI_BLACKPILL  // For use with F411 BlackPill, https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL
 //#define BOARD_BTT_SKR_PRO_1_1 // F407 based 3D Printer board
-//#define BOARD_BTT_SKR_20      // F407 based 3D Printer board
+#define BOARD_BTT_SKR_20      // F407 based 3D Printer board
 //#define BOARD_MY_MACHINE      // Add my_machine_map.h before enabling this!
 
 // WARNING: BOARD_BTT_SKR_20 may fry your Trinamic drivers due to bad hardware design.
@@ -53,7 +53,7 @@
 //#define LASER_COOLANT_ENABLE 1 // Laser coolant plugin. To be completed.
 //#define TRINAMIC_ENABLE   2130 // Trinamic TMC2130 stepper driver support. NOTE: work in progress.
 //#define TRINAMIC_ENABLE   5160 // Trinamic TMC5160 stepper driver support. NOTE: work in progress.
-//#define TRINAMIC_ENABLE   2209 // Trinamic TMC2209 stepper driver support. NOTE: work in progress.
+#define TRINAMIC_ENABLE   2209 // Trinamic TMC2209 stepper driver support. NOTE: work in progress.
 //#define TRINAMIC_I2C         1 // Trinamic I2C - SPI bridge interface.
 //#define TRINAMIC_DEV         1 // Development mode, adds a few M-codes to aid debugging. Do not enable in production code.
 //#define EEPROM_ENABLE        1 // I2C EEPROM support. Set to 1 for 24LC16(2K), 2 for larger sizes. Requires eeprom plugin.
