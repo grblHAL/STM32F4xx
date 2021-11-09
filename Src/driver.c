@@ -23,6 +23,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "main.h"
 #include "driver.h"
@@ -73,8 +74,8 @@
   #endif
 #endif
 
-#if !KEYPAD_ENABLE
-#define KEYPAD_STROBE_BIT 0
+#if !I2C_STROBE_ENABLE
+#define I2C_STROBE_BIT 0
 #endif
 
 #if !SPINDLE_SYNC_ENABLE
@@ -89,14 +90,14 @@
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 
-#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|KEYPAD_STROBE_BIT|SPINDLE_INDEX_BIT)
+#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|I2C_STROBE_BIT|SPINDLE_INDEX_BIT)
 
 #ifdef Z_LIMIT_POLL
-#if (DRIVER_IRQMASK-Z_LIMIT_BIT) != (LIMIT_MASK-Z_LIMIT_BIT+CONTROL_MASK+KEYPAD_STROBE_BIT+SPINDLE_INDEX_BIT)
+#if (DRIVER_IRQMASK-Z_LIMIT_BIT) != (LIMIT_MASK-Z_LIMIT_BIT+CONTROL_MASK+I2C_STROBE_BIT+SPINDLE_INDEX_BIT)
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 #else
-#if DRIVER_IRQMASK != (LIMIT_MASK+CONTROL_MASK+KEYPAD_STROBE_BIT+SPINDLE_INDEX_BIT)
+#if DRIVER_IRQMASK != (LIMIT_MASK+CONTROL_MASK+I2C_STROBE_BIT+SPINDLE_INDEX_BIT)
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 #endif
@@ -110,6 +111,8 @@ typedef union {
     };
 } debounce_t;
 
+static periph_signal_t *periph_pins = NULL;
+
 static input_signal_t inputpin[] = {
     { .id = Input_Reset,          .port = RESET_PORT,         .pin = RESET_PIN,           .group = PinGroup_Control },
     { .id = Input_FeedHold,       .port = FEED_HOLD_PORT,     .pin = FEED_HOLD_PIN,       .group = PinGroup_Control },
@@ -120,8 +123,8 @@ static input_signal_t inputpin[] = {
 #ifdef PROBE_PIN
     { .id = Input_Probe,          .port = PROBE_PORT,         .pin = PROBE_PIN,           .group = PinGroup_Probe },
 #endif
-#ifdef KEYPAD_STROBE_PIN
-    { .id = Input_KeypadStrobe,   .port = KEYPAD_PORT,        .pin = KEYPAD_STROBE_PIN,   .group = PinGroup_Keypad },
+#ifdef I2C_STROBE_PIN
+    { .id = Input_KeypadStrobe,   .port = I2C_STROBE_PORT,        .pin = I2C_STROBE_PIN,   .group = PinGroup_Keypad },
 #endif
 #ifdef MODE_SWITCH_PIN
     { .id = Input_ModeSelect,     .port = MODE_PORT,          .pin = MODE_SWITCH_PIN,     .group = PinGroup_MPG },
@@ -320,6 +323,22 @@ static debounce_t debounce;
 static probe_state_t probe = {
     .connected = On
 };
+#endif
+
+#if I2C_STROBE_ENABLE
+
+static driver_irq_handler_t i2c_strobe = { .type = IRQ_I2C_Strobe };
+
+static bool irq_claim (irq_type_t irq, uint_fast8_t id, irq_callback_ptr handler)
+{
+    bool ok;
+
+    if((ok = irq == IRQ_I2C_Strobe && i2c_strobe.callback == NULL))
+        i2c_strobe.callback = handler;
+
+    return ok;
+}
+
 #endif
 
 #include "grbl/stepdir_map.h"
@@ -1605,14 +1624,53 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info)
         pin_info(&pin);
     };
 
-#ifdef SPINDLE_PWM_TIMER_N
-    pin.pin = SPINDLE_PWM_PIN;
-    pin.function = Output_SpindlePWM;
-    pin.group = PinGroup_SpindlePWM;
-    pin.port = low_level ? (void *)SPINDLE_PWM_PORT : (void *)port2char(SPINDLE_PWM_PORT);
-    pin.description = NULL;
-    pin_info(&pin);
-#endif
+    periph_signal_t *ppin = periph_pins;
+
+    if(ppin) do {
+        pin.pin = ppin->pin.pin;
+        pin.function = ppin->pin.function;
+        pin.group = ppin->pin.group;
+        pin.port = low_level ? ppin->pin.port : (void *)port2char(ppin->pin.port);
+        pin.mode = ppin->pin.mode;
+        pin.description = ppin->pin.description;
+
+        pin_info(&pin);
+
+        ppin = ppin->next;
+    } while(ppin);
+}
+
+void registerPeriphPin (const periph_pin_t *pin)
+{
+    periph_signal_t *add_pin = malloc(sizeof(periph_signal_t));
+
+    if(!add_pin)
+        return;
+
+    memcpy(&add_pin->pin, pin, sizeof(periph_pin_t));
+    add_pin->next = NULL;
+
+    if(periph_pins == NULL) {
+        periph_pins = add_pin;
+    } else {
+        periph_signal_t *last = periph_pins;
+        while(last->next)
+            last = last->next;
+        last->next = add_pin;
+    }
+}
+
+void setPeriphPinDescription (const pin_function_t function, const pin_group_t group, const char *description)
+{
+    periph_signal_t *ppin = periph_pins;
+
+    if(ppin) do {
+        if(ppin->pin.function == function && ppin->pin.group == group) {
+            ppin->pin.description = description;
+            ppin = NULL;
+        } else
+            ppin = ppin->next;
+    } while(ppin);
 }
 
 // Initializes MCU peripherals for Grbl use
@@ -1706,11 +1764,22 @@ static bool driver_setup (settings_t *settings)
 #if !VFD_SPINDLE && defined(SPINDLE_PWM_TIMER_N)
 
     if(hal.driver_cap.variable_spindle) {
+
         GPIO_Init.Pin = (1<<SPINDLE_PWM_PIN);
         GPIO_Init.Mode = GPIO_MODE_AF_PP;
         GPIO_Init.Pull = GPIO_NOPULL;
         GPIO_Init.Alternate = SPINDLE_PWM_AF;
         HAL_GPIO_Init(SPINDLE_PWM_PORT, &GPIO_Init);
+
+        static const periph_pin_t pwm = {
+            .function = Output_SpindlePWM,
+            .group = PinGroup_SpindlePWM,
+            .port = SPINDLE_PWM_PORT,
+            .pin = SPINDLE_PWM_PIN,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        hal.periph_port.register_pin(&pwm);
     }
 
 #endif
@@ -1796,7 +1865,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "211101";
+    hal.driver_version = "211107";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1849,11 +1918,16 @@ bool driver_init (void)
 
     hal.irq_enable = __enable_irq;
     hal.irq_disable = __disable_irq;
+#if I2C_STROBE_ENABLE
+    hal.irq_claim = irq_claim;
+#endif
     hal.set_bits_atomic = bitsSetAtomic;
     hal.clear_bits_atomic = bitsClearAtomic;
     hal.set_value_atomic = valueSetAtomic;
     hal.get_elapsed_ticks = getElapsedTicks;
     hal.enumerate_pins = enumeratePins;
+    hal.periph_port.register_pin = registerPeriphPin;
+    hal.periph_port.set_pin_description = setPeriphPinDescription;
 
 #if USB_SERIAL_CDC
     serial_stream = usbInit();
@@ -2088,8 +2162,9 @@ void EXTI0_IRQHandler(void)
             DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
         } else
   #endif
-#elif defined(KEYPAD_ENABLE) && KEYPAD_STROBE_BIT & (1<<0)
-        keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_PIN) == 0);
+#elif defined(I2C_STROBE_ENABLE) && I2C_STROBE_BIT & (1<<0)
+        if(i2c_strobe.callback)
+            i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #elif LIMIT_MASK & (1<<0)
         if(hal.driver_cap.software_debounce) {
             debounce.limits = On;
@@ -2265,9 +2340,9 @@ void EXTI9_5_IRQHandler(void)
                 hal.limits.interrupt_callback(limitsGetState());
         }
 #endif
-#if KEYPAD_ENABLE && (KEYPAD_STROBE_BIT & 0x03E0)
-        if(ifg & KEYPAD_STROBE_BIT)
-            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_PIN) == 0);
+#if I2C_STROBE_ENABLE && (I2C_STROBE_BIT & 0x03E0)
+        if((ifg & I2C_STROBE_BIT) && i2c_strobe.callback)
+            i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #endif
 #if AUXINPUT_MASK & 0x03E0
         if(ifg & aux_irq)
@@ -2320,9 +2395,9 @@ void EXTI15_10_IRQHandler(void)
                 hal.limits.interrupt_callback(limitsGetState());
         }
 #endif
-#if KEYPAD_ENABLE && (KEYPAD_STROBE_BIT & 0xFC00)
-        if(ifg & KEYPAD_STROBE_BIT)
-            keypad_keyclick_handler(DIGITAL_IN(KEYPAD_PORT, KEYPAD_STROBE_PIN) == 0);
+#if I2C_STROBE_ENABLE && (I2C_STROBE_BIT & 0xFC00)
+        if((ifg & I2C_STROBE_BIT) && i2c_strobe.callback)
+            i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #endif
 #if AUXINPUT_MASK & 0xFC00
         if(ifg & aux_irq)

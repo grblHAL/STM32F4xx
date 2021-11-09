@@ -150,10 +150,9 @@
 #define AUXOUTPUT1_PORT         GPIOB
 #define AUXOUTPUT1_PIN          2
 
-#if KEYPAD_ENABLE
-#define KEYPAD_PORT             GPIOB
-#define KEYPAD_STROBE_PIN       0
-#define KEYPAD_STROBE_BIT       (1<<KEYPAD_STROBE_PIN)
+#if I2C_STROBE_ENABLE
+#define I2C_STROBE_PORT         GPIOB
+#define I2C_STROBE_PIN          0
 #endif
 
 #if SDCARD_ENABLE

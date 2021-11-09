@@ -24,18 +24,18 @@
 #include "i2c.h"
 #include "grbl/hal.h"
 
-#if KEYPAD_ENABLE
+#if KEYPAD_ENABLE == 1
 #include "keypad/keypad.h"
 #endif
 
 #ifdef I2C_PORT
 
 #ifdef I2C1_ALT_PINMAP
-  #define I2C1_SCL GPIO_PIN_6
-  #define I2C1_SDA GPIO_PIN_7
+  #define I2C1_SCL_PIN 6
+  #define I2C1_SDA_PIN 7
 #else
-  #define I2C1_SCL GPIO_PIN_8
-  #define I2C1_SDA GPIO_PIN_9
+  #define I2C1_SCL_PIN 8
+  #define I2C1_SDA_PIN 9
 #endif
 
 #define I2Cport(p) I2CportI(p)
@@ -59,7 +59,7 @@ void i2c_init (void)
 {
 #if I2C_PORT == 1
     GPIO_InitTypeDef GPIO_InitStruct = {
-        .Pin = I2C1_SCL|I2C1_SDA,
+        .Pin = (1 << I2C1_SCL_PIN)|(1 << I2C1_SDA_PIN),
         .Mode = GPIO_MODE_AF_OD,
         .Pull = GPIO_PULLUP,
         .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
@@ -73,6 +73,22 @@ void i2c_init (void)
 
     HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
     HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
+
+    static const periph_pin_t scl = {
+        .function = Output_SCK,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = I2C1_SCL_PIN,
+        .mode = { .mask = PINMODE_OD }
+    };
+
+    static const periph_pin_t sda = {
+        .function = Bidirectional_SDA,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = I2C1_SDA_PIN,
+        .mode = { .mask = PINMODE_OD }
+    };
 #endif
 
 #if I2C_PORT == 2
@@ -91,7 +107,26 @@ void i2c_init (void)
 
     HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
     HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
+
+    static const periph_pin_t scl = {
+        .function = Output_SCK,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = 10,
+        .mode = { .mask = PINMODE_OD }
+    };
+
+    static const periph_pin_t sda = {
+        .function = Bidirectional_SDA,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = 11,
+        .mode = { .mask = PINMODE_OD }
+    };
 #endif
+
+    hal.periph_port.register_pin(&scl);
+    hal.periph_port.register_pin(&sda);
 }
 
 #if I2C_PORT == 1
@@ -142,7 +177,7 @@ nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
 
 #endif
 
-#if KEYPAD_ENABLE
+#if KEYPAD_ENABLE == 1
 
 static uint8_t keycode = 0;
 static keycode_callback_ptr keypad_callback = NULL;
