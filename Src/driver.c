@@ -277,7 +277,7 @@ static output_signal_t outputpin[] = {
 #ifdef MOTOR_CSM5_PIN
     { .id = Output_MotorChipSelectM5,   .port = MOTOR_CSM5_PORT,    .pin = MOTOR_CSM5_PIN,          .group = PinGroup_MotorChipSelect },
 #endif
-#if !VFD_SPINDLE
+#if VFD_SPINDLE != 1
 #ifdef SPINDLE_ENABLE_PIN
     { .id = Output_SpindleOn,       .port = SPINDLE_ENABLE_PORT,    .pin = SPINDLE_ENABLE_PIN,      .group = PinGroup_SpindleControl },
 #endif
@@ -299,16 +299,22 @@ static output_signal_t outputpin[] = {
     { .id = Output_Aux1,            .port = AUXOUTPUT1_PORT,        .pin = AUXOUTPUT1_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT2_PORT
-    { .id = Output_Aux2,            .port = AUXOUTPUT2_PORT,        .pin = AUXOUTPUT2_PIN,          .group = PinGroup_AuxOutput }
+    { .id = Output_Aux2,            .port = AUXOUTPUT2_PORT,        .pin = AUXOUTPUT2_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT3_PORT
-    { .id = Output_Aux3,            .port = AUXOUTPUT3_PORT,        .pin = AUXOUTPUT3_PIN,          .group = PinGroup_AuxOutput }
+    { .id = Output_Aux3,            .port = AUXOUTPUT3_PORT,        .pin = AUXOUTPUT3_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT4_PORT
-    { .id = Output_Aux4,            .port = AUXOUTPUT4_PORT,        .pin = AUXOUTPUT4_PIN,          .group = PinGroup_AuxOutput }
+    { .id = Output_Aux4,            .port = AUXOUTPUT4_PORT,        .pin = AUXOUTPUT4_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT5_PORT
     { .id = Output_Aux5,            .port = AUXOUTPUT5_PORT,        .pin = AUXOUTPUT5_PIN,          .group = PinGroup_AuxOutput }
+#endif
+#ifdef AUXOUTPUT6_PORT
+    { .id = Output_Aux6,            .port = AUXOUTPUT6_PORT,        .pin = AUXOUTPUT6_PIN,          .group = PinGroup_AuxOutput }
+#endif
+#ifdef AUXOUTPUT7_PORT
+    { .id = Output_Aux7,            .port = AUXOUTPUT7_PORT,        .pin = AUXOUTPUT7_PIN,          .group = PinGroup_AuxOutput }
 #endif
 };
 
@@ -347,7 +353,7 @@ static bool irq_claim (irq_type_t irq, uint_fast8_t id, irq_callback_ptr handler
 static axes_signals_t motors_1 = {AXES_BITMASK}, motors_2 = {AXES_BITMASK};
 #endif
 
-#if !VFD_SPINDLE && defined(SPINDLE_PWM_TIMER_N)
+#if VFD_SPINDLE != 1 && defined(SPINDLE_PWM_TIMER_N)
 static bool pwmEnabled = false;
 static spindle_pwm_t spindle_pwm;
 static void spindle_set_speed (uint_fast16_t pwm_value);
@@ -974,7 +980,7 @@ probe_state_t probeGetState (void)
 
 #endif
 
-#if !VFD_SPINDLE
+#if VFD_SPINDLE != 1
 
 // Static spindle (off, on cw & on ccw)
 
@@ -1207,7 +1213,7 @@ static void spindleDataReset (void)
 
 // end spindle code
 
-#endif // !VFD_SPINDLE
+#endif // VFD_SPINDLE != 1
 
 // Start/stop coolant (and mist if enabled)
 static void coolantSetState (coolant_state_t mode)
@@ -1289,7 +1295,7 @@ void settings_changed (settings_t *settings)
         hal.stepper.disable_motors((axes_signals_t){0}, SquaringMode_Both);
 #endif
 
-#if !VFD_SPINDLE
+#if VFD_SPINDLE != 1
 
   #ifdef SPINDLE_PWM_TIMER_N
 
@@ -1425,8 +1431,10 @@ void settings_changed (settings_t *settings)
 
             pullup = false;
             input = &inputpin[--i];
-            input->irq_mode = IRQ_Mode_None;
-            input->bit = 1 << input->pin;
+            if(input->group != PinGroup_AuxInput) {
+                input->irq_mode = IRQ_Mode_None;
+                input->bit = 1 << input->pin;
+            }
 
             switch(input->id) {
 
@@ -1513,10 +1521,8 @@ void settings_changed (settings_t *settings)
 
             if(input->group == PinGroup_AuxInput) {
                 pullup = true;
-                input->cap.pull_mode = (PullMode_Up|PullMode_Down);
-                if(!(input->bit & DRIVER_IRQMASK)) {
+                if(input->cap.irq_mode != IRQ_Mode_None) {
                     aux_irq |= input->bit;
-                    input->cap.irq_mode = (IRQ_Mode_Rising|IRQ_Mode_Falling|IRQ_Mode_Change);
                     // Map interrupt to pin
                     uint32_t extireg = SYSCFG->EXTICR[input->pin >> 2] & ~(0b1111 << ((input->pin & 0b11) << 2));
                     extireg |= ((uint32_t)(GPIO_GET_INDEX(input->port)) << ((input->pin & 0b11) << 2));
@@ -1761,7 +1767,7 @@ static bool driver_setup (settings_t *settings)
 
   // Spindle init
 
-#if !VFD_SPINDLE && defined(SPINDLE_PWM_TIMER_N)
+#if VFD_SPINDLE != 1 && defined(SPINDLE_PWM_TIMER_N)
 
     if(hal.driver_cap.variable_spindle) {
 
@@ -1865,7 +1871,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "211107";
+    hal.driver_version = "211113";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1898,7 +1904,7 @@ bool driver_init (void)
     hal.probe.configure = probeConfigure;
 #endif
 
-#if !VFD_SPINDLE
+#if VFD_SPINDLE != 1
     hal.spindle.set_state = spindleSetState;
     hal.spindle.get_state = spindleGetState;
  #ifdef SPINDLE_PWM_TIMER_N
@@ -1961,12 +1967,15 @@ bool driver_init (void)
     hal.signals_cap.safety_door_ajar = On;
 #endif
 
-#if !VFD_SPINDLE && !PLASMA_ENABLE
+#if VFD_SPINDLE != 1 && !PLASMA_ENABLE
     hal.driver_cap.spindle_dir = On;
   #ifdef SPINDLE_PWM_TIMER_N
     hal.driver_cap.variable_spindle = On;
     hal.driver_cap.spindle_pwm_invert = On;
   #endif
+#if DUAL_SPINDLE
+    hal.driver_cap.dual_spindle = On;
+#endif
 #endif
 
 #if SPINDLE_SYNC_ENABLE
@@ -1996,6 +2005,9 @@ bool driver_init (void)
         if(input->group == PinGroup_AuxInput) {
             if(aux_inputs.pins.inputs == NULL)
                 aux_inputs.pins.inputs = input;
+            input->bit = 1 << input->pin;
+            input->cap.pull_mode = PullMode_UpDown;
+            input->cap.irq_mode = (DRIVER_IRQMASK & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
             aux_inputs.n_pins++;
         }
     }
@@ -2024,10 +2036,6 @@ bool driver_init (void)
 
 #if MODBUS_ENABLE
     modbus_init(serial2Init(115200), NULL);
-#endif
-
-#if SPINDLE_HUANYANG
-    huanyang_init();
 #endif
 
 #if BLUETOOTH_ENABLE

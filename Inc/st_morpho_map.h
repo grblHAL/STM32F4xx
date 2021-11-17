@@ -103,7 +103,7 @@
 
 // Define spindle PWM output pin.
 #define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
-#define SPINDLE_PWM_PIN         5
+#define SPINDLE_PWM_PIN         8
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOB
@@ -143,7 +143,6 @@
 #define AUXINPUT0_PIN           14
 #define AUXINPUT1_PORT          GPIOA
 #define AUXINPUT1_PIN           15
-#define AUXINPUT_MASK           (1<<AUXINPUT0_PIN|1<<AUXINPUT1_PIN)
 
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          15
@@ -153,19 +152,35 @@
 #if I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         GPIOB
 #define I2C_STROBE_PIN          0
+#else
+#define AUXINPUT2_PORT          GPIOB
+#define AUXINPUT2_PIN           0
 #endif
+
+#if SDCARD_ENABLE || TRINAMIC_ENABLE
+
+#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
 
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOC
 #define SD_CS_PIN               8
 #define SD_CS_BIT               (1<<SD_CS_PIN)
-#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
 #endif
 
 #if TRINAMIC_ENABLE
-#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
 #define MOTOR_CS_PORT           GPIOB
 #define MOTOR_CS_PIN            7
+#endif
+
+#else
+
+#define AUXOUTPUT2_PORT         GPIOA
+#define AUXOUTPUT2_PIN          5
+#define AUXOUTPUT3_PORT         GPIOA
+#define AUXOUTPUT3_PIN          6
+#define AUXOUTPUT4_PORT         GPIOA
+#define AUXOUTPUT4_PIN          7
+
 #endif
 
 // EOF

@@ -271,16 +271,8 @@
 #define FLASH_ENABLE 0
 #endif
 
-#if SPINDLE_HUANYANG
-#include "spindle/huanyang.h"
-#endif
-
 #if MODBUS_ENABLE
 #include "spindle/modbus.h"
-#endif
-
-#ifndef VFD_SPINDLE
-#define VFD_SPINDLE 0
 #endif
 
 #if MODBUS_ENABLE || BLUETOOTH_ENABLE

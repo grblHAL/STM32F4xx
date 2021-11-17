@@ -69,7 +69,7 @@
 
 // Define spindle PWM output pin.
 #define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
-#define SPINDLE_PWM_PIN         5
+#define SPINDLE_PWM_PIN         8
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOB
@@ -109,7 +109,6 @@
 #define AUXINPUT0_PIN           13
 #define AUXINPUT1_PORT          GPIOB
 #define AUXINPUT1_PIN           14
-#define AUXINPUT_MASK           (1<<AUXINPUT0_PIN|1<<AUXINPUT1_PIN)
 
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          15
