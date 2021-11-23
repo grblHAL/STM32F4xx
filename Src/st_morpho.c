@@ -177,7 +177,7 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
 
     while(--dly);
 
-    tmc_uart.disable(false);
+    tmc_uart.disable_rx(false);
     tmc_uart.reset_read_buffer();
 
     // Wait for response with 2ms timeout
@@ -198,7 +198,7 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
     } else
         wdgr.msg.addr.value = 0xFF;
 
-    tmc_uart.disable(true);
+    tmc_uart.disable_rx(true);
 
     dly = 5000;
     while(--dly);
@@ -235,7 +235,7 @@ void board_init (void)
 
     memcpy(&tmc_uart, serial2Init(230400), sizeof(io_stream_t));
 
-    tmc_uart.disable(true);
+    tmc_uart.disable_rx(true);
     tmc_uart.set_enqueue_rt_handler(stream_buffer_all);
 
 #endif
