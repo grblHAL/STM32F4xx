@@ -52,10 +52,6 @@
 #include "eeprom/eeprom.h"
 #endif
 
-#if BLUETOOTH_ENABLE
-#include "bluetooth/bluetooth.h"
-#endif
-
 #if PPI_ENABLE
 #include "laser/ppi.h"
 #endif
@@ -276,6 +272,27 @@ static output_signal_t outputpin[] = {
 #endif
 #ifdef MOTOR_CSM5_PIN
     { .id = Output_MotorChipSelectM5,   .port = MOTOR_CSM5_PORT,    .pin = MOTOR_CSM5_PIN,          .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CS_PIN
+    { .id = Output_MotorChipSelect,     .port = MOTOR_CS_PORT,      .pin = MOTOR_CS_PIN,            .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_UARTX_PIN
+    { .id = Bidirectional_MotorUARTX,   .port = MOTOR_UARTX_PORT,   .pin = MOTOR_UARTX_PIN,         .group = PinGroup_MotorUART },
+#endif
+#ifdef MOTOR_UARTY_PIN
+    { .id = Bidirectional_MotorUARTY,   .port = MOTOR_UARTY_PORT,   .pin = MOTOR_UARTY_PIN,         .group = PinGroup_MotorUART },
+#endif
+#ifdef MOTOR_UARTZ_PIN
+    { .id = Bidirectional_MotorUARTZ,   .port = MOTOR_UARTZ_PORT,   .pin = MOTOR_UARTZ_PIN,         .group = PinGroup_MotorUART },
+#endif
+#ifdef MOTOR_UARTM3_PIN
+    { .id = Bidirectional_MotorUARTM3,  .port = MOTOR_UARTM3_PORT,  .pin = MOTOR_UARTM3_PIN,        .group = PinGroup_MotorUART },
+#endif
+#ifdef MOTOR_UARTM4_PIN
+    { .id = Bidirectional_MotorUARTM4,  .port = MOTOR_UARTM4_PORT,  .pin = MOTOR_UARTM4_PIN,        .group = PinGroup_MotorUART },
+#endif
+#ifdef MOTOR_UARTM5_PIN
+    { .id = Bidirectional_MotorUARTM5,  .port = MOTOR_UARTM5_PORT,  .pin = MOTOR_UARTM5_PIN,        .group = PinGroup_MotorUART },
 #endif
 #if VFD_SPINDLE != 1
 #ifdef SPINDLE_ENABLE_PIN
@@ -1889,7 +1906,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "211121";
+    hal.driver_version = "211126";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -2049,20 +2066,10 @@ bool driver_init (void)
     board_init();
 #endif
 
+    serialRegisterStreams();
+
 #if ETHERNET_ENABLE
     enet_init();
-#endif
-
-#if MODBUS_ENABLE
-    modbus_init(serial2Init(115200), NULL);
-#endif
-
-#if BLUETOOTH_ENABLE
-#if USB_SERIAL_CDC
-    bluetooth_init(serialInit(115200));
-#else
-    bluetooth_init(serial2Init(115200));
-#endif
 #endif
 
 #include "grbl/plugins_init.h"

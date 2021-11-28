@@ -67,7 +67,7 @@ static const setting_descr_t aux_settings_descr[] = {
 
 static void aux_settings_load (void);
 
-static setting_details_t details = {
+static setting_details_t setting_details = {
     .groups = aux_groups,
     .n_groups = sizeof(aux_groups) / sizeof(setting_group_detail_t),
     .settings = aux_settings,
@@ -101,11 +101,6 @@ static bool is_setting_available (const setting_detail_t *setting)
     }
 
     return available;
-}
-
-static setting_details_t *onReportSettings (void)
-{
-    return &details;
 }
 
 static status_code_t aux_set_invert_out (setting_id_t id, uint_fast16_t value)
@@ -495,8 +490,7 @@ void ioports_init (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs)
         hal.port.get_pin_info = get_pin_info;
         hal.port.set_pin_description = set_pin_description;
 
-        details.on_get_settings = grbl.on_get_settings;
-        grbl.on_get_settings = onReportSettings;
+        settings_register(&setting_details);
 
         // Add M62-M65 port number mappings (P<n>) to description
         pnum = pn = malloc((3 * ports + (ports > 9 ? ports - 10 : 0)) + 1);
