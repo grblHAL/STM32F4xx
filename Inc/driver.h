@@ -275,7 +275,7 @@
 #include "spindle/modbus.h"
 #endif
 
-#if MODBUS_ENABLE || BLUETOOTH_ENABLE
+#if MODBUS_ENABLE || BLUETOOTH_ENABLE || TRINAMIC_UART_ENABLE
 #define SERIAL2_MOD
 #endif
 
@@ -284,12 +284,8 @@
   #ifndef TRINAMIC_MIXED_DRIVERS
     #define TRINAMIC_MIXED_DRIVERS 1
   #endif
-  #if TRINAMIC_ENABLE == 2209
-    #if MODBUS_ENABLE
-      #error "Cannot use TMC2209 drivers with Modbus spindle!"
-    #else
-      #define SERIAL2_MOD
-    #endif
+  #if TRINAMIC_UART_ENABLE && MODBUS_ENABLE
+    #error "Cannot use Trinamic UART drivers with Modbus spindle!"
   #endif
 #endif
 

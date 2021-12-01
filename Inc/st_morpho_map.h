@@ -37,7 +37,16 @@
 #define IS_NUCLEO_BOB
 #define HAS_IOPORTS
 #define HAS_BOARD_INIT
-
+/*
+#if EEPROM_ENABLE == 0
+#undef EEPROM_ENABLE
+#define EEPROM_ENABLE	1
+#endif
+#if EEPROM_IS_FRAM == 0
+#undef EEPROM_IS_FRAM
+#define EEPROM_IS_FRAM	1
+#endif
+*/
 //#define SPINDLE_SYNC_ENABLE 1
 
 // Define step pulse output pins.
@@ -157,17 +166,16 @@
 #define AUXINPUT2_PIN           0
 #endif
 
-#if SDCARD_ENABLE || TRINAMIC_ENABLE
+#if SDCARD_ENABLE || TRINAMIC_SPI_ENABLE
 
 #define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
 
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOC
 #define SD_CS_PIN               8
-#define SD_CS_BIT               (1<<SD_CS_PIN)
 #endif
 
-#if TRINAMIC_ENABLE
+#if TRINAMIC_SPI_ENABLE
 #define MOTOR_CS_PORT           GPIOB
 #define MOTOR_CS_PIN            7
 #endif
