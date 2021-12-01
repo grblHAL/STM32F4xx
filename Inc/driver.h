@@ -91,6 +91,14 @@
 #define GPIO_MAP     14
 #define GPIO_BITBAND 15
 
+#ifndef IS_NUCLEO_DEVKIT
+#if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
+#define IS_NUCLEO_DEVKIT 1
+#else
+#define IS_NUCLEO_DEVKIT 0
+#endif
+#endif
+
 #ifdef BOARD_CNC_BOOSTERPACK
   #if N_AXIS > 3
     #error Max number of axes is 3!
@@ -123,7 +131,7 @@
   #include "generic_map.h"
 #endif
 
-#if (defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)) && !defined(IS_NUCLEO_BOB)
+#if IS_NUCLEO_DEVKIT == 1 && !defined(IS_NUCLEO_BOB)
 #warning "Board map is not for Nucleo based boards and firmware may not work!"
 #endif
 
@@ -263,19 +271,11 @@
 #define FLASH_ENABLE 0
 #endif
 
-#if SPINDLE_HUANYANG
-#include "spindle/huanyang.h"
-#endif
-
 #if MODBUS_ENABLE
 #include "spindle/modbus.h"
 #endif
 
-#ifndef VFD_SPINDLE
-#define VFD_SPINDLE 0
-#endif
-
-#if MODBUS_ENABLE || BLUETOOTH_ENABLE
+#if MODBUS_ENABLE || BLUETOOTH_ENABLE || TRINAMIC_UART_ENABLE
 #define SERIAL2_MOD
 #endif
 
@@ -284,19 +284,17 @@
   #ifndef TRINAMIC_MIXED_DRIVERS
     #define TRINAMIC_MIXED_DRIVERS 1
   #endif
-  #if TRINAMIC_ENABLE == 2209
-    #if MODBUS_ENABLE
-      #error "Cannot use TMC2209 drivers with Modbus spindle!"
-    #else
-      #define SERIAL2_MOD
-    #endif
+  #if TRINAMIC_UART_ENABLE && MODBUS_ENABLE
+    #error "Cannot use Trinamic UART drivers with Modbus spindle!"
   #endif
 #endif
 
 // End configuration
 
-#if KEYPAD_ENABLE && !defined(KEYPAD_PORT)
+#if KEYPAD_ENABLE == 1 && !defined(I2C_STROBE_PORT)
 #error Keypad plugin not supported!
+#elif I2C_STROBE_ENABLE && !defined(I2C_STROBE_PORT)
+#error I2C strobe not supported!
 #endif
 
 #if SDCARD_ENABLE && !defined(SD_CS_PORT)

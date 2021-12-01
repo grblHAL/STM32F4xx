@@ -24,18 +24,18 @@
 #include "i2c.h"
 #include "grbl/hal.h"
 
-#if KEYPAD_ENABLE
+#if KEYPAD_ENABLE == 1
 #include "keypad/keypad.h"
 #endif
 
 #ifdef I2C_PORT
 
 #ifdef I2C1_ALT_PINMAP
-  #define I2C1_SCL GPIO_PIN_6
-  #define I2C1_SDA GPIO_PIN_7
+  #define I2C1_SCL_PIN 6
+  #define I2C1_SDA_PIN 7
 #else
-  #define I2C1_SCL GPIO_PIN_8
-  #define I2C1_SDA GPIO_PIN_9
+  #define I2C1_SCL_PIN 8
+  #define I2C1_SDA_PIN 9
 #endif
 
 #define I2Cport(p) I2CportI(p)
@@ -59,7 +59,7 @@ void i2c_init (void)
 {
 #if I2C_PORT == 1
     GPIO_InitTypeDef GPIO_InitStruct = {
-        .Pin = I2C1_SCL|I2C1_SDA,
+        .Pin = (1 << I2C1_SCL_PIN)|(1 << I2C1_SDA_PIN),
         .Mode = GPIO_MODE_AF_OD,
         .Pull = GPIO_PULLUP,
         .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
@@ -73,6 +73,22 @@ void i2c_init (void)
 
     HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
     HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
+
+    static const periph_pin_t scl = {
+        .function = Output_SCK,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = I2C1_SCL_PIN,
+        .mode = { .mask = PINMODE_OD }
+    };
+
+    static const periph_pin_t sda = {
+        .function = Bidirectional_SDA,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = I2C1_SDA_PIN,
+        .mode = { .mask = PINMODE_OD }
+    };
 #endif
 
 #if I2C_PORT == 2
@@ -91,7 +107,26 @@ void i2c_init (void)
 
     HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
     HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
+
+    static const periph_pin_t scl = {
+        .function = Output_SCK,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = 10,
+        .mode = { .mask = PINMODE_OD }
+    };
+
+    static const periph_pin_t sda = {
+        .function = Bidirectional_SDA,
+        .group = PinGroup_I2C,
+        .port = GPIOB,
+        .pin = 11,
+        .mode = { .mask = PINMODE_OD }
+    };
 #endif
+
+    hal.periph_port.register_pin(&scl);
+    hal.periph_port.register_pin(&sda);
 }
 
 #if I2C_PORT == 1
@@ -142,7 +177,7 @@ nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
 
 #endif
 
-#if KEYPAD_ENABLE
+#if KEYPAD_ENABLE == 1
 
 static uint8_t keycode = 0;
 static keycode_callback_ptr keypad_callback = NULL;
@@ -167,20 +202,24 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 #if TRINAMIC_ENABLE && TRINAMIC_I2C
 
+static uint16_t axis = 0xFF;
 static const uint8_t tmc_addr = I2C_ADR_I2CBRIDGE << 1;
 
-static TMC2130_status_t TMC_I2C_ReadRegister (TMC2130_t *driver, TMC2130_datagram_t *reg)
+TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
 {
-    uint8_t tmc_reg, buffer[5] = {0};
-    TMC2130_status_t status = {0};
+    uint8_t buffer[5] = {0};
+    TMC_spi_status_t status = 0;
 
-    if((tmc_reg = TMCI2C_GetMapAddress((uint8_t)(driver ? (uint32_t)driver->cs_pin : 0), reg->addr).value) == 0xFF) {
-        return status; // unsupported register
+    if(driver.axis != axis) {
+        buffer[0] = driver.axis | 0x80;
+        HAL_I2C_Mem_Write(&i2c_port, tmc_addr, axis, I2C_MEMADD_SIZE_8BIT, buffer, 1, 100);
+
+        axis = driver.axis;
     }
 
-    HAL_I2C_Mem_Read(&i2c_port, tmc_addr, tmc_reg, I2C_MEMADD_SIZE_8BIT, buffer, 5, 100);
+    HAL_I2C_Mem_Read(&i2c_port, tmc_addr, (uint16_t)reg->addr.idx, I2C_MEMADD_SIZE_8BIT, buffer, 5, 100);
 
-    status.value = buffer[0];
+    status = buffer[0];
     reg->payload.value = buffer[4];
     reg->payload.value |= buffer[3] << 8;
     reg->payload.value |= buffer[2] << 16;
@@ -189,32 +228,28 @@ static TMC2130_status_t TMC_I2C_ReadRegister (TMC2130_t *driver, TMC2130_datagra
     return status;
 }
 
-static TMC2130_status_t TMC_I2C_WriteRegister (TMC2130_t *driver, TMC2130_datagram_t *reg)
+TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
 {
-    uint8_t tmc_reg, buffer[4];
-    TMC2130_status_t status = {0};
+    uint8_t buffer[4];
+    TMC_spi_status_t status = 0;
 
-    reg->addr.write = 1;
-    tmc_reg = TMCI2C_GetMapAddress((uint8_t)(driver ? (uint32_t)driver->cs_pin : 0), reg->addr).value;
-    reg->addr.write = 0;
+    if(driver.axis != axis) {
+        buffer[0] = driver.axis | 0x80;
+        HAL_I2C_Mem_Write(&i2c_port, tmc_addr, axis, I2C_MEMADD_SIZE_8BIT, buffer, 1, 100);
 
-    if(tmc_reg != 0xFF) {
-
-        buffer[0] = (reg->payload.value >> 24) & 0xFF;
-        buffer[1] = (reg->payload.value >> 16) & 0xFF;
-        buffer[2] = (reg->payload.value >> 8) & 0xFF;
-        buffer[3] = reg->payload.value & 0xFF;
-
-        HAL_I2C_Mem_Write(&i2c_port, tmc_addr, tmc_reg, I2C_MEMADD_SIZE_8BIT, buffer, 4, 100);
+        axis = driver.axis;
     }
 
-    return status;
-}
+    buffer[0] = (reg->payload.value >> 24) & 0xFF;
+    buffer[1] = (reg->payload.value >> 16) & 0xFF;
+    buffer[2] = (reg->payload.value >> 8) & 0xFF;
+    buffer[3] = reg->payload.value & 0xFF;
 
-void I2C_DriverInit (TMC_io_driver_t *driver)
-{
-    driver->WriteRegister = TMC_I2C_WriteRegister;
-    driver->ReadRegister = TMC_I2C_ReadRegister;
+    reg->addr.write = 1;
+    HAL_I2C_Mem_Write(&i2c_port, tmc_addr, (uint16_t)reg->addr.idx, I2C_MEMADD_SIZE_8BIT, buffer, 4, 100);
+    reg->addr.write = 0;
+
+    return status;
 }
 
 #endif

@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2020 Terje Io
+  Copyright (c) 2020-2021 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -64,6 +64,30 @@ void spi_init (void)
             .Alternate = GPIO_AF5_SPI1,
         };
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+        static const periph_pin_t sck = {
+            .function = Output_SCK,
+            .group = PinGroup_SPI,
+            .port = GPIOA,
+            .pin = 5,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        static const periph_pin_t sdo = {
+            .function = Output_MOSI,
+            .group = PinGroup_SPI,
+            .port = GPIOA,
+            .pin = 6,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+        static const periph_pin_t sdi = {
+            .function = Input_MISO,
+            .group = PinGroup_SPI,
+            .port = GPIOA,
+            .pin = 7,
+            .mode = { .mask = PINMODE_NONE }
+        };
 #endif
 #if SPI_PORT == 2
         __HAL_RCC_SPI2_CLK_ENABLE();
@@ -76,6 +100,30 @@ void spi_init (void)
             .Alternate = GPIO_AF5_SPI2,
         };
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+        static const periph_pin_t sck = {
+            .function = Output_SCK,
+            .group = PinGroup_SPI,
+            .port = GPIOB,
+            .pin = 13,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        static const periph_pin_t sdo = {
+            .function = Output_MOSI,
+            .group = PinGroup_SPI,
+            .port = GPIOB,
+            .pin = 14,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+        static const periph_pin_t sdi = {
+            .function = Input_MISO,
+            .group = PinGroup_SPI,
+            .port = GPIOB,
+            .pin = 15,
+            .mode = { .mask = PINMODE_NONE }
+        };
 #endif
 #if SPI_PORT == 3
         __HAL_RCC_SPI3_CLK_ENABLE();
@@ -88,13 +136,40 @@ void spi_init (void)
             .Alternate = GPIO_AF6_SPI3
         };
         HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+        static const periph_pin_t sck = {
+            .function = Output_SCK,
+            .group = PinGroup_SPI,
+            .port = GPIOC,
+            .pin = 10,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        static const periph_pin_t sdo = {
+            .function = Output_MOSI,
+            .group = PinGroup_SPI,
+            .port = GPIOC,
+            .pin = 11,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+        static const periph_pin_t sdi = {
+            .function = Input_MISO,
+            .group = PinGroup_SPI,
+            .port = GPIOC,
+            .pin = 12,
+            .mode = { .mask = PINMODE_NONE }
+        };
 #endif
         HAL_SPI_Init(&spi_port);
         __HAL_SPI_ENABLE(&spi_port);
+
+        hal.periph_port.register_pin(&sck);
+        hal.periph_port.register_pin(&sdo);
+        hal.periph_port.register_pin(&sdi);
+
+        init = true;
     }
-
-    init = true;
-
 }
 
 // set the SSI speed to the max setting

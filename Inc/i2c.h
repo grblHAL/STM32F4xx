@@ -34,7 +34,7 @@
 
 #endif
 
-#if KEYPAD_ENABLE
+#if KEYPAD_ENABLE == 1
 
 #include "keypad/keypad.h"
 

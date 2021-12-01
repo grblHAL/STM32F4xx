@@ -500,7 +500,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 
 #endif  // TRINAMIC_ENABLE == 2209
 
-#if defined(TRINAMIC_ENABLE)
+#if TRINAMIC_ENABLE
 
 static void add_cs_pin (xbar_t *gpio)
 {

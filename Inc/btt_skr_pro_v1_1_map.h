@@ -21,10 +21,6 @@
 #error "Axis configuration is not supported!"
 #endif
 
-#if TRINAMIC_ENABLE
-#error "Trinamic plugin not supported!"
-#endif
-
 #if !defined(STM32F407xx) || HSE_VALUE == 8000000
 #error "This board has STM32F407 processor with a 25MHz crystal, select a corresponding build!"
 #endif
@@ -32,6 +28,9 @@
 #define BOARD_NAME "BTT SKR PRO v1.1"
 #define I2C_PORT 1
 #define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
+#if TRINAMIC_ENABLE
+#define HAS_BOARD_INIT
+#endif
 
 // Define step pulse output pins.
 #define X_STEP_PORT                 GPIOE
@@ -144,7 +143,61 @@
 #define PROBE_PIN                   1                       // BLTouch PA1
 
 #if SDCARD_ENABLE
-#define SD_CS_PORT                  GPIOB
+#define SD_CS_PORT                  GPIOA
 #define SD_CS_PIN                   12
 #define SPI_PORT                    2 // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15 (EXP2 Header)
+#endif
+
+#if TRINAMIC_UART_ENABLE
+
+#define MOTOR_UARTX_PORT            GPIOE
+#define MOTOR_UARTX_PIN             4
+#define MOTOR_UARTY_PORT            GPIOE
+#define MOTOR_UARTY_PIN             2
+#define MOTOR_UARTZ_PORT            GPIOE
+#define MOTOR_UARTZ_PIN             0
+
+#ifdef  M3_AVAILABLE
+#define MOTOR_UARTM3_PORT           GPIOD
+#define MOTOR_UARTM3_PIN            2
+#endif
+
+#ifdef  M4_AVAILABLE
+#define MOTOR_UARTM4_PORT           GPIOD
+#define MOTOR_UARTM4_PIN            0
+#endif
+
+#ifdef  M5_AVAILABLE
+#define MOTOR_UARTM5_PORT           GPIOD
+#define MOTOR_UARTM5_PIN            5
+#endif
+
+#endif
+
+#if TRINAMIC_SPI_ENABLE
+
+// SPI3 is used: GPIOC pin 10, 11 and 12
+
+#define MOTOR_CSX_PORT              GPIOA
+#define MOTOR_CSX_PIN               15
+#define MOTOR_CSY_PORT              GPIOB
+#define MOTOR_CSY_PIN               8
+#define MOTOR_CSZ_PORT              GPIOB
+#define MOTOR_CSZ_PIN               9
+
+#ifdef  M3_AVAILABLE
+#define MOTOR_CSM3_PORT             GPIOB
+#define MOTOR_CSM3_PIN              3
+#endif
+
+#ifdef  M4_AVAILABLE
+#define MOTOR_CSM4_PORT             GPIOG
+#define MOTOR_CSM4_PIN              15
+#endif
+
+#ifdef  M5_AVAILABLE
+#define MOTOR_CSM5_PORT             GPIOG
+#define MOTOR_CSM5_PIN              12
+#endif
+
 #endif

@@ -98,9 +98,9 @@
 #define PROBE_PORT              GPIOA
 #define PROBE_PIN               7
 
-#if KEYPAD_ENABLE
-#define KEYPAD_PORT             GPIOB
-#define KEYPAD_STROBE_PIN       7
+#if I2C_STROBE_ENABLE
+#define I2C_STROBE_PORT         GPIOB
+#define I2C_STROBE_PIN          7
 #endif
 
 #if SDCARD_ENABLE

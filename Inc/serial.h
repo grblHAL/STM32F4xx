@@ -36,5 +36,6 @@ const io_stream_t *serialInit (uint32_t baud_rate);
 #ifdef SERIAL2_MOD
 const io_stream_t *serial2Init(uint32_t baud_rate);
 #endif
+void serialRegisterStreams (void);
 
 /*EOF*/
