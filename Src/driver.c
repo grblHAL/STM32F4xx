@@ -1895,7 +1895,13 @@ static bool driver_setup (settings_t *settings)
 
 bool driver_init (void)
 {
-    // Enable EEPROM and serial port here for Grbl to be able to configure itself and report any errors
+#ifdef HAS_BOOTLOADER
+    extern uint8_t _FLASH_VectorTable;
+    __disable_irq();
+    SCB->VTOR = (uint32_t)&_FLASH_VectorTable;
+    __DSB();
+    __enable_irq();
+#endif
 
 #ifdef STM32F446xx
     hal.info = "STM32F446";
@@ -1906,7 +1912,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "211126";
+    hal.driver_version = "211203";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif

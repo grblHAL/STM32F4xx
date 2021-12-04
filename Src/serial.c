@@ -114,35 +114,19 @@ static void serialRxCancel (void)
 }
 
 //
-// Attempt to send a character bypassing buffering
-//
-inline static bool serialPutCNonBlocking (const char c)
-{
-    bool ok;
-
-    if((ok = !(USART->CR1 & USART_CR1_TXEIE) && !(USART->SR & USART_SR_TXE)))
-        USART->DR = c;
-
-    return ok;
-}
-
-//
 // Writes a character to the serial output stream
 //
 static bool serialPutC (const char c)
 {
-//    if(txbuf.head != txbuf.tail || !serialPutCNonBlocking(c)) {           // Try to send character without buffering...
+    uint16_t next_head = BUFNEXT(txbuf.head, txbuf);    // Get pointer to next free slot in buffer
 
-        uint16_t next_head = BUFNEXT(txbuf.head, txbuf);    // .. if not, get pointer to next free slot in buffer
-
-        while(txbuf.tail == next_head) {                    // While TX buffer full
-            if(!hal.stream_blocking_callback())             // check if blocking for space,
-                return false;                               // exit if not (leaves TX buffer in an inconsistent state)
-        }
-        txbuf.data[txbuf.head] = c;                         // Add data to buffer,
-        txbuf.head = next_head;                             // update head pointer and
-        USART->CR1 |= USART_CR1_TXEIE;                      // enable TX interrupts
-//    }
+    while(txbuf.tail == next_head) {                    // While TX buffer full
+        if(!hal.stream_blocking_callback())             // check if blocking for space,
+            return false;                               // exit if not (leaves TX buffer in an inconsistent state)
+    }
+    txbuf.data[txbuf.head] = c;                         // Add data to buffer,
+    txbuf.head = next_head;                             // update head pointer and
+    USART->CR1 |= USART_CR1_TXEIE;                      // enable TX interrupts
 
     return true;
 }
@@ -234,7 +218,7 @@ const io_stream_t *serialInit (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .connected = true,
+        .state.connected = true,
         .read = serialGetC,
         .write = serialWriteS,
         .write_n =  serialWrite,
@@ -413,40 +397,22 @@ static void serial2RxCancel (void)
 }
 
 //
-// Attempt to send a character bypassing buffering
-//
-static inline bool serial2PutCNonBlocking (const char c)
-{
-    bool ok;
-
-    if((ok = !(UART2->CR1 & USART_CR1_TXEIE) && !(UART2->SR & USART_SR_TXE)))
-        UART2->DR = c;
-
-    return ok;
-}
-
-//
 // Writes a character to the serial output stream
 //
 static bool serial2PutC (const char c)
 {
-    uint32_t next_head;
+    uint32_t next_head = BUFNEXT(txbuf2.head, txbuf2);   // Set and update head pointer
 
-//    if(txbuf2.head != txbuf2.tail || !serial2PutCNonBlocking(c)) {  // Try to send character without buffering...
+    while(txbuf2.tail == next_head) {           // While TX buffer full
+        if(!hal.stream_blocking_callback())     // check if blocking for space,
+            return false;                       // exit if not (leaves TX buffer in an inconsistent state)
+        UART2->CR1 |= USART_CR1_TXEIE;          // Enable TX interrupts???
+    }
 
-        next_head = BUFNEXT(txbuf2.head, txbuf2);   // .. if not, set and update head pointer
+    txbuf2.data[txbuf2.head] = c;               // Add data to buffer
+    txbuf2.head = next_head;                    // and update head pointer
 
-        while(txbuf2.tail == next_head) {           // While TX buffer full
-            if(!hal.stream_blocking_callback())     // check if blocking for space,
-                return false;                       // exit if not (leaves TX buffer in an inconsistent state)
-            UART2->CR1 |= USART_CR1_TXEIE;          // Enable TX interrupts???
-        }
-
-        txbuf2.data[txbuf2.head] = c;               // Add data to buffer
-        txbuf2.head = next_head;                    // and update head pointer
-
-        UART2->CR1 |= USART_CR1_TXEIE;              // Enable TX interrupts
-//    }
+    UART2->CR1 |= USART_CR1_TXEIE;              // Enable TX interrupts
 
     return true;
 }
@@ -557,7 +523,7 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
     static const io_stream_t stream = {
         .type = StreamType_Serial,
         .instance = 1,
-        .connected = true,
+        .state.connected = true,
         .read = serial2GetC,
         .write = serial2WriteS,
         .write_n =  serial2Write,
