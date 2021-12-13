@@ -338,7 +338,6 @@ static output_signal_t outputpin[] = {
 extern __IO uint32_t uwTick;
 static uint32_t pulse_length, pulse_delay, aux_irq = 0;;
 static bool IOInitDone = false;
-static const io_stream_t *serial_stream;
 static axes_signals_t next_step_outbits;
 static delay_t delay = { .ms = 1, .callback = NULL }; // NOTE: initial ms set to 1 for "resetting" systick timer on startup
 static debounce_t debounce;
@@ -406,30 +405,6 @@ static void driver_delay (uint32_t ms, delay_callback_ptr callback)
         if(callback)
             callback();
     }
-}
-
-static bool selectStream (const io_stream_t *stream)
-{
-    if(!stream)
-        stream = serial_stream;
-
-    if(hal.stream.read != stream->read)
-        stream->reset_read_buffer();
-
-    memcpy(&hal.stream, stream, sizeof(io_stream_t));
-
-    if(!hal.stream.write_all)
-        hal.stream.write_all = hal.stream.write;
-
-    hal.stream.set_enqueue_rt_handler(protocol_enqueue_realtime_command);
-
-    if(hal.stream.disable_rx)
-        hal.stream.disable_rx(false);
-
-    if(grbl.on_stream_changed)
-        grbl.on_stream_changed(hal.stream.type);
-
-    return stream->type == hal.stream.type;
 }
 
 // Enable/disable stepper motors
@@ -1759,7 +1734,7 @@ static bool driver_setup (settings_t *settings)
             GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
 
-            if(outputpin[i].group == PinGroup_MotorChipSelect)
+            if(outputpin[i].group == PinGroup_MotorChipSelect || outputpin[i].group == PinGroup_MotorUART)
                 DIGITAL_OUT(outputpin[i].port, outputpin[i].pin, 1);
         }
     }
@@ -1912,7 +1887,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "211203";
+    hal.driver_version = "211209";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1978,13 +1953,10 @@ bool driver_init (void)
     hal.periph_port.set_pin_description = setPeriphPinDescription;
 
 #if USB_SERIAL_CDC
-    serial_stream = usbInit();
+    stream_connect(usbInit());
 #else
-    serial_stream = serialInit(115200);
+    stream_connect(serialInit(115200));
 #endif
-
-    hal.stream_select = selectStream;
-    hal.stream_select(serial_stream);
 
 #ifdef I2C_PORT
     i2c_init();

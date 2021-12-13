@@ -99,6 +99,21 @@
 #define PROBE_PORT              GPIOB
 #define PROBE_PIN               15
 
+#if N_ABC_MOTORS == 0
+#define HAS_IOPORTS
+#if !SAFETY_DOOR_ENABLE
+#define AUXINPUT0_PORT          GPIOB
+#define AUXINPUT0_PIN           9
+#define AUXOUTPUT1_PORT         GPIOA
+#define AUXOUTPUT1_PIN          6
+#else
+#define AUXINPUT0_PORT          GPIOA
+#define AUXINPUT0_PIN           6
+#endif
+#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PIN          7
+#endif
+
 // NOT SUPPORTED
 #if KEYPAD_ENABLE
 #error Keypad not supported

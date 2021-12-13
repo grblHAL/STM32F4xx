@@ -120,8 +120,25 @@
 #define CONTROL_INMODE          GPIO_SHIFT6
 
 // Define probe switch input pin.
+#if !N_AUTO_SQUARED
 #define PROBE_PORT              GPIOB
 #define PROBE_PIN               15
+#endif
+
+#if N_ABC_MOTORS == 0
+#define HAS_IOPORTS
+#if !SAFETY_DOOR_ENABLE
+#define AUXINPUT0_PORT          GPIOB
+#define AUXINPUT0_PIN           9
+#define AUXOUTPUT1_PORT         GPIOA
+#define AUXOUTPUT1_PIN          6
+#else
+#define AUXINPUT0_PORT          GPIOA
+#define AUXINPUT0_PIN           6
+#endif
+#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PIN          7
+#endif
 
 // NOT SUPPORTED
 #if KEYPAD_ENABLE

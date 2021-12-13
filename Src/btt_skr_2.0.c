@@ -596,5 +596,14 @@ void board_init (void)
 #endif // TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160 || TRINAMIC_ENABLE == 2209
 }
 
+#if TRINAMIC_ENABLE == 2209
+
+void TIM7_IRQHandler (void)
+{
+    HAL_TIM_IRQHandler(&htim7);
+}
+
+#endif
+
 #endif  // BOARD_BTT_SKR_20
 
