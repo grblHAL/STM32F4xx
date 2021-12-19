@@ -21,11 +21,16 @@
 #error "Axis configuration is not supported!"
 #endif
 
-#if !defined(STM32F407xx) || HSE_VALUE == 8000000
-#error "This board has STM32F407 processor with a 25MHz crystal, select a corresponding build!"
+#if !defined(STM32F407xx) || HSE_VALUE != 8000000
+#error "This board has STM32F407 processor with a 8MHz crystal, select a corresponding build!"
 #endif
 
+#ifdef BOARD_BTT_SKR_PRO_1_2
+#define BOARD_NAME "BTT SKR PRO v1.2"
+#else
 #define BOARD_NAME "BTT SKR PRO v1.1"
+#endif
+
 #define I2C_PORT 1
 #define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
 #if TRINAMIC_ENABLE
@@ -96,7 +101,7 @@
 #define M4_ENABLE_PIN               3
 #endif
 
-// Define ganged axis or B axis step pulse and step direction output pins.
+// Define ganged axis or C axis step pulse and step direction output pins.
 #if N_ABC_MOTORS == 3
 #define M5_AVAILABLE                // E2
 #define M5_STEP_PORT                GPIOD
@@ -150,26 +155,26 @@
 
 #if TRINAMIC_UART_ENABLE
 
-#define MOTOR_UARTX_PORT            GPIOE
-#define MOTOR_UARTX_PIN             4
+#define MOTOR_UARTX_PORT            GPIOC
+#define MOTOR_UARTX_PIN             13
 #define MOTOR_UARTY_PORT            GPIOE
-#define MOTOR_UARTY_PIN             2
+#define MOTOR_UARTY_PIN             3
 #define MOTOR_UARTZ_PORT            GPIOE
-#define MOTOR_UARTZ_PIN             0
+#define MOTOR_UARTZ_PIN             1
 
 #ifdef  M3_AVAILABLE
 #define MOTOR_UARTM3_PORT           GPIOD
-#define MOTOR_UARTM3_PIN            2
+#define MOTOR_UARTM3_PIN            4
 #endif
 
 #ifdef  M4_AVAILABLE
 #define MOTOR_UARTM4_PORT           GPIOD
-#define MOTOR_UARTM4_PIN            0
+#define MOTOR_UARTM4_PIN            1
 #endif
 
 #ifdef  M5_AVAILABLE
 #define MOTOR_UARTM5_PORT           GPIOD
-#define MOTOR_UARTM5_PIN            5
+#define MOTOR_UARTM5_PIN            6
 #endif
 
 #endif

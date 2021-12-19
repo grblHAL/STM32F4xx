@@ -99,6 +99,10 @@
 #endif
 #endif
 
+#ifdef BOARD_BTT_SKR_PRO_1_2
+#define BOARD_BTT_SKR_PRO_1_1
+#endif
+
 #ifdef BOARD_CNC_BOOSTERPACK
   #if N_AXIS > 3
     #error Max number of axes is 3!

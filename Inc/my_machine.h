@@ -30,6 +30,7 @@
 //#define BOARD_BLACKPILL       // For use with F411 BlackPill, with optional auto square support for one axis
 //#define BOARD_MINI_BLACKPILL  // For use with F411 BlackPill, https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL
 //#define BOARD_BTT_SKR_PRO_1_1 // F407 based 3D Printer board
+//#define BOARD_BTT_SKR_PRO_1_2 // F407 based 3D Printer board
 //#define BOARD_BTT_SKR_20      // F407 based 3D Printer board
 //#define BOARD_MY_MACHINE      // Add my_machine_map.h before enabling this!
 
