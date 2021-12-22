@@ -127,5 +127,10 @@
 #define PROBE_PORT              GPIOD
 #define PROBE_PIN               12			// N15
 
+// Define main grbl uart port
+#define UART_INSTANCE						2
+
+// Define I2C Port - avoid confliction with USART3 port
+#undef I2C_PORT
 
 /* EOF */

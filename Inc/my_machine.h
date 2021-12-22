@@ -49,12 +49,12 @@
 // Uncomment to enable.
 
 #if !IS_NUCLEO_DEVKIT // The Nucleo boards has an off-chip UART to USB interface.
-#define USB_SERIAL_CDC       1 // Serial communication via native USB.
+//#define USB_SERIAL_CDC       1 // Serial communication via native USB.
 #endif
 //#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires and claims one auxillary input pin.
-#define VFD_ENABLE           99 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
+//#define VFD_ENABLE           1 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define DUAL_SPINDLE 		   1 // Uncomment for switching between VFD spindle and PWM output with $32
-#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
+//#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
 //#define SDCARD_ENABLE        2 // Run gcode programs from SD card.
 //#define KEYPAD_ENABLE        1 // Set to 1 for I2C keypad, 2 for other input such as serial data
 //#define ODOMETER_ENABLE      1 // Odometer plugin.

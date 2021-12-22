@@ -305,9 +305,9 @@
 #error SD card plugin not supported!
 #endif
 
-#ifndef I2C_PORT
-#define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
-#endif
+//#ifndef I2C_PORT
+//#define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
+//#endif
 
 #ifndef SPI_PORT
 #define SPI_PORT 1

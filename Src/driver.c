@@ -1887,7 +1887,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "211209";
+    hal.driver_version = "211221";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -1954,8 +1954,8 @@ bool driver_init (void)
 
 #if USB_SERIAL_CDC
     stream_connect(usbInit());
-#else
-    stream_connect(serialInit(115200));
+#elif !defined(UART_INSTANCE)
+    stream_connect(serialInit(BAUD_RATE));
 #endif
 
 #ifdef I2C_PORT
@@ -2008,6 +2008,8 @@ bool driver_init (void)
     hal.driver_cap.probe_pull_up = On;
 #endif
 
+    serialRegisterStreams();
+
 #ifdef HAS_IOPORTS
 
     uint32_t i;
@@ -2044,7 +2046,10 @@ bool driver_init (void)
     board_init();
 #endif
 
-    serialRegisterStreams();
+#if defined(UART_INSTANCE) && USB_SERIAL_CDC == 0
+    if(!stream_connect_instance(0, BAUD_RATE))
+        while(true); // Cannot boot if no communication channel is available!
+#endif
 
 #if ETHERNET_ENABLE
     enet_init();
