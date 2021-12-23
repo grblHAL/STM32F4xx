@@ -600,30 +600,30 @@ const io_stream_t* serial4Init(uint32_t baud_rate)
 
 void USART_GRBL_IRQHandler(void)
 {
-	if (USART_GRBL->SR & USART_SR_RXNE)
-	{
-		uint32_t data = USART_GRBL->DR;
-		if (!enqueue_realtime_command3((char) data))
-		{             // Check and strip realtime commands...
-			uint16_t next_head = BUFNEXT(rxbuf3.head, rxbuf3);    // Get and increment buffer pointer
-			if (next_head == rxbuf3.tail)                         // If buffer full
-			rxbuf3.overflow = 1;                             // flag overflow
-			else
-			{
-				rxbuf3.data[rxbuf3.head] = (char) data;            // if not add data to buffer
-				rxbuf3.head = next_head;                         // and update pointer
-			}
-		}
-	}
-
-	if ((USART_GRBL->SR & USART_SR_TXE) && (USART_GRBL->CR1 & USART_CR1_TXEIE))
-	{
-		uint_fast16_t tail = txbuf3.tail;            // Get buffer pointer
-		USART_GRBL->DR = txbuf3.data[tail];               // Send next character
-		txbuf3.tail = tail = BUFNEXT(tail, txbuf3);   // and increment pointer
-		if (tail == txbuf3.head)                      // If buffer empty then
-		USART_GRBL->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
-	}
+//	if (USART_GRBL->SR & USART_SR_RXNE)
+//	{
+//		uint32_t data = USART_GRBL->DR;
+//		if (!enqueue_realtime_command3((char) data))
+//		{             // Check and strip realtime commands...
+//			uint16_t next_head = BUFNEXT(rxbuf3.head, rxbuf3);    // Get and increment buffer pointer
+//			if (next_head == rxbuf3.tail)                         // If buffer full
+//			rxbuf3.overflow = 1;                             // flag overflow
+//			else
+//			{
+//				rxbuf3.data[rxbuf3.head] = (char) data;            // if not add data to buffer
+//				rxbuf3.head = next_head;                         // and update pointer
+//			}
+//		}
+//	}
+//
+//	if ((USART_GRBL->SR & USART_SR_TXE) && (USART_GRBL->CR1 & USART_CR1_TXEIE))
+//	{
+//		uint_fast16_t tail = txbuf3.tail;            // Get buffer pointer
+//		USART_GRBL->DR = txbuf3.data[tail];               // Send next character
+//		txbuf3.tail = tail = BUFNEXT(tail, txbuf3);   // and increment pointer
+//		if (tail == txbuf3.head)                      // If buffer empty then
+//		USART_GRBL->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
+//	}
 }
 
 /************************************
@@ -651,7 +651,6 @@ void board_init(void)
 // Enable UART
 	static io_stream_details_t streams =
 	{ .n_streams = sizeof(serial) / sizeof(io_stream_properties_t), .streams = serial, };
-
 	stream_register_streams(&streams);
 
 // Enable Encoder Timer

@@ -2047,7 +2047,7 @@ bool driver_init (void)
 #endif
 
 #if defined(UART_INSTANCE) && USB_SERIAL_CDC == 0
-    if(!stream_connect_instance(0, BAUD_RATE))
+    if(!stream_connect_instance(UART_INSTANCE, BAUD_RATE))
         while(true); // Cannot boot if no communication channel is available!
 #endif
 

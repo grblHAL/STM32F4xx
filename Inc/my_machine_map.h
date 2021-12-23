@@ -131,6 +131,6 @@
 #define UART_INSTANCE						2
 
 // Define I2C Port - avoid confliction with USART3 port
-#undef I2C_PORT
+//#undef I2C_PORT
 
 /* EOF */
