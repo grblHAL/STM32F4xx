@@ -24,6 +24,16 @@
 #endif
 
 #define BOARD_NAME "Nucleo-64 CNC Breakout (DAC)"
+
+#undef I2C_ENABLE
+#undef EEPROM_ENABLE
+#undef EEPROM_IS_FRAM
+
+#define I2C_ENABLE      1
+#define I2C_PORT        1
+#define EEPROM_ENABLE   1
+#define EEPROM_IS_FRAM  1
+
 #define HAS_IOPORTS
 #define HAS_BOARD_INIT
 #define I2C_PORT 1

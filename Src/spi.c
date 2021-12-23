@@ -22,6 +22,8 @@
 #include "main.h"
 #include "driver.h"
 
+#if SPI_ENABLE
+
 #define SPIport(p) SPIportI(p)
 #define SPIportI(p) SPI ## p
 
@@ -209,3 +211,5 @@ uint8_t spi_put_byte (uint8_t byte)
 
     return (uint8_t)spi_port.Instance->DR;
 }
+
+#endif // SPI_ENABLE

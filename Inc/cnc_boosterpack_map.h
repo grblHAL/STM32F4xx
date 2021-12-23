@@ -25,15 +25,15 @@
 
 #define BOARD_NAME "CNC BoosterPack"
 
-#ifdef EEPROM_ENABLE
-#undef EEPROM_ENABLE
-#endif
-
 #ifdef CNC_BOOSTERPACK
 #undef CNC_BOOSTERPACK
 #endif
 
+#undef I2C_ENABLE
+#undef EEPROM_ENABLE
+
 #define CNC_BOOSTERPACK 1
+#define I2C_ENABLE      0
 #define EEPROM_ENABLE   0 // Disabled for now for BlackPill - pin differences... // Only change if BoosterPack does not have EEPROM mounted
 
 // Define step pulse output pins.
@@ -109,8 +109,8 @@
 #define PROBE_PIN               7
 
 #if I2C_STROBE_ENABLE
-#define I2C_STROBE_PORT             GPIOB
-#define I2C_STROBE_PIN       15
+#define I2C_STROBE_POR          GPIOB
+#define I2C_STROBE_PIN          15
 #endif
 
 #if SDCARD_ENABLE

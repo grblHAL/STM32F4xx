@@ -282,7 +282,7 @@
 #if MODBUS_ENABLE || BLUETOOTH_ENABLE || TRINAMIC_UART_ENABLE
 #define SERIAL2_MOD
 #endif
-
+#define SERIAL2_MOD
 #if TRINAMIC_ENABLE
   #include "motors/trinamic.h"
   #ifndef TRINAMIC_MIXED_DRIVERS
@@ -305,11 +305,11 @@
 #error SD card plugin not supported!
 #endif
 
-#ifndef I2C_PORT
+#if I2C_ENABLE && !defined(I2C_PORT)
 #define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
 #endif
 
-#ifndef SPI_PORT
+#if SPI_ENABLE && !defined(SPI_PORT)
 #define SPI_PORT 1
 #endif
 

@@ -52,7 +52,7 @@
 #define USB_SERIAL_CDC       1 // Serial communication via native USB.
 #endif
 //#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires and claims one auxillary input pin.
-//#define HUANYANG_ENABLE      1 // Set to 1 or 2 for Huanyang VFD spindle.
+//#define VFD_ENABLE           1 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define DUAL_SPINDLE 		   1 // Uncomment for switching between VFD spindle and PWM output with $32
 //#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
 //#define SDCARD_ENABLE        2 // Run gcode programs from SD card.

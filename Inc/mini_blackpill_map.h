@@ -25,17 +25,6 @@
 
 #define BOARD_NAME "Minimal BlackPill grblHAL"
 
-#ifdef EEPROM_ENABLE
-#undef EEPROM_ENABLE
-#endif
-
-#ifdef CNC_BLACKPILL
-#undef CNC_BLACKPILL
-#endif
-
-#define CNC_BLACKPILL           1
-#define EEPROM_ENABLE           0 // Disabled for now for BlackPill - pin differences... // Only change if BoosterPack does not have EEPROM mounted
-
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA
 #define X_STEP_PIN              0
