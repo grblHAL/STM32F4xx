@@ -1,23 +1,23 @@
 /*
-  my_machine.h - configuration for STM32F4xx ARM processors
+ my_machine.h - configuration for STM32F4xx ARM processors
 
-  Part of grblHAL
+ Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+ Copyright (c) 2020-2021 Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+ Grbl is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+ Grbl is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ You should have received a copy of the GNU General Public License
+ along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 // NOTE: Only one board may be enabled!
 // If none is enabled pin mappings from generic_map.h will be used.
@@ -52,9 +52,9 @@
 //#define USB_SERIAL_CDC       1 // Serial communication via native USB.
 #endif
 //#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires and claims one auxillary input pin.
-//#define VFD_ENABLE           1 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
+#define VFD_ENABLE           99 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define DUAL_SPINDLE 		   1 // Uncomment for switching between VFD spindle and PWM output with $32
-//#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
+//#define MODBUS_ENABLE        2 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
 //#define SDCARD_ENABLE        2 // Run gcode programs from SD card.
 //#define KEYPAD_ENABLE        1 // Set to 1 for I2C keypad, 2 for other input such as serial data
 //#define ODOMETER_ENABLE      1 // Odometer plugin.
@@ -83,4 +83,3 @@
 //#define Y_GANGED_LIM_MAX    1
 //#define Z_GANGED_LIM_MAX    1
 //
-
