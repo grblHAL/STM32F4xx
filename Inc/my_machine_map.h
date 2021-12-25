@@ -132,7 +132,7 @@
 
 // Define Spindle port and pins
 #define MODBUS_SERIAL_PORT			3
-#define MODBUS_DIR_AUX					5
+//#define MODBUS_DIR_AUX					5
 
 // Define I2C Port - avoid confliction with USART3 port
 #undef I2C_PORT
