@@ -44,10 +44,24 @@ static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue
   #define USART USART2
   #define USART_IRQHandler USART2_IRQHandler
 
+#ifdef SERIAL2_MOD
+
+#define UART2 USART1
+#define UART2_IRQHandler USART1_IRQHandler
+
+#endif
+
 #else
 
   #define USART USART1
   #define USART_IRQHandler USART1_IRQHandler
+
+#ifdef SERIAL2_MOD
+
+#define UART2 USART2
+#define UART2_IRQHandler USART2_IRQHandler
+
+#endif
 
 #endif
 
@@ -59,6 +73,7 @@ static io_stream_properties_t serial[] = {
       .flags.claimed = Off,
       .flags.connected = On,
       .flags.can_set_baud = On,
+      .flags.modbus_ready = On,
       .claim = serialInit
     },
 #ifdef SERIAL2_MOD
@@ -83,6 +98,100 @@ void serialRegisterStreams (void)
     };
 
     stream_register_streams(&streams);
+
+#if IS_NUCLEO_DEVKIT
+
+    static const periph_pin_t tx = {
+        .function = Output_TX,
+        .group = PinGroup_UART1,
+        .port  = GPIOA,
+        .pin   = 2,
+        .mode  = { .mask = PINMODE_OUTPUT },
+        .description = "UART1"
+    };
+
+    static const periph_pin_t rx = {
+        .function = Input_RX,
+        .group = PinGroup_UART1,
+        .port = GPIOA,
+        .pin = 3,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART1"
+    };
+
+#else
+
+    static const periph_pin_t tx = {
+        .function = Output_TX,
+        .group = PinGroup_UART1,
+        .port = GPIOA,
+        .pin = 9,
+        .mode = { .mask = PINMODE_OUTPUT },
+        .description = "UART1"
+    };
+
+    static const periph_pin_t rx = {
+        .function = Input_RX,
+        .group = PinGroup_UART1,
+        .port = GPIOA,
+        .pin = 10,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART1"
+    };
+
+#endif
+
+    hal.periph_port.register_pin(&rx);
+    hal.periph_port.register_pin(&tx);
+
+#ifdef SERIAL2_MOD
+
+  #if IS_NUCLEO_DEVKIT
+
+    static const periph_pin_t tx2 = {
+        .function = Output_TX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 9,
+        .mode = { .mask = PINMODE_OUTPUT },
+        .description = "UART2"
+    };
+
+    static const periph_pin_t rx2 = {
+        .function = Input_RX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 10,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART2"
+    };
+
+  #else
+
+    static const periph_pin_t tx2 = {
+        .function = Output_TX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 2,
+        .mode = { .mask = PINMODE_OUTPUT },
+        .description = "UART2"
+    };
+
+    static const periph_pin_t rx2 = {
+        .function = Input_RX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 3,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART2"
+    };
+
+  #endif
+
+    hal.periph_port.register_pin(&rx2);
+    hal.periph_port.register_pin(&tx2);
+
+#endif // SERIAL2_MOD
 }
 
 //
@@ -93,6 +202,16 @@ static uint16_t serialRxFree (void)
     uint16_t tail = rxbuf.tail, head = rxbuf.head;
 
     return RX_BUFFER_SIZE - BUFCOUNT(head, tail, RX_BUFFER_SIZE);
+}
+
+//
+// Returns number of characters in serial input buffer
+//
+static uint16_t serialRxCount (void)
+{
+    uint32_t tail = rxbuf.tail, head = rxbuf.head;
+
+    return BUFCOUNT(head, tail, RX_BUFFER_SIZE);
 }
 
 //
@@ -145,12 +264,31 @@ static void serialWriteS (const char *s)
 //
 // Writes a number of characters from string to the serial output stream followed by EOL, blocks if buffer full
 //
-static void serialWrite(const char *s, uint16_t length)
+static void serialWrite (const char *s, uint16_t length)
 {
     char *ptr = (char *)s;
 
     while(length--)
         serialPutC(*ptr++);
+}
+
+//
+// Flushes the serial output buffer
+//
+static void serialTxFlush (void)
+{
+    USART->CR1 &= ~USART_CR1_TXEIE;     // Disable TX interrupts
+    txbuf.tail = txbuf.head;
+}
+
+//
+// Returns number of characters pending transmission
+//
+static uint16_t serialTxCount (void)
+{
+    uint32_t tail = txbuf.tail, head = txbuf.head;
+
+    return BUFCOUNT(head, tail, TX_BUFFER_SIZE) + (USART->SR & USART_SR_TC ? 0 : 1);
 }
 
 //
@@ -225,9 +363,9 @@ const io_stream_t *serialInit (uint32_t baud_rate)
         .write_char = serialPutC,
         .enqueue_rt_command = serialEnqueueRtCommand,
         .get_rx_buffer_free = serialRxFree,
-//        .get_rx_buffer_count = serialRxCount,
-//        .get_tx_buffer_count = serialTxCount,
-//        .reset_write_buffer = serialTxFlush,
+        .get_rx_buffer_count = serialRxCount,
+        .get_tx_buffer_count = serialTxCount,
+        .reset_write_buffer = serialTxFlush,
         .reset_read_buffer = serialRxFlush,
         .cancel_read_buffer = serialRxCancel,
         .suspend_read = serialSuspendInput,
@@ -262,24 +400,6 @@ const io_stream_t *serialInit (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART,
-        .port  = GPIOA,
-        .pin   = 2,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART1"
-    };
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART,
-        .port = GPIOA,
-        .pin = 3,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART1"
-    };
-
-
 #else
 
     __HAL_RCC_USART1_CLK_ENABLE();
@@ -293,28 +413,7 @@ const io_stream_t *serialInit (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART,
-        .port = GPIOA,
-        .pin = 9,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "UART1"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART,
-        .port = GPIOA,
-        .pin = 10,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART1"
-    };
-
 #endif
-
-    hal.periph_port.register_pin(&rx);
-    hal.periph_port.register_pin(&tx);
 
     return &stream;
 }
@@ -344,18 +443,6 @@ void USART_IRQHandler (void)
 }
 
 #ifdef SERIAL2_MOD
-
-#if IS_NUCLEO_DEVKIT
-
-#define UART2 USART1
-#define UART2_IRQHandler USART1_IRQHandler
-
-#else
-
-#define UART2 USART2
-#define UART2_IRQHandler USART2_IRQHandler
-
-#endif
 
 //
 // Returns number of free characters in serial input buffer
@@ -429,7 +516,7 @@ static void serial2WriteS (const char *s)
 
 // Writes a number of characters from a buffer to the serial output stream, blocks if buffer full
 //
-static void serial2Write(const char *s, uint16_t length)
+static void serial2Write (const char *s, uint16_t length)
 {
     char *ptr = (char *)s;
 
@@ -564,24 +651,6 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART + stream.instance,
-        .port = GPIOA,
-        .pin = 9,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "UART2"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART + stream.instance,
-        .port = GPIOA,
-        .pin = 10,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART2"
-    };
-
 #else
 
     __HAL_RCC_USART2_CLK_ENABLE();
@@ -601,28 +670,7 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART + stream.instance,
-        .port = GPIOA,
-        .pin = 2,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "UART2"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART + stream.instance,
-        .port = GPIOA,
-        .pin = 3,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART2"
-    };
-
 #endif
-
-    hal.periph_port.register_pin(&rx);
-    hal.periph_port.register_pin(&tx);
 
     return &stream;
 }
@@ -651,4 +699,3 @@ void UART2_IRQHandler (void)
    }
 }
 #endif
-

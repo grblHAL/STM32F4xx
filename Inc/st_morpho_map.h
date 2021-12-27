@@ -19,8 +19,6 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define UART_INSTANCE 1
-
 #if TRINAMIC_ENABLE == 2130
 #include "trinamic\tmc2130.h"
 #endif
@@ -35,7 +33,6 @@
 
 #define BOARD_NAME "Nucleo-64 CNC Breakout"
 
-
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 #undef EEPROM_IS_FRAM
@@ -44,13 +41,11 @@
 #define I2C_PORT        1
 #define EEPROM_ENABLE   1
 #define EEPROM_IS_FRAM  1
-
+//#define SPINDLE_SYNC_ENABLE 1
 
 #define IS_NUCLEO_BOB
 #define HAS_IOPORTS
 #define HAS_BOARD_INIT
-
-//#define SPINDLE_SYNC_ENABLE 1
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOC
