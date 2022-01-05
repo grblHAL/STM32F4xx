@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2020-2022 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -143,6 +143,11 @@
 #define SPINDLE_PULSE_PIN       2
 #define SPINDLE_PULSE_BIT       (1<<SPINDLE_PULSE_PIN)
 
+#endif
+
+#if MPG_MODE == 1 && !SDCARD_ENABLE
+#define MPG_MODE_PORT           GPIOC
+#define MPG_MODE_PIN            8
 #endif
 
 // Auxiliary I/O
