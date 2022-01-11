@@ -33,8 +33,9 @@
 #include "grbl/protocol.h"
 #include "grbl/motor_pins.h"
 #include "grbl/pin_bits_masks.h"
+#include "grbl/state_machine.h"
 
-#ifdef I2C_PORT
+#ifdef I2C_ENABLE
 #include "i2c.h"
 #endif
 
@@ -145,43 +146,43 @@ static input_signal_t inputpin[] = {
 #ifdef Y2_LIMIT_PIN
     { .id = Input_LimitY_2,       .port = Y2_LIMIT_PORT,      .pin = Y2_LIMIT_PIN,        .group = PinGroup_Limit },
 #endif
-	{ .id = Input_LimitZ,         .port = Z_LIMIT_PORT,       .pin = Z_LIMIT_PIN,         .group = PinGroup_Limit }
+	{ .id = Input_LimitZ,         .port = Z_LIMIT_PORT,       .pin = Z_LIMIT_PIN,         .group = PinGroup_Limit },
 #ifdef Z2_LIMIT_PIN
-  , { .id = Input_LimitZ_2,       .port = Z2_LIMIT_PORT,      .pin = Z2_LIMIT_PIN,        .group = PinGroup_Limit }
+  , { .id = Input_LimitZ_2,       .port = Z2_LIMIT_PORT,      .pin = Z2_LIMIT_PIN,        .group = PinGroup_Limit },
 #endif
 #ifdef A_LIMIT_PIN
-  , { .id = Input_LimitA,         .port = A_LIMIT_PORT,       .pin = A_LIMIT_PIN,         .group = PinGroup_Limit }
+    { .id = Input_LimitA,         .port = A_LIMIT_PORT,       .pin = A_LIMIT_PIN,         .group = PinGroup_Limit },
 #endif
 #ifdef B_LIMIT_PIN
-  , { .id = Input_LimitB,         .port = B_LIMIT_PORT,       .pin = B_LIMIT_PIN,         .group = PinGroup_Limit }
+    { .id = Input_LimitB,         .port = B_LIMIT_PORT,       .pin = B_LIMIT_PIN,         .group = PinGroup_Limit },
 #endif
 #ifdef C_LIMIT_PIN
-  , { .id = Input_LimitC,         .port = C_LIMIT_PORT,       .pin = C_LIMIT_PIN,         .group = PinGroup_Limit }
+    { .id = Input_LimitC,         .port = C_LIMIT_PORT,       .pin = C_LIMIT_PIN,         .group = PinGroup_Limit },
 #endif
 #if SPINDLE_SYNC_ENABLE
-  , { .id = Input_SpindleIndex,   .port = SPINDLE_INDEX_PORT, .pin = SPINDLE_INDEX_PIN,   .group = PinGroup_SpindleIndex }
+    { .id = Input_SpindleIndex,   .port = SPINDLE_INDEX_PORT, .pin = SPINDLE_INDEX_PIN,   .group = PinGroup_SpindleIndex },
 #endif
 // Aux input pins must be consecutive in this array
 #ifdef AUXINPUT0_PIN
-  , { .id = Input_Aux0,           .port = AUXINPUT0_PORT,     .pin = AUXINPUT0_PIN,       .group = PinGroup_AuxInput }
+    { .id = Input_Aux0,           .port = AUXINPUT0_PORT,     .pin = AUXINPUT0_PIN,       .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINPUT1_PIN
-  , { .id = Input_Aux1,           .port = AUXINPUT1_PORT,     .pin = AUXINPUT1_PIN,       .group = PinGroup_AuxInput }
+    { .id = Input_Aux1,           .port = AUXINPUT1_PORT,     .pin = AUXINPUT1_PIN,       .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINPUT2_PIN
-  , { .id = Input_Aux2,           .port = AUXINPUT2_PORT,     .pin = AUXINPUT2_PIN,       .group = PinGroup_AuxInput }
+    { .id = Input_Aux2,           .port = AUXINPUT2_PORT,     .pin = AUXINPUT2_PIN,       .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINPUT3_PIN
-  , { .id = Input_Aux3,           .port = AUXINPUT3_PORT,     .pin = AUXINPUT3_PIN,       .group = PinGroup_AuxInput }
+    { .id = Input_Aux3,           .port = AUXINPUT3_PORT,     .pin = AUXINPUT3_PIN,       .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINPUT4_PIN
-  , { .id = Input_Aux4,           .port = AUXINPUT4_PORT,     .pin = AUXINPUT4_PIN,       .group = PinGroup_AuxInput }
+    { .id = Input_Aux4,           .port = AUXINPUT4_PORT,     .pin = AUXINPUT4_PIN,       .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINPUT3_PIN
-  , { .id = Input_Aux5,           .port = AUXINPUT5_PORT,     .pin = AUXINPUT5_PIN,       .group = PinGroup_AuxInput }
+    { .id = Input_Aux5,           .port = AUXINPUT5_PORT,     .pin = AUXINPUT5_PIN,       .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINPUT6_PIN
-  , { .id = Input_Aux6,           .port = AUXINPUT6_PORT,     .pin = AUXINPUT6_PIN,       .group = PinGroup_AuxInput }
+    { .id = Input_Aux6,           .port = AUXINPUT6_PORT,     .pin = AUXINPUT6_PIN,       .group = PinGroup_AuxInput }
 #endif
 };
 
@@ -336,10 +337,10 @@ static output_signal_t outputpin[] = {
     { .id = Output_Aux4,            .port = AUXOUTPUT4_PORT,        .pin = AUXOUTPUT4_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT5_PORT
-    { .id = Output_Aux5,            .port = AUXOUTPUT5_PORT,        .pin = AUXOUTPUT5_PIN,          .group = PinGroup_AuxOutput }
+    { .id = Output_Aux5,            .port = AUXOUTPUT5_PORT,        .pin = AUXOUTPUT5_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT6_PORT
-    { .id = Output_Aux6,            .port = AUXOUTPUT6_PORT,        .pin = AUXOUTPUT6_PIN,          .group = PinGroup_AuxOutput }
+    { .id = Output_Aux6,            .port = AUXOUTPUT6_PORT,        .pin = AUXOUTPUT6_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT7_PORT
     { .id = Output_Aux7,            .port = AUXOUTPUT7_PORT,        .pin = AUXOUTPUT7_PIN,          .group = PinGroup_AuxOutput }
@@ -406,11 +407,10 @@ static spindle_data_t *spindleGetData (spindle_data_request_t request);
 static void driver_delay (uint32_t ms, delay_callback_ptr callback)
 {
     if((delay.ms = ms) > 0) {
-        // Restart systick...
-//        SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
-//        SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
-        if(!(delay.callback = callback))
-            while(delay.ms);
+        if(!(delay.callback = callback)) {
+            while(delay.ms)
+                grbl.on_execute_delay(state_get());
+        }
     } else {
         delay.callback = NULL;
         if(callback)
@@ -1878,8 +1878,11 @@ static bool driver_setup (settings_t *settings)
     IOInitDone = settings->version == 21;
 
     hal.settings_changed(settings);
-    hal.spindle.set_state((spindle_state_t){0}, 0.0f);
-    hal.coolant.set_state((coolant_state_t){0});
+
+    if(hal.spindle.set_state)
+    	hal.spindle.set_state((spindle_state_t){0}, 0.0f);
+
+	hal.coolant.set_state((coolant_state_t){0});
 
 #if PPI_ENABLE
     ppi_init();
@@ -1931,7 +1934,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "220105";
+    hal.driver_version = "220111";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -2004,7 +2007,7 @@ bool driver_init (void)
     stream_connect(serialInit(BAUD_RATE));
 #endif
 
-#ifdef I2C_PORT
+#ifdef I2C_ENABLE
     i2c_init();
 #endif
 
@@ -2053,8 +2056,6 @@ bool driver_init (void)
     hal.driver_cap.probe_pull_up = On;
 #endif
 
-#ifdef HAS_IOPORTS
-
     uint32_t i;
     input_signal_t *input;
     static pin_group_pins_t aux_inputs = {0}, aux_outputs = {0};
@@ -2064,10 +2065,10 @@ bool driver_init (void)
         if(input->group == PinGroup_AuxInput) {
             if(aux_inputs.pins.inputs == NULL)
                 aux_inputs.pins.inputs = input;
+            input->id = (pin_function_t)(Input_Aux0 + aux_inputs.n_pins++);
             input->bit = 1 << input->pin;
             input->cap.pull_mode = PullMode_UpDown;
             input->cap.irq_mode = (DRIVER_IRQMASK & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
-            aux_inputs.n_pins++;
         }
     }
 
@@ -2077,12 +2078,12 @@ bool driver_init (void)
         if(output->group == PinGroup_AuxOutput) {
             if(aux_outputs.pins.outputs == NULL)
                 aux_outputs.pins.outputs = output;
-            aux_outputs.n_pins++;
+            output->id = (pin_function_t)(Output_Aux0 + aux_outputs.n_pins++);
         }
     }
 
+#ifdef HAS_IOPORTS
     ioports_init(&aux_inputs, &aux_outputs);
-
 #endif
 
 #ifdef HAS_BOARD_INIT

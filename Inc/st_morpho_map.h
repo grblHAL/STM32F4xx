@@ -186,11 +186,15 @@
 #else
 
 #define AUXOUTPUT2_PORT         GPIOA
-#define AUXOUTPUT2_PIN          5
+#define AUXOUTPUT2_PIN          6
 #define AUXOUTPUT3_PORT         GPIOA
-#define AUXOUTPUT3_PIN          6
+#define AUXOUTPUT3_PIN          5
 #define AUXOUTPUT4_PORT         GPIOA
 #define AUXOUTPUT4_PIN          7
+#define AUXOUTPUT5_PORT         GPIOC
+#define AUXOUTPUT5_PIN          8
+#define AUXOUTPUT6_PORT         GPIOB
+#define AUXOUTPUT6_PIN          7
 
 #endif
 
