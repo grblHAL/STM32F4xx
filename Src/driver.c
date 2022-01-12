@@ -35,7 +35,7 @@
 #include "grbl/pin_bits_masks.h"
 #include "grbl/state_machine.h"
 
-#ifdef I2C_ENABLE
+#if I2C_ENABLE
 #include "i2c.h"
 #endif
 
@@ -2007,7 +2007,7 @@ bool driver_init (void)
     stream_connect(serialInit(BAUD_RATE));
 #endif
 
-#ifdef I2C_ENABLE
+#if I2C_ENABLE
     i2c_init();
 #endif
 
