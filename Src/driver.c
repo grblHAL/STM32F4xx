@@ -146,7 +146,7 @@ static input_signal_t inputpin[] = {
 #ifdef Y2_LIMIT_PIN
     { .id = Input_LimitY_2,       .port = Y2_LIMIT_PORT,      .pin = Y2_LIMIT_PIN,        .group = PinGroup_Limit },
 #endif
-	{ .id = Input_LimitZ,         .port = Z_LIMIT_PORT,       .pin = Z_LIMIT_PIN,         .group = PinGroup_Limit },
+    { .id = Input_LimitZ,         .port = Z_LIMIT_PORT,       .pin = Z_LIMIT_PIN,         .group = PinGroup_Limit },
 #ifdef Z2_LIMIT_PIN
   , { .id = Input_LimitZ_2,       .port = Z2_LIMIT_PORT,      .pin = Z2_LIMIT_PIN,        .group = PinGroup_Limit },
 #endif
@@ -480,7 +480,7 @@ static void stepperCyclesPerTick (uint32_t cycles_per_tick)
 
 inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_signals_t step_outbits_1)
 {
-	axes_signals_t step_outbits_2;
+    axes_signals_t step_outbits_2;
     step_outbits_2.mask = (step_outbits_1.mask & motors_2.mask) ^ settings.steppers.step_invert.mask;
 
 #if STEP_OUTMODE == GPIO_BITBAND
@@ -1880,9 +1880,9 @@ static bool driver_setup (settings_t *settings)
     hal.settings_changed(settings);
 
     if(hal.spindle.set_state)
-    	hal.spindle.set_state((spindle_state_t){0}, 0.0f);
+        hal.spindle.set_state((spindle_state_t){0}, 0.0f);
 
-	hal.coolant.set_state((coolant_state_t){0});
+    hal.coolant.set_state((coolant_state_t){0});
 
 #if PPI_ENABLE
     ppi_init();
