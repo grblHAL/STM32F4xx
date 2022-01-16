@@ -31,7 +31,7 @@
 #include "grbl/protocol.h"
 #include "grbl/settings.h"
 
-#if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
+#if TRINAMIC_SPI_ENABLE
 
 static struct {
     GPIO_TypeDef *port;
@@ -159,7 +159,7 @@ static void if_init (uint8_t motors, axes_signals_t axisflags)
 
 #endif
 
-#if TRINAMIC_ENABLE == 2209
+#if TRINAMIC_UART_ENABLE
 
 #include "serial.h"
 
@@ -216,7 +216,7 @@ void tmc_uart_write (trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
 
 void board_init (void)
 {
-#if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
+#if TRINAMIC_SPI_ENABLE
 
     trinamic_driver_if_t driver = {
         .on_drivers_init = if_init
@@ -231,7 +231,7 @@ void board_init (void)
 
     trinamic_if_init(&driver);
 
-#elif TRINAMIC_ENABLE == 2209
+#elif TRINAMIC_UART_ENABLE
 
     memcpy(&tmc_uart, serial2Init(230400), sizeof(io_stream_t));
 

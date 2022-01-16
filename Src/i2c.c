@@ -28,7 +28,7 @@
 #include "keypad/keypad.h"
 #endif
 
-#ifdef I2C_PORT
+#if I2C_ENABLE
 
 #ifdef I2C1_ALT_PINMAP
   #define I2C1_SCL_PIN 6
@@ -151,8 +151,6 @@ void I2C2_ER_IRQHandler(void)
 }
 #endif
 
-#endif
-
 #if EEPROM_ENABLE
 
 nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
@@ -175,7 +173,7 @@ nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
     return ret == HAL_OK ? NVS_TransferResult_OK : NVS_TransferResult_Failed;
 }
 
-#endif
+#endif // EEPROM_ENABLE
 
 #if KEYPAD_ENABLE == 1
 
@@ -198,7 +196,7 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
     }
 }
 
-#endif
+#endif // KEYPAD_ENABLE == 1
 
 #if TRINAMIC_ENABLE && TRINAMIC_I2C
 
@@ -252,4 +250,6 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
     return status;
 }
 
-#endif
+#endif // TRINAMIC_ENABLE && TRINAMIC_I2C
+
+#endif // I2C_ENABLE

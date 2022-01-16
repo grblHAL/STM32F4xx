@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2020-2022 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -101,10 +101,4 @@
 #if I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         GPIOB
 #define I2C_STROBE_PIN          7
-#endif
-
-#if SDCARD_ENABLE
-#define SD_CS_PORT              GPIOA
-#define SD_CS_PIN               3
-#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
 #endif

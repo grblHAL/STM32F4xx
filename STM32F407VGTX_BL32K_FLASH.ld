@@ -42,6 +42,7 @@ MEMORY
   EEPROM_EMUL(xrw)      : ORIGIN = 0x80E0000,   LENGTH = 128K
 }
 
+_FLASH_VectorTable = ORIGIN(FLASH);
 _EEPROM_Emul_Start = ORIGIN(EEPROM_EMUL);
 _EEPROM_Emul_Sector = 11;
 

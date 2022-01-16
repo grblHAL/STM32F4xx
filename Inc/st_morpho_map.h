@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2020-2022 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #if TRINAMIC_ENABLE == 2130
 #include "trinamic\tmc2130.h"
 #endif
@@ -33,21 +32,20 @@
 #endif
 
 #define BOARD_NAME "Nucleo-64 CNC Breakout"
-#define I2C_PORT 1
+
+#undef I2C_ENABLE
+#undef EEPROM_ENABLE
+#undef EEPROM_IS_FRAM
+
+#define I2C_ENABLE      1
+#define I2C_PORT        1
+#define EEPROM_ENABLE   1
+#define EEPROM_IS_FRAM  1
+//#define SPINDLE_SYNC_ENABLE 1
+
 #define IS_NUCLEO_BOB
 #define HAS_IOPORTS
 #define HAS_BOARD_INIT
-/*
-#if EEPROM_ENABLE == 0
-#undef EEPROM_ENABLE
-#define EEPROM_ENABLE	1
-#endif
-#if EEPROM_IS_FRAM == 0
-#undef EEPROM_IS_FRAM
-#define EEPROM_IS_FRAM	1
-#endif
-*/
-//#define SPINDLE_SYNC_ENABLE 1
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOC
@@ -147,6 +145,11 @@
 
 #endif
 
+#if MPG_MODE == 1 && !SDCARD_ENABLE
+#define MPG_MODE_PORT           GPIOC
+#define MPG_MODE_PIN            8
+#endif
+
 // Auxiliary I/O
 #define AUXINPUT0_PORT          GPIOB
 #define AUXINPUT0_PIN           14
@@ -183,11 +186,15 @@
 #else
 
 #define AUXOUTPUT2_PORT         GPIOA
-#define AUXOUTPUT2_PIN          5
+#define AUXOUTPUT2_PIN          6
 #define AUXOUTPUT3_PORT         GPIOA
-#define AUXOUTPUT3_PIN          6
+#define AUXOUTPUT3_PIN          5
 #define AUXOUTPUT4_PORT         GPIOA
 #define AUXOUTPUT4_PIN          7
+#define AUXOUTPUT5_PORT         GPIOC
+#define AUXOUTPUT5_PIN          8
+#define AUXOUTPUT6_PORT         GPIOB
+#define AUXOUTPUT6_PIN          7
 
 #endif
 

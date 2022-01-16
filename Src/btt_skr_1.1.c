@@ -241,60 +241,62 @@ void board_init (void)
 #define HALFDUPLEX_SWITCH_DELAY 4           // defined in bit-periods
 #define RCV_BUF_SIZE            16          // read packet is 8 bytes
 
-TIM_HandleTypeDef htim7;
-
-static GPIO_TypeDef *port;
-static uint16_t pin;
-static uint16_t period_div_2;
-static volatile uint32_t tx_buffer;
-static volatile int32_t tx_bit_count;
-static volatile uint32_t rx_buffer;
-static volatile int32_t rx_bit_count;
-static volatile bool rx_busy = false;
-static volatile bool tx_busy = false;
-
-static volatile uint8_t receive_buffer[RCV_BUF_SIZE];
-static volatile uint8_t wr_ptr = 0;
-static volatile uint8_t rd_ptr = 0;
-static bool buffer_overflow = false;
-static volatile uint8_t rx_irq_count = 0;
-
-static struct {
+typedef struct {
     GPIO_TypeDef *port;
     uint16_t pin;
-} uart[TMC_N_MOTORS_MAX];
+} tmc_uart_t;
 
-/**
-  * @brief Set UART Pin Mode
-  * @param port, pin, and mode
-  * @retval None
-  * If mode == true, set the UART pin to OUTPUT_PP,
-  * otherwise set the UART pin to INPUT with PULLUP
-  */
-static inline void pinMode(GPIO_TypeDef *port, uint16_t pin, bool mode)
+typedef struct {
+    volatile int_fast16_t bit_count;
+    volatile bool busy;
+    volatile uint_fast16_t data;
+} tmc_uart_tx_buffer_t;
+
+typedef struct {
+    volatile uint_fast16_t head;
+    volatile uint_fast16_t tail;
+    volatile int_fast16_t bit_count;
+    volatile uint_fast16_t irq_count;
+    bool overflow;
+    bool busy;
+    uint8_t data[RCV_BUF_SIZE];
+} tmc_uart_rx_buffer_t;
+
+static TIM_HandleTypeDef htim7 = {
+    .Instance = TIM7,
+    .Init.Prescaler = 0,
+    .Init.CounterMode = TIM_COUNTERMODE_UP,
+    .Init.ClockDivision = TIM_CLOCKDIVISION_DIV1,
+    .Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE
+};
+
+static uint16_t period_div_2;
+static tmc_uart_tx_buffer_t tx_buf;
+static tmc_uart_rx_buffer_t rx_buf;
+static tmc_uart_t uart[TMC_N_MOTORS_MAX], *active_uart;
+
+static inline void setTX ()
 {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin = 1 << pin;
-    if (mode) {   // output if true
-        GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-        GPIO_InitStruct.Pull = GPIO_NOPULL;
-    } else {      // input with pull-up
-        GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-        GPIO_InitStruct.Pull = GPIO_PULLUP;
-    }
-    HAL_GPIO_Init(port, &GPIO_InitStruct);
-}
+    static GPIO_InitTypeDef GPIO_InitStruct = {
+        .Mode = GPIO_MODE_OUTPUT_PP,
+        .Pull = GPIO_NOPULL
+    };
 
+    GPIO_InitStruct.Pin = 1 << active_uart->pin;
+    HAL_GPIO_Init(active_uart->port, &GPIO_InitStruct);
 
-static inline void setTX (void)
-{
-    DIGITAL_OUT(port, pin, 1);
-    pinMode(port, pin, true);
+    DIGITAL_OUT(uart->port, uart->pin, 1);
 }
 
 static inline void setRX (void)
 {
-    pinMode(port, pin, false);    // INPUT with PULLUP
+    static GPIO_InitTypeDef GPIO_InitStruct = {
+        .Mode = GPIO_MODE_INPUT,
+        .Pull = GPIO_PULLUP
+    };
+
+    GPIO_InitStruct.Pin = 1 << active_uart->pin;
+    HAL_GPIO_Init(active_uart->port, &GPIO_InitStruct);
 }
 
 /**
@@ -303,61 +305,46 @@ static inline void setRX (void)
   * @retval None
   * This is called by the interrupt handler.
   */
-static void send(void)
+static inline void send (void)
 {
-  //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_4);      // delete me when done debugging
-
-    if(tx_bit_count++ < 9) {
-        DIGITAL_OUT(port, pin, tx_buffer & 1);  // drive bit out
-        tx_buffer >>= 1;                        // shift to next bit
+    if(tx_buf.bit_count++ < 9) {
+        DIGITAL_OUT(active_uart->port, active_uart->pin, tx_buf.data & 1);  // drive bit out
+        tx_buf.data >>= 1;                                                  // shift to next bit
     } else {
-        DIGITAL_OUT(port, pin, 1);              // STOP bit (1)
-        tx_busy = false;                        // we are done with STOP bit
+        DIGITAL_OUT(active_uart->port, active_uart->pin, 1);                // STOP bit (1)
+        tx_buf.busy = false;                                                // we are done with STOP bit
     }
 }
 
 static void write_n (uint8_t data[], uint32_t length)
 {
-    uint8_t i;
+    uint_fast8_t i = 0;
 
-    while(tx_busy)                                // should not be anything pending but...
-    ;
+    while(tx_buf.busy);                             // should not be anything pending but...
 
-    tx_buffer = data[0] << 1;                     // form first word with START bit (0)
-    tx_bit_count = 0;                             // reset bit counter
-    __HAL_TIM_SET_COUNTER(&htim7, START_DELAY);   // initialize counter with START delay
-    htim7.Instance->CR1 &= ~(TIM_CR1_UDIS);       // enable interrupt
-    tx_busy = true;
-    send();                                       // force first bit without interrupt
+    tx_buf.data = data[i++] << 1;                   // form first word with START bit (0)
+    tx_buf.bit_count = 0;                           // reset bit counter
+    tx_buf.busy = true;
+    length--;
 
-    while(tx_busy)                                // wait for 1st byte to finish
-    ;
+    __HAL_TIM_SET_COUNTER(&htim7, START_DELAY);     // initialize counter with START delay
+    htim7.Instance->CR1 &= ~TIM_CR1_UDIS;           // enable interrupt
+    send();                                         // force first bit without interrupt
 
-    for(i = 1; i < length; i++) {
-       tx_buffer = data[i] << 1;                 // form next word
-       tx_bit_count = 0;
-       tx_busy = true;
-       while(tx_busy)                            // wait for byte to finish
-        ;
-    }
-    tx_busy = true;                               // wait one more bit period
-    while(tx_busy)                                // for the last STOP bit
-    ;
+    while(tx_buf.busy);                             // wait for 1st byte to finish
 
-    htim7.Instance->CR1 |= TIM_CR1_UDIS;          // disable interrupt
+    do {
+        tx_buf.data = data[i++] << 1;               // form next word
+        tx_buf.bit_count = 0;
+        tx_buf.busy = true;
+        while(tx_buf.busy);                         // wait for byte to finish
+    } while(--length);
+
+    tx_buf.busy = true;                             // wait one more bit period
+    while(tx_buf.busy);                             // for the last STOP bit
+
+    htim7.Instance->CR1 |= TIM_CR1_UDIS;            // disable interrupt
 }
-
-
-
-/**
-  * @brief Get Read Buffer Count
-  * @param None
-  * @returnval Count
-  */
- static int32_t rx_buffer_count(void)
- {
-     return (rd_ptr + RCV_BUF_SIZE - wr_ptr) % RCV_BUF_SIZE;
- }
 
 /**
   * @brief Software Serial Read Byte
@@ -366,13 +353,13 @@ static void write_n (uint8_t data[], uint32_t length)
   *
   * Returns the next byte from the receive buffer or -1 on underflow.
   */
-static int32_t read_byte (void)
+static int16_t read_byte (void)
 {
-    if (rd_ptr == wr_ptr)
+    if (rx_buf.tail == rx_buf.head)
         return -1;
 
-    uint8_t byte = receive_buffer[rd_ptr]; // get next byte
-    rd_ptr = (rd_ptr + 1) % RCV_BUF_SIZE;
+    int16_t byte = (int16_t)rx_buf.data[rx_buf.tail];   // get next byte
+    rx_buf.tail = BUFNEXT(rx_buf.tail, rx_buf);
 
     return byte;
 }
@@ -386,38 +373,40 @@ static int32_t read_byte (void)
   */
 static void rcv (void)
 {
-  //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_4);      // delete me when done debugging
+    static volatile uint32_t rx_byte;
 
-    bool inbit = DIGITAL_IN(port, pin);
+    bool inbit = DIGITAL_IN(active_uart->port, active_uart->pin);
 
-    if(rx_bit_count == -1) {            // -1 means waiting for START (0)
+//    hal.port.digital_out(4, 1);
+
+    if(rx_buf.bit_count == -1) {                                // -1 means waiting for START (0)
         if(!inbit) {
-            rx_bit_count = 0;           // 0: START bit received
-            rx_buffer = 0;
+            rx_buf.bit_count = 0;                               // 0: START bit received
+            rx_byte = 0;
         }
-    } else if(rx_bit_count >= 8) {      // >= 8 means waiting for STOP
+    } else if(rx_buf.bit_count >= 8) {                          // >= 8 means waiting for STOP
         if(inbit) {
-            uint8_t next = (wr_ptr + 1) % RCV_BUF_SIZE;
-            if (next != rd_ptr) {       // room in buffer?
-                receive_buffer[wr_ptr] = rx_buffer; // save new byte
-                wr_ptr = next;
-            } else {                    // rx_bit_cnt = x  with x = [0..7] correspond to new bit x received
-                buffer_overflow = true;
-            }
+            uint_fast16_t next = BUFNEXT(rx_buf.head, rx_buf);
+            if (next != rx_buf.tail) {                          // room in buffer?
+                rx_buf.data[rx_buf.head] = rx_byte;             // save new byte
+                rx_buf.head = next;
+            } else                                              // rx_bit_cnt = x  with x = [0..7] correspond to new bit x received
+                rx_buf.overflow = true;
         }
-        rx_bit_count = -1;              // wait for next START
+        rx_buf.bit_count = -1;                                  // wait for next START
     } else {
-        rx_buffer >>= 1;                // shift previous
-        if (inbit) {
-            rx_buffer |= 0x80;          // OR in new
-        }
-        rx_bit_count++;                 // Preprare for next bit
+        rx_byte >>= 1;                                          // shift previous
+        if (inbit)
+            rx_byte |= 0x80;                                    // OR in new
+        rx_buf.bit_count++;                                     // Preprare for next bit
     }
+
+//    hal.port.digital_out(4, 0);
 }
 
-static void stop_listening(void)
+static void stop_listening (void)
 {
-  uint8_t count = rx_irq_count;
+  uint8_t count = rx_buf.irq_count;
 
   // Need to wait HALFDUPLEX_SWITCH_DELAY sample periods for TMC2209 to release it's transmitter
   /*
@@ -432,34 +421,30 @@ static void stop_listening(void)
    * Either way, we are not really fighting the PDN_UART pin since both
    * the TMC2209 chip and the STM32 are driving high.
    */
-    while ((rx_irq_count + 256 - count) % 256 < HALFDUPLEX_SWITCH_DELAY)
-    ;
+    while ((rx_buf.irq_count + 256 - count) % 256 < HALFDUPLEX_SWITCH_DELAY);
+
     setTX();      // turn driver on just before the TMC driver goes off
 
     // Wait one more bit period without which the TMC won't respond
-    while ((rx_irq_count + 256 - count) % 256 < (HALFDUPLEX_SWITCH_DELAY + 1))
-    ;
+    while ((rx_buf.irq_count + 256 - count) % 256 < (HALFDUPLEX_SWITCH_DELAY + 1));
 
     // Now we can wrap things up
-    rx_busy = false;
-    htim7.Instance->CR1 |= (TIM_CR1_UDIS); // Disable output event
+    rx_buf.busy = false;
+    htim7.Instance->CR1 |= TIM_CR1_UDIS; // Disable output event
 }
 
-TMC_uart_write_datagram_t* tmc_uart_read(trinamic_motor_t driver, TMC_uart_read_datagram_t *rdgr)
+TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read_datagram_t *rdgr)
 {
     static TMC_uart_write_datagram_t wdgr = {0};
     static TMC_uart_write_datagram_t bad = {0};
 
     // Remember the port and pin we are using
-    port = uart[driver.id].port;
-    pin = uart[driver.id].pin;
+    active_uart = &uart[driver.id];
 
     // claim the semaphore or wait until free
     //
-
     // purge anything in buffer
-    while (rx_buffer_count())
-        read_byte();
+    rx_buf.tail = rx_buf.head = 0;
 
     write_n(rdgr->data, sizeof(TMC_uart_read_datagram_t)); // send read request
 
@@ -469,70 +454,59 @@ TMC_uart_write_datagram_t* tmc_uart_read(trinamic_motor_t driver, TMC_uart_read_
     // Look for START (0)
     // If read request had CRC error or some other issue, we won't get a reply
     // so we need to timeout
-    uint8_t timeout = ABORT_TIMEOUT;
     uint32_t ms = hal.get_elapsed_ticks();
-    bool inbit;
+
     do {
-        uint32_t ms2 = hal.get_elapsed_ticks();
-        if (ms2 != ms) {
-            ms = ms2;
-            if (--timeout == 0) {
-                HAL_Delay(TWELVE_BIT_TIMES);
-                setTX();                  // turn on our driver
-                return &bad;              // return {0}
-            }
+        if (hal.get_elapsed_ticks() - ms > ABORT_TIMEOUT) {
+            hal.delay_ms(TWELVE_BIT_TIMES + 1, NULL);
+            setTX();                // turn on our driver
+            return &bad;            // return {0}
         }
-        inbit = DIGITAL_IN(port, pin);
-    } while (inbit);
+    } while (DIGITAL_IN(active_uart->port, active_uart->pin));
 
     // Now that we found a START bit, set timer to 1/2 bit width and start interrupts
     // This allows us to sample reliably in the center of each receive bit
-    rx_busy = true;
-    rx_bit_count = -1; // look for START bit
+    rx_buf.busy = true;
+    rx_buf.bit_count = -1; // look for START bit
+
     __HAL_TIM_SET_COUNTER(&htim7, period_div_2);
-    htim7.Instance->CR1 &= ~(TIM_CR1_UDIS);
+    htim7.Instance->CR1 &= ~TIM_CR1_UDIS;
 
     // Wait for read response
-    timeout = ABORT_TIMEOUT;
+    int16_t res;
     ms = hal.get_elapsed_ticks();
-    for (uint8_t i = 0; i < 8;) {
-        uint32_t ms2 = hal.get_elapsed_ticks();
-        if (ms2 != ms) {
-            ms = ms2;
-            if (--timeout == 0) {
-                rx_busy = false;
-                htim7.Instance->CR1 |= (TIM_CR1_UDIS);  // turn off interrupts
-                HAL_Delay(TWELVE_BIT_TIMES);
-                setTX();                                // turn on our driver
-                return &bad;
-            }
+
+    for (uint32_t i = 0; i < 8;) {
+
+        if (hal.get_elapsed_ticks() - ms > ABORT_TIMEOUT) {
+            rx_buf.busy = false;
+            htim7.Instance->CR1 |= TIM_CR1_UDIS;        // turn off interrupts
+            hal.delay_ms(TWELVE_BIT_TIMES + 1, NULL);
+            setTX();                                    // turn on our driver
+            return &bad;
         }
-        int16_t res = read_byte();
-        if (res != -1) {
-            wdgr.data[i] = res;
-            i++;
-        }
+
+        if ((res = read_byte()) != -1)
+            wdgr.data[i++] = res;
     }
 
     // purge anything left in buffer
-    while (rx_buffer_count())
-        read_byte();
+    rx_buf.tail = rx_buf.head = 0;
 
     stop_listening();
 
     return &wdgr;
 }
 
-void tmc_uart_write(trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
+void tmc_uart_write (trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
 {
     // Remember the port and pin we are using
-    port = uart[driver.id].port;
-    pin = uart[driver.id].pin;
+    active_uart = &uart[driver.id];
 
     write_n(dgr->data, sizeof(TMC_uart_write_datagram_t));
 }
 
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
+void HAL_TIM_Base_MspInit (TIM_HandleTypeDef* htim_base)
 {
     if(htim_base->Instance == TIM7) {
         __HAL_RCC_TIM7_CLK_ENABLE();
@@ -541,38 +515,29 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
     }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
+void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef* htim)
 {
-  //HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_0);      // delete me when done debugging
-
-    if (tx_busy)
+    if (tx_buf.busy)
         send();
-    if (rx_busy) {
+    else if (rx_buf.busy) {
         rcv();
-        rx_irq_count++;
+        rx_buf.irq_count++;
     }
 }
 
-static void MX_TIM7_Init(void)
+static void MX_TIM7_Init (void)
 {
     RCC_ClkInitTypeDef clock;
-    uint32_t latency;
-    uint32_t timer_clock_freq;
-    uint16_t period;
+    uint32_t latency, timer_clock_freq;
 
     // Determine the period based on the timer clock
     HAL_RCC_GetClockConfig(&clock, &latency);
+
     timer_clock_freq = HAL_RCC_GetPCLK1Freq() * (clock.APB1CLKDivider == 0 ? 1 : 2);
-    period = ((uint16_t)((double)timer_clock_freq / SWS_BAUDRATE) + 0.5);
+    htim7.Init.Period = (uint16_t)(((float)timer_clock_freq / (float)SWS_BAUDRATE) + 0.5f);
 
-    period_div_2 = (period / 2.0f) + 0.5;         // save this for use by receive
+    period_div_2 = (uint16_t)(((float)htim7.Init.Period / 2.0f) + 0.5f);         // save this for use by receive
 
-    htim7.Instance = TIM7;
-    htim7.Init.Prescaler = 0;
-    htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim7.Init.Period = period;
-    htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
     if (HAL_TIM_Base_Init(&htim7) != HAL_OK) {
         Error_Handler();
     }
@@ -636,7 +601,7 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
 
 void driver_preinit (motor_map_t motor, trinamic_driver_config_t *config)
 {
-    config->address = 0; // ??
+    config->address = 0;
 }
 
 void board_init (void)
@@ -649,7 +614,11 @@ void board_init (void)
     trinamic_if_init(&driver_if);
 }
 
+void TIM7_IRQHandler (void)
+{
+    HAL_TIM_IRQHandler(&htim7);
+}
+
 #endif // TRINAMIC_UART_ENABLE
 
 #endif  // BOARD_BTT_SKR_20
-

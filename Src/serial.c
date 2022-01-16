@@ -44,10 +44,24 @@ static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue
   #define USART USART2
   #define USART_IRQHandler USART2_IRQHandler
 
+#ifdef SERIAL2_MOD
+
+#define UART2 USART1
+#define UART2_IRQHandler USART1_IRQHandler
+
+#endif
+
 #else
 
   #define USART USART1
   #define USART_IRQHandler USART1_IRQHandler
+
+#ifdef SERIAL2_MOD
+
+#define UART2 USART2
+#define UART2_IRQHandler USART2_IRQHandler
+
+#endif
 
 #endif
 
@@ -59,6 +73,7 @@ static io_stream_properties_t serial[] = {
       .flags.claimed = Off,
       .flags.connected = On,
       .flags.can_set_baud = On,
+      .flags.modbus_ready = On,
       .claim = serialInit
     },
 #ifdef SERIAL2_MOD
@@ -83,6 +98,100 @@ void serialRegisterStreams (void)
     };
 
     stream_register_streams(&streams);
+
+#if IS_NUCLEO_DEVKIT
+
+    static const periph_pin_t tx = {
+        .function = Output_TX,
+        .group = PinGroup_UART1,
+        .port  = GPIOA,
+        .pin   = 2,
+        .mode  = { .mask = PINMODE_OUTPUT },
+        .description = "UART1"
+    };
+
+    static const periph_pin_t rx = {
+        .function = Input_RX,
+        .group = PinGroup_UART1,
+        .port = GPIOA,
+        .pin = 3,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART1"
+    };
+
+#else
+
+    static const periph_pin_t tx = {
+        .function = Output_TX,
+        .group = PinGroup_UART1,
+        .port = GPIOA,
+        .pin = 9,
+        .mode = { .mask = PINMODE_OUTPUT },
+        .description = "UART1"
+    };
+
+    static const periph_pin_t rx = {
+        .function = Input_RX,
+        .group = PinGroup_UART1,
+        .port = GPIOA,
+        .pin = 10,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART1"
+    };
+
+#endif
+
+    hal.periph_port.register_pin(&rx);
+    hal.periph_port.register_pin(&tx);
+
+#ifdef SERIAL2_MOD
+
+  #if IS_NUCLEO_DEVKIT
+
+    static const periph_pin_t tx2 = {
+        .function = Output_TX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 9,
+        .mode = { .mask = PINMODE_OUTPUT },
+        .description = "UART2"
+    };
+
+    static const periph_pin_t rx2 = {
+        .function = Input_RX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 10,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART2"
+    };
+
+  #else
+
+    static const periph_pin_t tx2 = {
+        .function = Output_TX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 2,
+        .mode = { .mask = PINMODE_OUTPUT },
+        .description = "UART2"
+    };
+
+    static const periph_pin_t rx2 = {
+        .function = Input_RX,
+        .group = PinGroup_UART2,
+        .port = GPIOA,
+        .pin = 3,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART2"
+    };
+
+  #endif
+
+    hal.periph_port.register_pin(&rx2);
+    hal.periph_port.register_pin(&tx2);
+
+#endif // SERIAL2_MOD
 }
 
 //
@@ -93,6 +202,16 @@ static uint16_t serialRxFree (void)
     uint16_t tail = rxbuf.tail, head = rxbuf.head;
 
     return RX_BUFFER_SIZE - BUFCOUNT(head, tail, RX_BUFFER_SIZE);
+}
+
+//
+// Returns number of characters in serial input buffer
+//
+static uint16_t serialRxCount (void)
+{
+    uint32_t tail = rxbuf.tail, head = rxbuf.head;
+
+    return BUFCOUNT(head, tail, RX_BUFFER_SIZE);
 }
 
 //
@@ -114,35 +233,19 @@ static void serialRxCancel (void)
 }
 
 //
-// Attempt to send a character bypassing buffering
-//
-inline static bool serialPutCNonBlocking (const char c)
-{
-    bool ok;
-
-    if((ok = !(USART->CR1 & USART_CR1_TXEIE) && !(USART->SR & USART_SR_TXE)))
-        USART->DR = c;
-
-    return ok;
-}
-
-//
 // Writes a character to the serial output stream
 //
 static bool serialPutC (const char c)
 {
-//    if(txbuf.head != txbuf.tail || !serialPutCNonBlocking(c)) {           // Try to send character without buffering...
+    uint16_t next_head = BUFNEXT(txbuf.head, txbuf);    // Get pointer to next free slot in buffer
 
-        uint16_t next_head = BUFNEXT(txbuf.head, txbuf);    // .. if not, get pointer to next free slot in buffer
-
-        while(txbuf.tail == next_head) {                    // While TX buffer full
-            if(!hal.stream_blocking_callback())             // check if blocking for space,
-                return false;                               // exit if not (leaves TX buffer in an inconsistent state)
-        }
-        txbuf.data[txbuf.head] = c;                         // Add data to buffer,
-        txbuf.head = next_head;                             // update head pointer and
-        USART->CR1 |= USART_CR1_TXEIE;                      // enable TX interrupts
-//    }
+    while(txbuf.tail == next_head) {                    // While TX buffer full
+        if(!hal.stream_blocking_callback())             // check if blocking for space,
+            return false;                               // exit if not (leaves TX buffer in an inconsistent state)
+    }
+    txbuf.data[txbuf.head] = c;                         // Add data to buffer,
+    txbuf.head = next_head;                             // update head pointer and
+    USART->CR1 |= USART_CR1_TXEIE;                      // enable TX interrupts
 
     return true;
 }
@@ -161,12 +264,31 @@ static void serialWriteS (const char *s)
 //
 // Writes a number of characters from string to the serial output stream followed by EOL, blocks if buffer full
 //
-static void serialWrite(const char *s, uint16_t length)
+static void serialWrite (const char *s, uint16_t length)
 {
     char *ptr = (char *)s;
 
     while(length--)
         serialPutC(*ptr++);
+}
+
+//
+// Flushes the serial output buffer
+//
+static void serialTxFlush (void)
+{
+    USART->CR1 &= ~USART_CR1_TXEIE;     // Disable TX interrupts
+    txbuf.tail = txbuf.head;
+}
+
+//
+// Returns number of characters pending transmission
+//
+static uint16_t serialTxCount (void)
+{
+    uint32_t tail = txbuf.tail, head = txbuf.head;
+
+    return BUFCOUNT(head, tail, TX_BUFFER_SIZE) + (USART->SR & USART_SR_TC ? 0 : 1);
 }
 
 //
@@ -234,17 +356,16 @@ const io_stream_t *serialInit (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .connected = true,
+        .state.connected = On,
         .read = serialGetC,
         .write = serialWriteS,
         .write_n =  serialWrite,
         .write_char = serialPutC,
-        .write_all = serialWriteS,
         .enqueue_rt_command = serialEnqueueRtCommand,
         .get_rx_buffer_free = serialRxFree,
-//        .get_rx_buffer_count = serialRxCount,
-//        .get_tx_buffer_count = serialTxCount,
-//        .reset_write_buffer = serialTxFlush,
+        .get_rx_buffer_count = serialRxCount,
+        .get_tx_buffer_count = serialTxCount,
+        .reset_write_buffer = serialTxFlush,
         .reset_read_buffer = serialRxFlush,
         .cancel_read_buffer = serialRxCancel,
         .suspend_read = serialSuspendInput,
@@ -279,24 +400,6 @@ const io_stream_t *serialInit (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART,
-        .port  = GPIOA,
-        .pin   = 2,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "Primary UART"
-    };
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART,
-        .port = GPIOA,
-        .pin = 3,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "Primary UART"
-    };
-
-
 #else
 
     __HAL_RCC_USART1_CLK_ENABLE();
@@ -310,28 +413,7 @@ const io_stream_t *serialInit (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART,
-        .port = GPIOA,
-        .pin = 9,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "Primary UART"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART,
-        .port = GPIOA,
-        .pin = 10,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "Primary UART"
-    };
-
 #endif
-
-    hal.periph_port.register_pin(&rx);
-    hal.periph_port.register_pin(&tx);
 
     return &stream;
 }
@@ -361,18 +443,6 @@ void USART_IRQHandler (void)
 }
 
 #ifdef SERIAL2_MOD
-
-#if IS_NUCLEO_DEVKIT
-
-#define UART2 USART1
-#define UART2_IRQHandler USART1_IRQHandler
-
-#else
-
-#define UART2 USART2
-#define UART2_IRQHandler USART2_IRQHandler
-
-#endif
 
 //
 // Returns number of free characters in serial input buffer
@@ -413,40 +483,22 @@ static void serial2RxCancel (void)
 }
 
 //
-// Attempt to send a character bypassing buffering
-//
-static inline bool serial2PutCNonBlocking (const char c)
-{
-    bool ok;
-
-    if((ok = !(UART2->CR1 & USART_CR1_TXEIE) && !(UART2->SR & USART_SR_TXE)))
-        UART2->DR = c;
-
-    return ok;
-}
-
-//
 // Writes a character to the serial output stream
 //
 static bool serial2PutC (const char c)
 {
-    uint32_t next_head;
+    uint32_t next_head = BUFNEXT(txbuf2.head, txbuf2);   // Set and update head pointer
 
-//    if(txbuf2.head != txbuf2.tail || !serial2PutCNonBlocking(c)) {  // Try to send character without buffering...
+    while(txbuf2.tail == next_head) {           // While TX buffer full
+        if(!hal.stream_blocking_callback())     // check if blocking for space,
+            return false;                       // exit if not (leaves TX buffer in an inconsistent state)
+        UART2->CR1 |= USART_CR1_TXEIE;          // Enable TX interrupts???
+    }
 
-        next_head = BUFNEXT(txbuf2.head, txbuf2);   // .. if not, set and update head pointer
+    txbuf2.data[txbuf2.head] = c;               // Add data to buffer
+    txbuf2.head = next_head;                    // and update head pointer
 
-        while(txbuf2.tail == next_head) {           // While TX buffer full
-            if(!hal.stream_blocking_callback())     // check if blocking for space,
-                return false;                       // exit if not (leaves TX buffer in an inconsistent state)
-            UART2->CR1 |= USART_CR1_TXEIE;          // Enable TX interrupts???
-        }
-
-        txbuf2.data[txbuf2.head] = c;               // Add data to buffer
-        txbuf2.head = next_head;                    // and update head pointer
-
-        UART2->CR1 |= USART_CR1_TXEIE;              // Enable TX interrupts
-//    }
+    UART2->CR1 |= USART_CR1_TXEIE;              // Enable TX interrupts
 
     return true;
 }
@@ -464,7 +516,7 @@ static void serial2WriteS (const char *s)
 
 // Writes a number of characters from a buffer to the serial output stream, blocks if buffer full
 //
-static void serial2Write(const char *s, uint16_t length)
+static void serial2Write (const char *s, uint16_t length)
 {
     char *ptr = (char *)s;
 
@@ -557,12 +609,11 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
     static const io_stream_t stream = {
         .type = StreamType_Serial,
         .instance = 1,
-        .connected = true,
+        .state.connected = On,
         .read = serial2GetC,
         .write = serial2WriteS,
         .write_n =  serial2Write,
         .write_char = serial2PutC,
-        .write_all = serial2WriteS,
         .enqueue_rt_command = serial2EnqueueRtCommand,
         .get_rx_buffer_free = serial2RxFree,
         .get_rx_buffer_count = serial2RxCount,
@@ -600,24 +651,6 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART2,
-        .port = GPIOA,
-        .pin = 9,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "Secondary UART"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART2,
-        .port = GPIOA,
-        .pin = 10,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "Secondary UART"
-    };
-
 #else
 
     __HAL_RCC_USART2_CLK_ENABLE();
@@ -637,28 +670,7 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
     HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
 
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART2,
-        .port = GPIOA,
-        .pin = 2,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "Secondary UART"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART2,
-        .port = GPIOA,
-        .pin = 3,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "Secondary UART"
-    };
-
 #endif
-
-    hal.periph_port.register_pin(&rx);
-    hal.periph_port.register_pin(&tx);
 
     return &stream;
 }
@@ -687,4 +699,3 @@ void UART2_IRQHandler (void)
    }
 }
 #endif
-
