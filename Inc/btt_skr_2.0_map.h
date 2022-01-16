@@ -117,7 +117,7 @@
 
 // Define spindle PWM output pin.
 #define SPINDLE_PWM_PORT_BASE       GPIOB_BASE
-#define SPINDLE_PWM_PIN             0                           // EXP1 - PB0, pin 9
+#define SPINDLE_PWM_PIN             0                           // EXP1 - PB0, pin 2
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB
@@ -127,20 +127,20 @@
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // These are all available on EXP2 along with electrical RESET* (EXP2-8)
-#define CONTROL_PORT                GPIOA
-#define RESET_PIN                   4                           // Exp2-4
-#define FEED_HOLD_PIN               5                           // Exp2-2
-#define CYCLE_START_PIN             6                           // Exp2-1
+#define CONTROL_PORT                GPIOE
+#define RESET_PIN                   10                          // Exp1-5
+#define FEED_HOLD_PIN               11                          // Exp1-6
+#define CYCLE_START_PIN             12                          // Exp1-7
 
 #if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT            GPIOA
-#define SAFETY_DOOR_PIN             7                           // EXP2-6
+#define SAFETY_DOOR_PORT            GPIOE
+#define SAFETY_DOOR_PIN             13                          // EXP1-8
 #endif
 #define CONTROL_INMODE              GPIO_BITBAND
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOE
-#define PROBE_PIN                   4                       // BLTouch PE4
+#define PROBE_PIN                   5                           // Servos
 
 // XXXXX
 // SKR-2 has SD/MMC interface and does not work in SPI mode
