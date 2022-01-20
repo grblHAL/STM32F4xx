@@ -52,12 +52,12 @@
 //#define USB_SERIAL_CDC       1 // Serial communication via native USB.
 #endif
 //#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires and claims one auxillary input pin.
-#define VFD_ENABLE           101 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
+//#define VFD_ENABLE           101 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define SHIHLIN_ENABLE       1
 //#define DUAL_SPINDLE 		   1 // Uncomment for switching between VFD spindle and PWM output with $32
-#define MODBUS_ENABLE        3 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin, 3 for shihlin vfd (author:tai)
+//#define MODBUS_ENABLE        3 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin, 3 for shihlin vfd (author:tai)
 //#define SDCARD_ENABLE        2 // Run gcode programs from SD card.
-//#define KEYPAD_ENABLE        1 // Set to 1 for I2C keypad, 2 for other input such as serial data
+//#define KEYPAD_ENABLE        2 // Set to 1 for I2C keypad, 2 for other input such as serial data
 //#define ODOMETER_ENABLE      1 // Odometer plugin.
 //#define PPI_ENABLE           1 // Laser PPI plugin. To be completed.
 //#define LASER_COOLANT_ENABLE 1 // Laser coolant plugin. To be completed.

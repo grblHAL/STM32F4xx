@@ -8,6 +8,20 @@
 #ifndef F4MPV4_HOSOI_H_
 #define F4MPV4_HOSOI_H_
 
+#include <string.h>
+#include "main.h"
+#include "driver.h"
+#include "serial.h"
+
+#include "grbl/hal.h"
+#include "grbl/limits.h"
+#include "grbl/protocol.h"
+#include "grbl/motor_pins.h"
+#include "grbl/pin_bits_masks.h"
+#include "grbl/stepdir_map.h"
+#include "grbl/motion_control.h"
+#include "grbl/state_machine.h"
+
 #define PU1_Pin GPIO_PIN_2
 #define PU1_GPIO_Port GPIOA
 #define DR1_Pin GPIO_PIN_3
@@ -96,5 +110,8 @@
 #define  X9tog 	HAL_GPIO_TogglePin(X9);
 #define  X10tog HAL_GPIO_TogglePin(X10);
 #define  X11tog HAL_GPIO_TogglePin(X11);
+
+
+static void encoder_handler(sys_state_t state);
 
 #endif /* F4MPV4_HOSOI_H_ */
