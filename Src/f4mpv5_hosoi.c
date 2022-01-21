@@ -7,7 +7,7 @@
 
 #include "f4mpv4_hosoi.h"
 
-TIM_HandleTypeDef htim2, htim3, htim5;
+TIM_HandleTypeDef htim2, htim3, htim4;
 UART_HandleTypeDef huart4;
 
 static on_report_options_ptr on_report_options;
@@ -76,9 +76,9 @@ void TIM3_IRQHandler(void)
 {
 HAL_TIM_IRQHandler(&htim3);
 }
-//void TIM5_IRQHandler(void)
+//void TIM4_IRQHandler(void)
 //{
-//HAL_TIM_IRQHandler(&htim5);
+//HAL_TIM_IRQHandler(&htim4);
 //}
 
 void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim_encoder)
@@ -104,7 +104,7 @@ if (htim_encoder->Instance == TIM2)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	HAL_NVIC_SetPriority(TIM2_IRQn, 2, 0);
+	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
 	}
 else if (htim_encoder->Instance == TIM3)
@@ -117,35 +117,19 @@ else if (htim_encoder->Instance == TIM3)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	HAL_NVIC_SetPriority(TIM3_IRQn, 3, 0);
+	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	}
-//else if (htim_encoder->Instance == TIM5)
+//else if (htim_encoder->Instance == TIM4)
 //	{
-//	/* USER CODE BEGIN TIM5_MspInit 0 */
-//
-//	/* USER CODE END TIM5_MspInit 0 */
-//	/* Peripheral clock enable */
-//	__HAL_RCC_TIM5_CLK_ENABLE();
-//
-//	__HAL_RCC_GPIOA_CLK_ENABLE();
-//	/**TIM5 GPIO Configuration
-//	 PA0-WKUP     ------> TIM5_CH1
-//	 PA1     ------> TIM5_CH2
-//	 */
-//	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
+//	__HAL_RCC_TIM4_CLK_ENABLE();
+//	__HAL_RCC_GPIOB_CLK_ENABLE();
+//	GPIO_InitStruct.Pin = GPIO_PIN_6 | GPIO_PIN_7;
 //	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 //	GPIO_InitStruct.Pull = GPIO_NOPULL;
 //	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-//	GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
-//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-//
-//	/* TIM5 interrupt Init */
-//	HAL_NVIC_SetPriority(TIM5_IRQn, 0, 0);
-//	HAL_NVIC_EnableIRQ(TIM5_IRQn);
-//	/* USER CODE BEGIN TIM5_MspInit 1 */
-//
-//	/* USER CODE END TIM5_MspInit 1 */
+//	GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
+//	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 //	}
 
 }
@@ -165,11 +149,10 @@ else if (htim_encoder->Instance == TIM3)
 	HAL_GPIO_DeInit(GPIOB, GPIO_PIN_4 | GPIO_PIN_5);
 	HAL_NVIC_DisableIRQ(TIM3_IRQn);
 	}
-//else if (htim_encoder->Instance == TIM5)
+//else if (htim_encoder->Instance == TIM4)
 //	{
-//	__HAL_RCC_TIM5_CLK_DISABLE();
-//	HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0 | GPIO_PIN_1);
-//	HAL_NVIC_DisableIRQ(TIM5_IRQn);
+//	__HAL_RCC_TIM4_CLK_DISABLE();
+//	HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6 | GPIO_PIN_7);
 //	}
 
 }
@@ -193,8 +176,17 @@ if (htim == knob_x.timer)
 	{
 	knob_x.counter = __HAL_TIM_GET_COUNTER(htim);
 	knob_x.count = (int16_t) (knob_x.counter / 4);
-
 //	if (knob_x.delta_count != 0)
+//		{
+//		protocol_enqueue_rt_command(encoder_handler);
+//		}
+	}
+
+if (htim == knob_y.timer)
+	{
+	knob_y.counter = __HAL_TIM_GET_COUNTER(htim);
+	knob_y.count = (int16_t) (knob_y.counter / 4);
+//	if (knob_z.delta_count != 0)
 //		{
 //		protocol_enqueue_rt_command(encoder_handler);
 //		}
@@ -202,20 +194,18 @@ if (htim == knob_x.timer)
 
 if (htim == knob_z.timer)
 	{
-	temp = __HAL_TIM_GET_COUNTER(htim);
 	knob_z.counter = __HAL_TIM_GET_COUNTER(htim);
 	knob_z.count = (int16_t) (knob_z.counter / 4);
-
 //	if (knob_z.delta_count != 0)
 //		{
 //		protocol_enqueue_rt_command(encoder_handler);
 //		}
 	}
 knob_x.delta_count = knob_x.count - knob_x.prev_count;
+knob_y.delta_count = knob_y.count - knob_y.prev_count;
 knob_z.delta_count = knob_z.count - knob_z.prev_count;
 
 protocol_enqueue_rt_command(encoder_handler);
-
 
 }
 
@@ -257,32 +247,7 @@ if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
 	{
 	Error_Handler();
 	}
-//----------------------------------------
-//htim5.Instance = TIM5;
-//htim5.Init.Prescaler = 0;
-//htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-//htim5.Init.Period = 4294967295;
-//htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-//htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-//sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
-//sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
-//sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
-//sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-//sConfig.IC1Filter = 0;
-//sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
-//sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
-//sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
-//sConfig.IC2Filter = 0;
-//if (HAL_TIM_Encoder_Init(&htim5, &sConfig) != HAL_OK)
-//	{
-//	Error_Handler();
-//	}
-//sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-//sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-//if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
-//	{
-//	Error_Handler();
-//	}
+
 //----------------------------------------
 htim3.Instance = TIM3;
 htim3.Init.Prescaler = 0;
@@ -309,11 +274,36 @@ if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
 	{
 	Error_Handler();
 	}
-
+//----------------------------------------
+//htim4.Instance = TIM4;
+//htim4.Init.Prescaler = 0;
+//htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+//htim4.Init.Period = 65535;
+//htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+//htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+//sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+//sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+//sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+//sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+//sConfig.IC1Filter = 0;
+//sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+//sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+//sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+//sConfig.IC2Filter = 0;
+//if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
+//	{
+//	Error_Handler();
+//	}
+//sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+//sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+//if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+//	{
+//	Error_Handler();
+//	}
 //----------------------------------------
 knob_x.timer = &htim2;
-//knob_y.timer = &htim5;
-knob_z.timer = &htim3;
+knob_y.timer = &htim3;
+knob_z.timer = &htim4;
 for (uint8_t i = 0; i < NUMBER_OF_ENCODER; i++)
 	{
 	knob_ptr[i]->count = 0;
@@ -322,8 +312,8 @@ for (uint8_t i = 0; i < NUMBER_OF_ENCODER; i++)
 	knob_ptr[i]->prev_count = 0;
 	}
 HAL_TIM_Encoder_Start_IT(knob_x.timer, TIM_CHANNEL_ALL);
-//HAL_TIM_Encoder_Start_IT(knob_y.timer, TIM_CHANNEL_ALL);
-HAL_TIM_Encoder_Start_IT(knob_z.timer, TIM_CHANNEL_ALL);
+HAL_TIM_Encoder_Start_IT(knob_y.timer, TIM_CHANNEL_ALL);
+//HAL_TIM_Encoder_Start_IT(knob_z.timer, TIM_CHANNEL_ALL);
 }
 
 static void encoder_handler(sys_state_t state)
@@ -367,12 +357,14 @@ static void encoder_handler(sys_state_t state)
 //encoder_interrupt_busy = false;
 //--------------------------------------------------
 knob_x.prev_count = knob_x.count;
+knob_y.prev_count = knob_y.count;
 knob_z.prev_count = knob_z.count;
 if (encoder_interrupt_busy == true) return;
-if ((knob_x.delta_count != 0) || (knob_z.delta_count != 0))
+if ((knob_x.delta_count != 0)|| (knob_y.delta_count != 0) || (knob_z.delta_count != 0))
 	{
 	encoder_interrupt_busy = true;
 	knob_x.sign = knob_x.delta_count >= 0 ? 1.0f : -1.0f;
+	knob_y.sign = knob_y.delta_count >= 0 ? 1.0f : -1.0f;
 	knob_z.sign = knob_z.delta_count >= 0 ? 1.0f : -1.0f;
 	plan_line_data_t plan_data =
 			{
@@ -384,6 +376,7 @@ if ((knob_x.delta_count != 0) || (knob_z.delta_count != 0))
 	// Get current position.
 	system_convert_array_steps_to_mpos(origin.values, sys.position);
 	if (knob_x.delta_count != 0) target.x = origin.x + knob_x.sign * 5.0f;
+	if (knob_y.delta_count != 0) target.y = origin.y + knob_y.sign * 5.0f;
 	if (knob_z.delta_count != 0) target.z = origin.z + knob_z.sign * 5.0f;
 
 	mc_line(target.values, &plan_data);
