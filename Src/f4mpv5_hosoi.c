@@ -42,47 +42,6 @@ if (!newopt)
 	hal.stream.write("[PLUGIN:Blink LED v1.00]" ASCII_EOL);
 }
 
-static void blink_led(sys_state_t state)
-{
-//	static bool led_on = false;
-static uint32_t ms = 0;
-
-if (hal.get_elapsed_ticks() >= ms)
-	{
-	ms = hal.get_elapsed_ticks() + 1000; //ms
-
-//		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6); // Green
-//		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); // Blue
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8); // Red
-
-// Alternative Method
-//		static bool led_on = false;
-//		static uint32_t ms = 0;
-//
-//		if (hal.get_elapsed_ticks() >= ms)
-//		{
-//			ms = hal.get_elapsed_ticks() + 500; //ms
-//			led_on = !led_on;
-//			if (led_on)
-//			GPIOC->ODR |= GPIO_PIN_13;
-//			else
-//			GPIOC->ODR &= ~GPIO_PIN_13;
-//		}
-
-	// temp - to be deleted
-//	    target.x = sys.position[0] + 20.0f;
-//	    target.y = sys.position[1];
-//	    hal.stream.write(uitoa(x));
-//	    hal.stream.write(",");
-//	    hal.stream.write(uitoa(y));
-//	    hal.stream.write(ASCII_EOL);
-//	    mc_line(target.values, &plan_data);
-
-	}
-
-on_execute_realtime(state);
-}
-
 // ENCODER
 #define NUMBER_OF_ENCODER 3
 
@@ -99,6 +58,7 @@ typedef struct
 	volatile int16_t count;
 	volatile int16_t prev_count;
 	volatile int16_t delta_count;
+	volatile float sign;
 	TIM_HandleTypeDef *timer;
 } knob_t;
 
@@ -144,7 +104,7 @@ if (htim_encoder->Instance == TIM2)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
+	HAL_NVIC_SetPriority(TIM2_IRQn, 2, 0);
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
 	}
 else if (htim_encoder->Instance == TIM3)
@@ -157,7 +117,7 @@ else if (htim_encoder->Instance == TIM3)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	HAL_NVIC_SetPriority(TIM3_IRQn, 0, 1);
+	HAL_NVIC_SetPriority(TIM3_IRQn, 3, 0);
 	HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	}
 //else if (htim_encoder->Instance == TIM5)
@@ -233,26 +193,29 @@ if (htim == knob_x.timer)
 	{
 	knob_x.counter = __HAL_TIM_GET_COUNTER(htim);
 	knob_x.count = (int16_t) (knob_x.counter / 4);
-	knob_x.delta_count = knob_x.count - knob_x.prev_count;
-	if (knob_x.delta_count != 0)
-		{
-		protocol_enqueue_rt_command(encoder_handler);
-		}
+
+//	if (knob_x.delta_count != 0)
+//		{
+//		protocol_enqueue_rt_command(encoder_handler);
+//		}
 	}
 
-//if (htim == knob_z.timer)
-//	{
-//	temp = __HAL_TIM_GET_COUNTER(htim);
-//	knob_z.counter = __HAL_TIM_GET_COUNTER(htim);
-//	knob_z.count = (int16_t) (knob_z.counter / 4);
-//	knob_z.delta_count = knob_z.count - knob_z.prev_count;
+if (htim == knob_z.timer)
+	{
+	temp = __HAL_TIM_GET_COUNTER(htim);
+	knob_z.counter = __HAL_TIM_GET_COUNTER(htim);
+	knob_z.count = (int16_t) (knob_z.counter / 4);
+
 //	if (knob_z.delta_count != 0)
 //		{
 //		protocol_enqueue_rt_command(encoder_handler);
 //		}
-//	}
+	}
+knob_x.delta_count = knob_x.count - knob_x.prev_count;
+knob_z.delta_count = knob_z.count - knob_z.prev_count;
 
-temp = __HAL_TIM_GET_COUNTER(htim);
+protocol_enqueue_rt_command(encoder_handler);
+
 
 }
 
@@ -365,11 +328,52 @@ HAL_TIM_Encoder_Start_IT(knob_z.timer, TIM_CHANNEL_ALL);
 
 static void encoder_handler(sys_state_t state)
 {
+//--------------------------------------------------
+//if (encoder_interrupt_busy == true) return;
+//if (knob_x.delta_count != 0)
+//	{
+//	encoder_interrupt_busy = true;
+//	sign = knob_x.delta_count >= 0 ? 1.0f : -1.0f;
+//	plan_line_data_t plan_data_x =
+//			{
+//			0
+//			};
+//	plan_data.feed_rate = 30000.0f;
+//	protocol_buffer_synchronize();
+//	sync_position();
+//	// Get current position.
+//	system_convert_array_steps_to_mpos(origin.values, sys.position);
+//	target.x = origin.x + sign * 25.0f;
+//	knob_x.prev_count = knob_x.count;
+//	mc_line(target.values, &plan_data_x);
+//	}
+//if (knob_z.delta_count != 0)
+//	{
+//	encoder_interrupt_busy = true;
+//	sign = knob_z.delta_count >= 0 ? 1.0f : -1.0f;
+//	plan_line_data_t plan_data_z =
+//			{
+//			0
+//			};
+//	plan_data_z.feed_rate = 30000.0f;
+//	protocol_buffer_synchronize();
+//	sync_position();
+//	// Get current position.
+//	system_convert_array_steps_to_mpos(origin.values, sys.position);
+//	target.z = origin.z + sign * 25.0f;
+//	knob_z.prev_count = knob_z.count;
+//	mc_line(target.values, &plan_data_z);
+//	}
+//encoder_interrupt_busy = false;
+//--------------------------------------------------
+knob_x.prev_count = knob_x.count;
+knob_z.prev_count = knob_z.count;
 if (encoder_interrupt_busy == true) return;
-if (knob_x.delta_count != 0)
+if ((knob_x.delta_count != 0) || (knob_z.delta_count != 0))
 	{
 	encoder_interrupt_busy = true;
-	sign = knob_x.delta_count >= 0 ? 1.0f : -1.0f;
+	knob_x.sign = knob_x.delta_count >= 0 ? 1.0f : -1.0f;
+	knob_z.sign = knob_z.delta_count >= 0 ? 1.0f : -1.0f;
 	plan_line_data_t plan_data =
 			{
 			0
@@ -379,12 +383,53 @@ if (knob_x.delta_count != 0)
 	sync_position();
 	// Get current position.
 	system_convert_array_steps_to_mpos(origin.values, sys.position);
-	target.x = origin.x + sign * 10.0f;
-	knob_x.prev_count = knob_x.count;
-	encoder_interrupt_busy = false;
-	mc_line(target.values, &plan_data);
-	}
+	if (knob_x.delta_count != 0) target.x = origin.x + knob_x.sign * 5.0f;
+	if (knob_z.delta_count != 0) target.z = origin.z + knob_z.sign * 5.0f;
 
+	mc_line(target.values, &plan_data);
+	encoder_interrupt_busy = false;
+	}
+}
+
+static void blink_led(sys_state_t state)
+{
+//	static bool led_on = false;
+static uint32_t ms = 0;
+
+if (hal.get_elapsed_ticks() >= ms)
+	{
+	ms = hal.get_elapsed_ticks() + 1000; //ms
+
+//		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6); // Green
+//		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7); // Blue
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8); // Red
+
+// Alternative Method
+//		static bool led_on = false;
+//		static uint32_t ms = 0;
+//
+//		if (hal.get_elapsed_ticks() >= ms)
+//		{
+//			ms = hal.get_elapsed_ticks() + 500; //ms
+//			led_on = !led_on;
+//			if (led_on)
+//			GPIOC->ODR |= GPIO_PIN_13;
+//			else
+//			GPIOC->ODR &= ~GPIO_PIN_13;
+//		}
+
+	// temp - to be deleted
+//	    target.x = sys.position[0] + 20.0f;
+//	    target.y = sys.position[1];
+//	    hal.stream.write(uitoa(x));
+//	    hal.stream.write(",");
+//	    hal.stream.write(uitoa(y));
+//	    hal.stream.write(ASCII_EOL);
+//	    mc_line(target.values, &plan_data);
+
+	}
+//protocol_enqueue_rt_command(encoder_handler);
+on_execute_realtime(state);
 }
 
 void led_init(void)

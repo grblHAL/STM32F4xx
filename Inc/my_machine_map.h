@@ -110,8 +110,8 @@
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOE
 #define COOLANT_FLOOD_PIN       1
-#define COOLANT_MIST_PORT       GPIOB
-#define COOLANT_MIST_PIN        4
+//#define COOLANT_MIST_PORT       GPIOB
+//#define COOLANT_MIST_PIN        4
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #define CONTROL_PORT            GPIOD
