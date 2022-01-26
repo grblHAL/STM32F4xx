@@ -119,6 +119,8 @@
   #include "btt_skr_pro_v1_1_map.h"
 #elif defined(BOARD_BTT_SKR_20)
   #include "btt_skr_2.0_map.h"
+#elif defined(BOARD_BTT_SKR_20_DAC)
+  #include "btt_skr_2.0_dac_map.h"
 #elif defined(BOARD_PROTONEER_3XX)
   #include "protoneer_3.xx_map.h"
 #elif defined(BOARD_GENERIC_UNO)

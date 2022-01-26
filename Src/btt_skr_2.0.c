@@ -23,8 +23,19 @@
 */
 
 #include "driver.h"
+#if defined(BOARD_BTT_SKR_20) || defined(BOARD_BTT_SKR_20_DAC)
 
-#if defined(BOARD_BTT_SKR_20)
+#if defined(BOARD_BTT_SKR_20_DAC)
+// For the DAC to work, need to add HAL_DAC_MODULE_ENABLED to the build configuration
+#include "stm32f4xx_hal_dac.h"
+
+static DAC_HandleTypeDef hdac;
+static void update_dac(uint32_t dac_value);
+static void my_settings_changed (settings_t *settings);
+static void my_set_state (spindle_state_t state, float rpm);
+static settings_changed_ptr settings_changed;
+static spindle_set_state_ptr set_state;
+#endif
 
 #if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
 
@@ -584,16 +595,136 @@ static void if_init(uint8_t motors, axes_signals_t enabled)
 
 #endif
 
-void board_init (void)
+#if defined(BOARD_BTT_SKR_20_DAC)
+/**
+* @brief DAC MSP Initialization
+* This function configures the hardware resources used in this example
+* @param hdac: DAC handle pointer
+* @retval None
+*/
+void HAL_DAC_MspInit(DAC_HandleTypeDef* hdac)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if(hdac->Instance==DAC)
+  {
+  /* USER CODE BEGIN DAC_MspInit 0 */
+
+  /* USER CODE END DAC_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_DAC_CLK_ENABLE();
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    /**DAC GPIO Configuration
+    PA5     ------> DAC_OUT2
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_5;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN DAC_MspInit 1 */
+
+  /* USER CODE END DAC_MspInit 1 */
+  }
+
+}
+
+static void MX_DAC_Init(void)
 {
 
+  /* USER CODE BEGIN DAC_Init 0 */
+
+  /* USER CODE END DAC_Init 0 */
+
+  DAC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN DAC_Init 1 */
+
+  /* USER CODE END DAC_Init 1 */
+  /** DAC Initialization
+  */
+  hdac.Instance = DAC;
+  if (HAL_DAC_Init(&hdac) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** DAC channel OUT2 config
+  */
+  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+  if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN DAC_Init 2 */
+
+  /* USER CODE END DAC_Init 2 */
+
+}
+
+static inline void update_dac(uint32_t dac_value)
+{
+  hdac.Instance->DHR12R2 = dac_value;
+}
+
+static void my_set_state (spindle_state_t state, float rpm)
+{
+  static float my_rpm;
+  uint32_t dac_value;
+
+  if(!state.on || rpm == 0.0f) {
+    update_dac(0);
+  } else {
+    if(rpm < settings.spindle.rpm_min)
+      my_rpm = settings.spindle.rpm_min;
+    else
+      if(rpm > settings.spindle.rpm_max)
+        my_rpm = settings.spindle.rpm_max;
+      else
+        my_rpm = rpm;
+
+    // want max output to be 2.5V but range of dac is full 3.3V
+    // result is value from 0 to ~3103
+    dac_value = (my_rpm / settings.spindle.rpm_max) * (2.5 / 3.3) * 4096.0f;
+
+    update_dac(dac_value);
+  }
+
+  if(set_state)
+    set_state(state, rpm);
+}
+
+static void my_settings_changed (settings_t *settings)
+{
+  settings_changed(settings);
+
+  // claim the set_state pointer in case it gets overwritten
+  if(hal.spindle.set_state != my_set_state) {
+    set_state = hal.spindle.set_state;
+    hal.spindle.set_state = my_set_state;
+  }
+}
+#endif
+
+void board_init (void)
+{
 #if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160 || TRINAMIC_ENABLE == 2209
 
   static trinamic_driver_if_t driver_if = {.on_drivers_init = if_init};
-
   trinamic_if_init(&driver_if);
 
 #endif // TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160 || TRINAMIC_ENABLE == 2209
+
+#if defined(BOARD_BTT_SKR_20_DAC)
+  // Initialize analog output pin PA5 used for Mach 3 type spindle
+  MX_DAC_Init();
+  DAC->DHR12R2 = 0;                       // set dac output to 0
+  __HAL_DAC_ENABLE(&hdac, DAC_CHANNEL_2); // enable the dac
+
+  // Intercept the settings_changed pointer
+  settings_changed = hal.settings_changed;
+  hal.settings_changed = my_settings_changed;
+#endif
 }
 
 #if TRINAMIC_ENABLE == 2209
