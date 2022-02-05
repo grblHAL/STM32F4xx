@@ -23,10 +23,6 @@
 #error "BTT SKR-2 supports 5 motors max."
 #endif
 
-#if TRINAMIC_ENABLE && N_GANGED > 0
-#error "BTT SKR-2 does not support ganged motors with Trinamic drivers."
-#endif
-
 #if !defined(STM32F407xx) || HSE_VALUE != 8000000
 #error "This board has STM32F407 processor with a 8MHz crystal, select a corresponding build!"
 #endif
