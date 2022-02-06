@@ -136,7 +136,7 @@
 #define FEED_HOLD_PORT              GPIOD
 #define FEED_HOLD_PIN               11                          // E1 Limit
 #define CYCLE_START_PORT            GPIOG
-#define CYCLE_START_PIN             2                           // E2 Limit
+#define CYCLE_START_PIN             5                           // E2 Limit
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOG
 #define SAFETY_DOOR_PIN             6                           // EXP1 PG4
