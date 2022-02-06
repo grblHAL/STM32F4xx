@@ -131,8 +131,8 @@
 #define COOLANT_MIST_PIN            14                          // HEAT1
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT                  GPIOG
-#define RESET_PIN                   4                           // E0 Limit
+#define RESET_PORT                  GPIOE
+#define RESET_PIN                   15                          // E0 Limit
 #define FEED_HOLD_PORT              GPIOD
 #define FEED_HOLD_PIN               11                          // E1 Limit
 #define CYCLE_START_PORT            GPIOG
