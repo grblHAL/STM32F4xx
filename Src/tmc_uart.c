@@ -167,7 +167,7 @@ static void rcv (void)
 
     bool inbit = DIGITAL_IN(active_uart->port, active_uart->pin);
 
-    hal.port.digital_out(0, 1);
+//    hal.port.digital_out(0, 1);
 
     if(rx_buf.bit_count == -1) {                                // -1 means waiting for START (0)
         if(!inbit) {
@@ -191,7 +191,7 @@ static void rcv (void)
         rx_buf.bit_count++;                                     // Preprare for next bit
     }
 
-    hal.port.digital_out(0, 0);
+//    hal.port.digital_out(0, 0);
 }
 
 static void stop_listening (void)
