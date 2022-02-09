@@ -138,11 +138,36 @@
 #define PROBE_PORT                  GPIOE
 #define PROBE_PIN                   4                       // BLTouch PE4
 
+// Safe Power Control
+#define STEPPERS_POWER_PORT         GPIOC
+#define STEPPERS_POWER_PIN          13
+
 // XXXXX
 // SKR-2 has SD/MMC interface and does not work in SPI mode
 #if SDCARD_ENABLE
 #error "SD SDIO/MMC interface does not support SPI."
 #endif
+
+#if TRINAMIC_UART_ENABLE
+
+#define MOTOR_UARTX_PORT            GPIOE
+#define MOTOR_UARTX_PIN             0
+#define MOTOR_UARTY_PORT            GPIOD
+#define MOTOR_UARTY_PIN             3
+#define MOTOR_UARTZ_PORT            GPIOD
+#define MOTOR_UARTZ_PIN             0
+
+#ifdef  M3_AVAILABLE
+#define MOTOR_UARTM3_PORT           GPIOC
+#define MOTOR_UARTM3_PIN            6
+#endif
+
+#ifdef  M4_AVAILABLE
+#define MOTOR_UARTM4_PORT           GPIOD
+#define MOTOR_UARTM4_PIN            12
+#endif
+
+#elif TRINAMIC_SPI_ENABLE
 
 // The BTT SKR-2 uses software SPI
 // MISO pin is also SWCLK from JTAG port, so can't debug with Trinamic SPI drivers:-(
@@ -161,7 +186,6 @@
 #define TRINAMIC_MISO_PIN           14
 #endif
 
-// The CS pins are also the UART pins for 1 wire serial Trinamic drivers (2208, 2209)
 #define MOTOR_CSX_PORT              GPIOE
 #define MOTOR_CSX_PIN               0
 #define MOTOR_CSY_PORT              GPIOD
@@ -179,8 +203,6 @@
 #define MOTOR_CSM4_PIN              12
 #endif
 
-// Safe Power Control
-#define STEPPERS_POWER_PORT         GPIOC
-#define STEPPERS_POWER_PIN          13
+#endif
 
 // EOF

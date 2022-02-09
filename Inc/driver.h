@@ -67,6 +67,8 @@
 #define timercr2ois(c, n) TIM_CR2_OIS ## c ## n
 #define timerAF(t, f) timeraf(t, f)
 #define timeraf(t, f) GPIO_AF ## f ## _TIM ## t
+#define timerCLKENA(t) timercken(t)
+#define timercken(t) __HAL_RCC_TIM ## t ## _CLK_ENABLE
 
 // Configuration, do not change here
 
