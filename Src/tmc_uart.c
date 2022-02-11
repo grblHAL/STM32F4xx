@@ -119,7 +119,7 @@ static void write_n (uint8_t data[], uint32_t length)
     tx_buf.busy = true;
     length--;
 
-    TMC_UART_TIMER->CNT = 0;                        // initialize counter with START delay
+    TMC_UART_TIMER->CNT = 0;                        // initialize counter and
     TMC_UART_TIMER->CR1 &= ~TIM_CR1_UDIS;           // enable interrupt
 
     while(tx_buf.busy);                             // wait for 1st byte to finish
@@ -129,9 +129,6 @@ static void write_n (uint8_t data[], uint32_t length)
         tx_buf.busy = true;
         while(tx_buf.busy);                         // wait for byte to finish
     } while(--length);
-
-    tx_buf.busy = true;                             // wait one more bit period
-    while(tx_buf.busy);                             // for the last STOP bit
 
     TMC_UART_TIMER->CR1 |= TIM_CR1_UDIS;            // disable interrupt
 }
