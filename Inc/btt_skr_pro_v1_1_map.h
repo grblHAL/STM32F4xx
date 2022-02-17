@@ -17,6 +17,8 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// IMPORTANT: Control inputs are mapped differently when build is configured for more than 3 axes!
+
 #if N_ABC_MOTORS > 3
 #error "Axis configuration is not supported!"
 #endif
@@ -131,12 +133,21 @@
 #define COOLANT_MIST_PIN            14                          // HEAT1
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
+#if N_AXIS > 3
 #define RESET_PORT                  GPIOF
 #define RESET_PIN                   13                          // EXP2 PF13
 #define FEED_HOLD_PORT              GPIOF
 #define FEED_HOLD_PIN               11                          // EXP2 PF11
 #define CYCLE_START_PORT            GPIOB
 #define CYCLE_START_PIN             15                          // EXP2 PB15
+#else
+#define RESET_PORT                  GPIOG
+#define RESET_PIN                   4                           // E0 Limit
+#define FEED_HOLD_PORT              GPIOD
+#define FEED_HOLD_PIN               11                          // E1 Limit
+#define CYCLE_START_PORT            GPIOG
+#define CYCLE_START_PIN             2                           // E2 Limit
+#endif
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOG
 #define SAFETY_DOOR_PIN             6                           // EXP1 PG4
@@ -145,7 +156,7 @@
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOA
-#define PROBE_PIN                   1                       // BLTouch PA1
+#define PROBE_PIN                   1                           // BLTouch PA1
 
 #if SDCARD_ENABLE
 #define SD_CS_PORT                  GPIOA

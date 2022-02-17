@@ -289,22 +289,36 @@
 #define MODBUS_TEST 0
 #endif
 
+#if TRINAMIC_UART_ENABLE && !defined(MOTOR_UARTX_PORT)
+#define TRINAMIC_TEST 1
+#else
+#define TRINAMIC_TEST 0
+#endif
+
+#if MPG_ENABLE
+#define MPG_TEST 1
+#else
+#define MPG_TEST 0
+#endif
+
 #if KEYPAD_ENABLE == 2 && MPG_ENABLE == 0
 #define KEYPAD_TEST 1
 #else
 #define KEYPAD_TEST 0
 #endif
 
-#if MODBUS_TEST + KEYPAD_TEST + BLUETOOTH_ENABLE + TRINAMIC_UART_ENABLE + MPG_ENABLE > 1
+#if MODBUS_TEST + KEYPAD_TEST + MPG_TEST + TRINAMIC_TEST + BLUETOOTH_ENABLE > 1
 #error "Only one option that uses the serial port can be enabled!"
 #endif
 
-#if MODBUS_TEST || KEYPAD_TEST|| BLUETOOTH_ENABLE || TRINAMIC_UART_ENABLE || MPG_ENABLE
+#if MODBUS_TEST || KEYPAD_TEST || MPG_TEST || TRINAMIC_TEST || BLUETOOTH_ENABLE
 #define SERIAL2_MOD
 #endif
 
 #undef MODBUS_TEST
 #undef KEYPAD_TEST
+#undef MPG_TEST
+#undef TRINAMIC_TEST
 
 #if MPG_MODE == 1 && !defined(MPG_MODE_PIN)
 #error "MPG_MODE_PIN must be defined!"
