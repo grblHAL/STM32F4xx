@@ -83,7 +83,7 @@
 #define M3_DIRECTION_PORT           GPIOA
 #define M3_DIRECTION_PIN            0
 #define M3_LIMIT_PORT               GPIOE
-#define M3_LIMIT_PIN                10
+#define M3_LIMIT_PIN                15
 #define M3_ENABLE_PORT              GPIOC
 #define M3_ENABLE_PIN               3
 #endif
@@ -96,7 +96,7 @@
 #define M4_DIRECTION_PORT           GPIOE
 #define M4_DIRECTION_PIN            7
 #define M4_LIMIT_PORT               GPIOE
-#define M4_LIMIT_PIN                19
+#define M4_LIMIT_PIN                10
 #define M4_ENABLE_PORT              GPIOA
 #define M4_ENABLE_PIN               3
 #endif
@@ -131,12 +131,12 @@
 #define COOLANT_MIST_PIN            14                          // HEAT1
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT                  GPIOG
-#define RESET_PIN                   4                           // E0 Limit
-#define FEED_HOLD_PORT              GPIOD
-#define FEED_HOLD_PIN               11                          // E1 Limit
-#define CYCLE_START_PORT            GPIOG
-#define CYCLE_START_PIN             2                           // E2 Limit
+#define RESET_PORT                  GPIOF
+#define RESET_PIN                   13                          // EXP2 PF13
+#define FEED_HOLD_PORT              GPIOF
+#define FEED_HOLD_PIN               11                          // EXP2 PF11
+#define CYCLE_START_PORT            GPIOB
+#define CYCLE_START_PIN             15                          // EXP2 PB15
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOG
 #define SAFETY_DOOR_PIN             6                           // EXP1 PG4

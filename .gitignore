@@ -25,8 +25,8 @@ $RECYCLE.BIN/
 .settings
 
 # Build folder
-
 build
+.pio/
 
 #
 # =========================
