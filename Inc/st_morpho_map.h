@@ -47,6 +47,10 @@
 #define HAS_IOPORTS
 #define HAS_BOARD_INIT
 
+#if SDCARD_ENABLE || TRINAMIC_SPI_ENABLE
+#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
+#endif
+
 // Define step pulse output pins.
 #define STEP_PORT               GPIOC
 #define X_STEP_PIN              0
@@ -145,9 +149,14 @@
 
 #endif
 
-#if MPG_MODE == 1 && !SDCARD_ENABLE
+#if MPG_MODE == 1
+#ifndef SPI_PORT
 #define MPG_MODE_PORT           GPIOC
 #define MPG_MODE_PIN            8
+#elif N_ABC_MOTORS == 0
+#define MPG_MODE_PORT           GPIOC
+#define MPG_MODE_PIN            11
+#endif
 #endif
 
 // Auxiliary I/O
@@ -155,6 +164,8 @@
 #define AUXINPUT0_PIN           14
 #define AUXINPUT1_PORT          GPIOA
 #define AUXINPUT1_PIN           15
+#define AUXINPUT2_PORT          GPIOB
+#define AUXINPUT2_PIN           13
 
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          15
@@ -165,13 +176,11 @@
 #define I2C_STROBE_PORT         GPIOB
 #define I2C_STROBE_PIN          0
 #else
-#define AUXINPUT2_PORT          GPIOB
-#define AUXINPUT2_PIN           0
+#define AUXINPUT3_PORT          GPIOB
+#define AUXINPUT3_PIN           0
 #endif
 
-#if SDCARD_ENABLE || TRINAMIC_SPI_ENABLE
-
-#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
+#ifdef SPI_PORT
 
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOC
@@ -191,11 +200,12 @@
 #define AUXOUTPUT3_PIN          5
 #define AUXOUTPUT4_PORT         GPIOA
 #define AUXOUTPUT4_PIN          7
-#define AUXOUTPUT5_PORT         GPIOC
-#define AUXOUTPUT5_PIN          8
-#define AUXOUTPUT6_PORT         GPIOB
-#define AUXOUTPUT6_PIN          7
-
+#define AUXOUTPUT5_PORT         GPIOB
+#define AUXOUTPUT5_PIN          7
+#if MPG_MODE == 0
+#define AUXOUTPUT6_PORT         GPIOC
+#define AUXOUTPUT6_PIN          8
+#endif
 #endif
 
 // EOF

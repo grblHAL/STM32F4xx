@@ -178,7 +178,7 @@ static input_signal_t inputpin[] = {
 #ifdef AUXINPUT4_PIN
     { .id = Input_Aux4,           .port = AUXINPUT4_PORT,     .pin = AUXINPUT4_PIN,       .group = PinGroup_AuxInput },
 #endif
-#ifdef AUXINPUT3_PIN
+#ifdef AUXINPUT5_PIN
     { .id = Input_Aux5,           .port = AUXINPUT5_PORT,     .pin = AUXINPUT5_PIN,       .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINPUT6_PIN
