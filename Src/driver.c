@@ -574,7 +574,7 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
     DIGITAL_OUT(B_STEP_PORT, B_STEP_PIN, step_outbits.b);
   #endif
   #ifdef C_AXIS
-    DIGITAL_OUT(C_STEP_PORT->ODR, C_STEP_PIN, step_outbits.c);
+    DIGITAL_OUT(C_STEP_PORT, C_STEP_PIN, step_outbits.c);
   #endif
 #elif STEP_OUTMODE == GPIO_MAP
     STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_outbits.value];
@@ -1086,21 +1086,10 @@ static void spindle_set_speed (uint_fast16_t pwm_value)
     }
 }
 
-#ifdef SPINDLE_PWM_DIRECT
-
 static uint_fast16_t spindleGetPWM (float rpm)
 {
     return spindle_compute_pwm_value(&spindle_pwm, rpm, false);
 }
-
-#else
-
-static void spindleUpdateRPM (float rpm)
-{
-    spindle_set_speed(spindle_compute_pwm_value(&spindle_pwm, rpm, false));
-}
-
-#endif
 
 // Start or stop spindle
 static void spindleSetStateVariable (spindle_state_t state, float rpm)
@@ -1779,6 +1768,7 @@ static bool driver_setup (settings_t *settings)
 
  // Stepper init
 
+    STEPPER_TIMER_CLOCK_ENA();
     STEPPER_TIMER->CR1 &= ~TIM_CR1_CEN;
     STEPPER_TIMER->SR &= ~TIM_SR_UIF;
     STEPPER_TIMER->CNT = 0;
@@ -1788,6 +1778,8 @@ static bool driver_setup (settings_t *settings)
     NVIC_EnableIRQ(STEPPER_TIMER_IRQn);
 
  // Single-shot 100 ns per tick
+
+    PULSE_TIMER_CLOCK_ENA();
     PULSE_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
     PULSE_TIMER->PSC = hal.f_step_timer / 10000000UL - 1;
     PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
@@ -1806,6 +1798,7 @@ static bool driver_setup (settings_t *settings)
 
     if(hal.driver_cap.software_debounce) {
         // Single-shot 0.1 ms per tick
+        DEBOUNCE_TIMER_CLOCK_ENA();
         DEBOUNCE_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
         DEBOUNCE_TIMER->PSC = hal.f_step_timer / 10000UL - 1;
         DEBOUNCE_TIMER->SR &= ~TIM_SR_UIF;
@@ -1818,6 +1811,8 @@ static bool driver_setup (settings_t *settings)
   // Spindle init
 
 #ifdef SPINDLE_PWM_TIMER_N
+
+    SPINDLE_PWM_CLOCK_ENA();
 
     GPIO_Init.Pin = (1 << SPINDLE_PWM_PIN);
     GPIO_Init.Mode = GPIO_MODE_AF_PP;
@@ -1848,6 +1843,7 @@ static bool driver_setup (settings_t *settings)
 #if PPI_ENABLE
 
     // Single-shot 1 us per tick
+    PPI_TIMER_CLOCK_ENA();
     PPI_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
     PPI_TIMER->PSC = hal.f_step_timer / 1000000UL - 1;
     PPI_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
@@ -1860,11 +1856,13 @@ static bool driver_setup (settings_t *settings)
 
 #if SPINDLE_SYNC_ENABLE
 
+    RPM_TIMER_CLOCK_ENA();
     RPM_TIMER->CR1 = TIM_CR1_CKD_1;
     RPM_TIMER->PSC = hal.f_step_timer / 1000000UL - 1;
     RPM_TIMER->CR1 |= TIM_CR1_CEN;
 
 //    RPM_COUNTER->SMCR = TIM_SMCR_SMS_0|TIM_SMCR_SMS_1|TIM_SMCR_SMS_2|TIM_SMCR_ETF_2|TIM_SMCR_ETF_3|TIM_SMCR_TS_0|TIM_SMCR_TS_1|TIM_SMCR_TS_2;
+    RPM_COUNTER_CLOCK_ENA();
     RPM_COUNTER->SMCR = TIM_SMCR_ECE;
     RPM_COUNTER->PSC = 0;
     RPM_COUNTER->ARR = 65535;
@@ -2016,12 +2014,8 @@ bool driver_init (void)
         .cap.variable = On,
         .cap.laser = On,
         .cap.pwm_invert = On,
-#ifdef SPINDLE_PWM_DIRECT
         .get_pwm = spindleGetPWM,
         .update_pwm = spindle_set_speed,
-#else
-        .update_rpm = spindleUpdateRPM,
-#endif
 #endif
 #if PPI_ENABLE
         .pulse_on = spindlePulseOn,

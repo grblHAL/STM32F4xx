@@ -71,6 +71,26 @@ static void SystemClock_Config(void)
     RCC_OscInitStruct.PLL.PLLQ = 2;
     RCC_OscInitStruct.PLL.PLLR = 2;
 
+    #define APB1CLKDIV RCC_HCLK_DIV4
+    #define APB2CLKDIV RCC_HCLK_DIV2
+    #define FLASH_LATENCY FLASH_LATENCY_5
+
+  #elif defined(BOARD_FYSETC_S6)
+
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLM = 12; // Input clock divider (12MHz crystal) = Base clock 1MHz
+    RCC_OscInitStruct.PLL.PLLN = 336; // Main clock multiplier
+    RCC_OscInitStruct.PLL.PLLP = 2; // Main clock divider = Main clock 168MHz
+    RCC_OscInitStruct.PLL.PLLQ = 7; // Special peripheral (USB) clock divider (relative to main clock multiplier) = USB clock 48MHz
+    RCC_OscInitStruct.PLL.PLLR = 2;
+
+    #define APB1CLKDIV RCC_HCLK_DIV2
+    #define APB2CLKDIV RCC_HCLK_DIV1
     #define FLASH_LATENCY FLASH_LATENCY_5
 
   #else
@@ -95,29 +115,11 @@ static void SystemClock_Config(void)
     RCC_OscInitStruct.PLL.PLLR = 2;
 #endif
 
+    #define APB1CLKDIV RCC_HCLK_DIV4
+    #define APB2CLKDIV RCC_HCLK_DIV2
     #define FLASH_LATENCY FLASH_LATENCY_5
 
   #endif
-
-    #define APB1CLKDIV RCC_HCLK_DIV4
-    #define APB2CLKDIV RCC_HCLK_DIV2
-
-#elif defined(BOARD_FYSETC_S6)
-
-    /** Configure the main internal regulator output voltage  */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 12; // Input clock divider (12MHz crystal) = Base clock 1MHz
-  RCC_OscInitStruct.PLL.PLLN = 336; // Main clock multiplier
-  RCC_OscInitStruct.PLL.PLLP = 2; // Main clock divider = Main clock 168MHz
-  RCC_OscInitStruct.PLL.PLLQ = 7; // Special peripheral (USB) clock divider (relative to main clock multiplier) = USB clock 48MHz
-  RCC_OscInitStruct.PLL.PLLR = 2;
-
-  #define FLASH_LATENCY FLASH_LATENCY_5
 
 #elif defined(STM32F411xE)
 
@@ -167,9 +169,9 @@ static void SystemClock_Config(void)
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
     RCC_OscInitStruct.PLL.PLLQ = 7;
 
-    #define FLASH_LATENCY FLASH_LATENCY_5
     #define APB1CLKDIV RCC_HCLK_DIV4
     #define APB2CLKDIV RCC_HCLK_DIV2
+    #define FLASH_LATENCY FLASH_LATENCY_5
 
 #else // STM32F401
 

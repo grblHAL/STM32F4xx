@@ -27,6 +27,9 @@
 
 #define BOARD_NAME "Fysetc S6 V2.0"
 
+#undef I2C_ENABLE
+#undef EEPROM_ENABLE
+
 #define I2C_ENABLE 1
 #define I2C_PORT 1 // PB8 / PB9
 // #define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
