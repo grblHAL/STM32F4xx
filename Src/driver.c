@@ -1047,7 +1047,9 @@ static void spindleSetState (spindle_state_t state, float rpm)
     if (!state.on)
         spindle_off();
     else {
+#ifdef SPINDLE_DIRECTION_PIN
         spindle_dir(state.ccw);
+#endif
         spindle_on();
     }
 }
@@ -1933,7 +1935,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "220324";
+    hal.driver_version = "130522";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif

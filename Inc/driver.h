@@ -69,6 +69,12 @@
 #define timeraf(t, f) GPIO_AF ## f ## _TIM ## t
 #define timerCLKENA(t) timercken(t)
 #define timercken(t) __HAL_RCC_TIM ## t ## _CLK_ENABLE
+#define usart(t) usartN(t)
+#define usartN(t) USART ## t
+#define usartINT(t) usartint(t)
+#define usartint(t) USART ## t ## _IRQn
+#define usartHANDLER(t) usarthandler(t)
+#define usarthandler(t) USART ## t ## _IRQHandler
 
 // Configuration, do not change here
 
@@ -326,7 +332,11 @@
 #endif
 
 #if MODBUS_TEST || KEYPAD_TEST || MPG_TEST || TRINAMIC_TEST || BLUETOOTH_ENABLE
-#define SERIAL2_MOD
+#if IS_NUCLEO_DEVKIT
+#define SERIAL2_MOD 1
+#else
+#define SERIAL2_MOD 2
+#endif
 #endif
 
 #undef MODBUS_TEST

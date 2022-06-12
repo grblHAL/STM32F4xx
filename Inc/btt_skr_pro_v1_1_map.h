@@ -33,6 +33,10 @@
 #define BOARD_NAME "BTT SKR PRO v1.1"
 #endif
 
+#if USB_SERIAL_CDC == 0
+//#define SERIAL_MOD 3
+#endif
+
 #define I2C_PORT 1
 #define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
 #if TRINAMIC_ENABLE
