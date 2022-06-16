@@ -50,6 +50,11 @@ static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue
 #define USART usart(SERIAL_MOD)
 #define USART_IRQ usartINT(SERIAL_MOD)
 #define USART_IRQHandler usartHANDLER(SERIAL_MOD)
+#if SERIAL_MOD == 1 || SERIAL_MOD == 6
+#define USART_CLK HAL_RCC_GetPCLK2Freq()
+#else
+#define USART_CLK HAL_RCC_GetPCLK1Freq()
+#endif
 
 #ifdef SERIAL2_MOD
 #if SERIAL_MOD == SERIAL_MOD2
@@ -58,6 +63,11 @@ static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue
 #define UART2 usart(SERIAL2_MOD)
 #define UART2_IRQ usartINT(SERIAL2_MOD)
 #define UART2_IRQHandler usartHANDLER(SERIAL2_MOD)
+#if SERIAL2_MOD == 1 || SERIAL2_MOD == 6
+#define UART2_CLK HAL_RCC_GetPCLK2Freq()
+#else
+#define UART2_CLK HAL_RCC_GetPCLK1Freq()
+#endif
 #endif
 
 static io_stream_properties_t serial[] = {
@@ -215,15 +225,9 @@ static bool serialSuspendInput (bool suspend)
 
 static bool serialSetBaudRate (uint32_t baud_rate)
 {
-#if SERIAL_MOD == 2
     USART->CR1 = USART_CR1_RE|USART_CR1_TE;
-    USART->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK1Freq(), baud_rate);
+    USART->BRR = UART_BRR_SAMPLING16(USART_CLK, baud_rate);
     USART->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
-#else
-    USART->CR1 = USART_CR1_RE|USART_CR1_TE;
-    USART->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), baud_rate);
-    USART->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
-#endif
 
     return true;
 }
@@ -539,15 +543,9 @@ static bool serial2SuspendInput (bool suspend)
 
 static bool serial2SetBaudRate (uint32_t baud_rate)
 {
-#if SERIAL_MOD == 2
     UART2->CR1 = USART_CR1_RE|USART_CR1_TE;
-    UART2->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK1Freq(), baud_rate);
+    UART2->BRR = UART_BRR_SAMPLING16(UART2_CLK, baud_rate);
     UART2->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
-#else
-    UART2->CR1 = USART_CR1_RE|USART_CR1_TE;
-    UART2->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), baud_rate);
-    UART2->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
-#endif
 
     return true;
 }
