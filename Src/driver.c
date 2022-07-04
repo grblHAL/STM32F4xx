@@ -1063,7 +1063,7 @@ static void spindle_set_speed (uint_fast16_t pwm_value)
 {
     if (pwm_value == spindle_pwm.off_value) {
         pwmEnabled = false;
-        if(settings.spindle.flags.pwm_action == SpindleAction_DisableWithZeroSPeed)
+        if(settings.spindle.flags.enable_rpm_controlled)
             spindle_off();
         if(spindle_pwm.always_on) {
             SPINDLE_PWM_TIMER_CCR = spindle_pwm.off_value;
@@ -1078,9 +1078,10 @@ static void spindle_set_speed (uint_fast16_t pwm_value)
             SPINDLE_PWM_TIMER_CCR = 0;
 #endif
     } else {
-        if(!pwmEnabled)
+        if(!pwmEnabled) {
             spindle_on();
-        pwmEnabled = true;
+            pwmEnabled = true;
+        }
         SPINDLE_PWM_TIMER_CCR = pwm_value;
 #if SPINDLE_PWM_TIMER_N == 1
         SPINDLE_PWM_TIMER->BDTR |= TIM_BDTR_MOE;
@@ -1096,15 +1097,18 @@ static uint_fast16_t spindleGetPWM (float rpm)
 // Start or stop spindle
 static void spindleSetStateVariable (spindle_state_t state, float rpm)
 {
-    if (!state.on || rpm == 0.0f) {
-        spindle_set_speed(spindle_pwm.off_value);
-        spindle_off();
-    } else {
 #ifdef SPINDLE_DIRECTION_PIN
+    if(state.on)
         spindle_dir(state.ccw);
 #endif
-        spindle_set_speed(spindle_compute_pwm_value(&spindle_pwm, rpm, false));
+    if(!settings.spindle.flags.enable_rpm_controlled) {
+        if(state.on)
+            spindle_on();
+        else
+            spindle_off();
     }
+
+    spindle_set_speed(state.on ? spindle_compute_pwm_value(&spindle_pwm, rpm, false) : spindle_pwm.off_value);
 
 #if SPINDLE_SYNC_ENABLE
     if(settings.spindle.at_speed_tolerance > 0.0f) {
@@ -1162,9 +1166,9 @@ bool spindleConfig (void)
     HAL_RCC_GetClockConfig(&clock, &latency);
 
 #if SPINDLE_PWM_TIMER_N == 1
-    if((hal.spindle.cap.variable = spindle_precompute_pwm_values(&spindle_pwm, (HAL_RCC_GetPCLK2Freq() * (clock.APB2CLKDivider == 0 ? 1 : 2)) / prescaler))) {
+    if((hal.spindle.cap.variable = !settings.spindle.flags.pwm_disable && spindle_precompute_pwm_values(&spindle_pwm, (HAL_RCC_GetPCLK2Freq() * (clock.APB2CLKDivider == 0 ? 1 : 2)) / prescaler))) {
 #else
-    if((hal.spindle.cap.variable = spindle_precompute_pwm_values(&spindle_pwm, (HAL_RCC_GetPCLK1Freq() * (clock.APB1CLKDivider == 0 ? 1 : 2)) / prescaler))) {
+    if((hal.spindle.cap.variable = !settings.spindle.flags.pwm_disable && spindle_precompute_pwm_values(&spindle_pwm, (HAL_RCC_GetPCLK1Freq() * (clock.APB1CLKDivider == 0 ? 1 : 2)) / prescaler))) {
 #endif
 
         hal.spindle.set_state = spindleSetStateVariable;
@@ -1200,9 +1204,14 @@ bool spindleConfig (void)
         SPINDLE_PWM_TIMER->CCER |= SPINDLE_PWM_CCER_EN;
         SPINDLE_PWM_TIMER->CR1 |= TIM_CR1_CEN;
 
-    } else
+    } else {
+        if(pwmEnabled)
+            hal.spindle.set_state((spindle_state_t){0}, 0.0f);
 #endif // SPINDLE_PWM_TIMER_N
         hal.spindle.set_state = spindleSetState;
+    }
+
+    spindle_update_caps(hal.spindle.cap.variable);
 
     return true;
 }
@@ -1599,31 +1608,31 @@ void settings_changed (settings_t *settings)
         __HAL_GPIO_EXTI_CLEAR_IT(irq_mask);
 
         if(irq_mask & (1<<0)) {
-            HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 2);
+            HAL_NVIC_SetPriority(EXTI0_IRQn, 2, 0);
             HAL_NVIC_EnableIRQ(EXTI0_IRQn);
         }
         if(irq_mask & (1<<1)) {
-            HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 2);
+            HAL_NVIC_SetPriority(EXTI1_IRQn, 2, 0);
             HAL_NVIC_EnableIRQ(EXTI1_IRQn);
         }
         if(irq_mask & (1<<2)) {
-            HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 2);
+            HAL_NVIC_SetPriority(EXTI2_IRQn, 2, 0);
             HAL_NVIC_EnableIRQ(EXTI2_IRQn);
         }
         if(irq_mask & (1<<3)) {
-            HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 2);
+            HAL_NVIC_SetPriority(EXTI3_IRQn, 2, 0);
             HAL_NVIC_EnableIRQ(EXTI3_IRQn);
         }
         if(irq_mask & (1<<4)) {
-            HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 2);
+            HAL_NVIC_SetPriority(EXTI4_IRQn, 2, 0);
             HAL_NVIC_EnableIRQ(EXTI4_IRQn);
         }
         if(irq_mask & 0x03E0) {
-            HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 2);
+            HAL_NVIC_SetPriority(EXTI9_5_IRQn, 2, 0);
             HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
         }
         if(irq_mask & 0xFC00) {
-            HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 2);
+            HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
             HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
         }
 
@@ -1776,7 +1785,7 @@ static bool driver_setup (settings_t *settings)
     STEPPER_TIMER->CNT = 0;
     STEPPER_TIMER->DIER |= TIM_DIER_UIE;
 
-    NVIC_SetPriority(STEPPER_TIMER_IRQn, 1);
+    HAL_NVIC_SetPriority(STEPPER_TIMER_IRQn, 1, 0);
     NVIC_EnableIRQ(STEPPER_TIMER_IRQn);
 
  // Single-shot 100 ns per tick
@@ -1788,13 +1797,8 @@ static bool driver_setup (settings_t *settings)
     PULSE_TIMER->CNT = 0;
     PULSE_TIMER->DIER |= TIM_DIER_UIE;
 
-    NVIC_SetPriority(PULSE_TIMER_IRQn, 0);
+    HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 0, 1);
     NVIC_EnableIRQ(PULSE_TIMER_IRQn);
-
- // Limit pins init
-
-    if (settings->limits.flags.hard_enabled)
-        HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0x02, 0x02);
 
  // Control pins init
 
@@ -1935,7 +1939,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "130522";
+    hal.driver_version = "220703";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -2477,7 +2481,7 @@ void EXTI15_10_IRQHandler(void)
         if((ifg & I2C_STROBE_BIT) && i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #endif
-#if MPG_MODE_PIN && (MPG_MODE_PIN & 0xFC00)
+#if MPG_MODE_BIT && (MPG_MODE_BIT & 0xFC00)
         if(ifg & MPG_MODE_BIT)
             protocol_enqueue_rt_command(mpg_select);
 #endif
