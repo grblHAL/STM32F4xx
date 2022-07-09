@@ -35,12 +35,13 @@
 
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
-#undef EEPROM_IS_FRAM
+//#undef EEPROM_IS_FRAM
 
 #define I2C_ENABLE      1
 #define I2C_PORT        1
 #define EEPROM_ENABLE   1
-#define EEPROM_IS_FRAM  1
+//#define EEPROM_IS_FRAM  1
+//#undef SPINDLE_SYNC_ENABLE
 //#define SPINDLE_SYNC_ENABLE 1
 
 #define IS_NUCLEO_BOB
@@ -141,11 +142,8 @@
 
 #define SPINDLE_INDEX_PORT      GPIOB
 #define SPINDLE_INDEX_PIN       14
-#define SPINDLE_INDEX_BIT       (1<<SPINDLE_INDEX_PIN)
-
 #define SPINDLE_PULSE_PORT      GPIOD
 #define SPINDLE_PULSE_PIN       2
-#define SPINDLE_PULSE_BIT       (1<<SPINDLE_PULSE_PIN)
 
 #endif
 

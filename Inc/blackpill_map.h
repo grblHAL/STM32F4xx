@@ -31,8 +31,8 @@
  * A8  Spindle PWM  | B8  Cycle Start       | C8  (N/A)
  * A9  Y2 Step      | B9  Door Safety       | C9  (N/A)
  * A10 Y2 Direction | B10 Y2 Limit          | C10 (N/A)
- * A11              | B11                   | C11 (N/A)
- * A12              | B12 X Limit           | C12 (N/A)
+ * A11 USB D-       | B11                   | C11 (N/A)
+ * A12 USB D+       | B12 X Limit           | C12 (N/A)
  * A13              | B13 Y Limit           | C13
  * A14              | B14 Z Limit           | C14 Coolant Flood
  * A15              | B15 Probe             | C15 coolant Mist
@@ -43,6 +43,8 @@
 #endif
 
 #define BOARD_NAME "BlackPill"
+//#undef SPINDLE_SYNC_ENABLE
+//#define SPINDLE_SYNC_ENABLE 1
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA
@@ -112,6 +114,18 @@
 #if !N_AUTO_SQUARED
 #define PROBE_PORT              GPIOB
 #define PROBE_PIN               15
+#endif
+
+// Spindle encoder pins.
+#if SPINDLE_SYNC_ENABLE
+
+#define RPM_COUNTER_N           2
+#define RPM_TIMER_N             3
+#define SPINDLE_INDEX_PORT      GPIOB
+#define SPINDLE_INDEX_PIN       3
+#define SPINDLE_PULSE_PORT      GPIOA
+#define SPINDLE_PULSE_PIN       15
+
 #endif
 
 #if N_ABC_MOTORS == 0

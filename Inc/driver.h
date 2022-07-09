@@ -257,14 +257,17 @@
 #if SPINDLE_PWM_TIMER_N == 2 || SPINDLE_PWM_TIMER_N == 3
 #error Timer conflict: spindle sync and spindle PWM!
 #endif
-
+#ifndef RPM_COUNTER_N
 #define RPM_COUNTER_N               3
+#endif
 #define RPM_COUNTER                 timer(RPM_COUNTER_N)
 #define RPM_COUNTER_IRQn            timerINT(RPM_COUNTER_N)
 #define RPM_COUNTER_IRQHandler      timerHANDLER(RPM_COUNTER_N)
 #define RPM_COUNTER_CLOCK_ENA       timerCLKENA(RPM_COUNTER_N)
 
+#ifndef RPM_TIMER_N
 #define RPM_TIMER_N                 2
+#endif
 #define RPM_TIMER                   timer(RPM_TIMER_N)
 #define RPM_TIMER_IRQn              timerINT(RPM_TIMER_N)
 #define RPM_TIMER_IRQHandler        timerHANDLER(RPM_TIMER_N)

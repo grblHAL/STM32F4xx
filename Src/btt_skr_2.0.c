@@ -169,7 +169,7 @@ static void if_init(uint8_t motors, axes_signals_t enabled)
   UNUSED(motors);
 
   if (!init_ok) {
-#if TRINAMIC_ENABLE == 2130 || TRINAMIC_ENABLE == 5160
+
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
     // Set all output pins: push-pull, no pull-up, slow
@@ -188,21 +188,8 @@ static void if_init(uint8_t motors, axes_signals_t enabled)
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(TRINAMIC_MISO_PORT, &GPIO_InitStruct);
-#endif
-#if TRINAMIC_ENABLE == 2209
-		MX_TIM7_Init();
-		htim7.Instance->CR1 |= TIM_CR1_UDIS;			// Disable update events
-		HAL_TIM_Base_Start_IT(&htim7);
 
-/*     // Delete when done debugging
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-	  GPIO_InitStruct.Pin = 1 << 4;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-	  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
- */
-#endif
-        hal.enumerate_pins(true, add_cs_pin);
+    hal.enumerate_pins(true, add_cs_pin);
   }
 }
 
