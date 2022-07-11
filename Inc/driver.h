@@ -31,8 +31,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define ESTOP_ENABLE 0
-
 #ifndef OVERRIDE_MY_MACHINE
 #include "my_machine.h"
 #endif

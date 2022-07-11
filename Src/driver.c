@@ -143,7 +143,11 @@ static void spindle_set_speed (uint_fast16_t pwm_value);
 static periph_signal_t *periph_pins = NULL;
 
 static input_signal_t inputpin[] = {
+#if ESTOP_ENABLE
+    { .id = Input_EStop,          .port = RESET_PORT,         .pin = RESET_PIN,           .group = PinGroup_Control },
+#else
     { .id = Input_Reset,          .port = RESET_PORT,         .pin = RESET_PIN,           .group = PinGroup_Control },
+#endif
     { .id = Input_FeedHold,       .port = FEED_HOLD_PORT,     .pin = FEED_HOLD_PIN,       .group = PinGroup_Control },
     { .id = Input_CycleStart,     .port = CYCLE_START_PORT,   .pin = CYCLE_START_PIN,     .group = PinGroup_Control },
 #if SAFETY_DOOR_ENABLE
@@ -1224,7 +1228,9 @@ bool spindleConfig (void)
         hal.spindle.set_state = spindleSetState;
     }
 
+#if SPINDLE_SYNC_ENABLE
     hal.spindle.cap.at_speed = hal.spindle.get_data == spindleGetData;
+#endif
 
     spindle_update_caps(hal.spindle.cap.variable);
 
@@ -1988,7 +1994,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "220709";
+    hal.driver_version = "220710";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
