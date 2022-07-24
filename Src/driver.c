@@ -995,7 +995,7 @@ static control_signals_t systemGetState (void)
   #endif
   #if ESTOP_ENABLE
     signals.e_stop = signals.reset;
-    signals.reset = settings.control_invert.mask.reset;
+    signals.reset = settings.control_invert.reset;
   #endif
 #endif
 
@@ -1994,7 +1994,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "220710";
+    hal.driver_version = "220722";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
