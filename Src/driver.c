@@ -1226,7 +1226,9 @@ bool spindleConfig (void)
             hal.spindle.set_state((spindle_state_t){0}, 0.0f);
 #endif // SPINDLE_PWM_TIMER_N
         hal.spindle.set_state = spindleSetState;
+#ifdef SPINDLE_PWM_TIMER_N
     }
+#endif
 
 #if SPINDLE_SYNC_ENABLE
     hal.spindle.cap.at_speed = hal.spindle.get_data == spindleGetData;
