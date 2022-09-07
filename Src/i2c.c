@@ -24,6 +24,8 @@
 #include "i2c.h"
 #include "grbl/hal.h"
 
+#if !defined(BOARD_FLEXI_HAL)
+
 #if KEYPAD_ENABLE == 1
 #include "keypad/keypad.h"
 #endif
@@ -253,3 +255,5 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
 #endif // TRINAMIC_ENABLE && TRINAMIC_I2C
 
 #endif // I2C_ENABLE
+
+#endif // Flexi_hal

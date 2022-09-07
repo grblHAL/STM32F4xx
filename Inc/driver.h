@@ -139,6 +139,8 @@
   #include "st_morpho_dac_map.h"
 #elif defined(BOARD_MINI_BLACKPILL)
   #include "mini_blackpill_map.h"
+#elif defined(BOARD_FLEXI_HAL)
+  #include "flexi_hal_map.h"  
 #elif defined(BOARD_MY_MACHINE)
   #include "my_machine_map.h"
 #else // default board
@@ -328,13 +330,21 @@
 #define KEYPAD_TEST 0
 #endif
 
+#if IS_FLEXI_CNC
+#if MODBUS_TEST + KEYPAD_TEST + MPG_TEST + TRINAMIC_TEST + BLUETOOTH_ENABLE > 2
+#error "Only one option that uses the serial port can be enabled!"
+#endif
+#else
 #if MODBUS_TEST + KEYPAD_TEST + MPG_TEST + TRINAMIC_TEST + BLUETOOTH_ENABLE > 1
 #error "Only one option that uses the serial port can be enabled!"
+#endif
 #endif
 
 #if MODBUS_TEST || KEYPAD_TEST || MPG_TEST || TRINAMIC_TEST || BLUETOOTH_ENABLE
 #if IS_NUCLEO_DEVKIT
 #define SERIAL2_MOD 1
+#elif IS_FLEXI_CNC
+#define SERIAL2_MOD 3
 #else
 #define SERIAL2_MOD 2
 #endif
@@ -369,7 +379,11 @@
 #endif
 
 #if I2C_ENABLE && !defined(I2C_PORT)
-#define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
+  #ifdef FMP_I2C
+  #define I2C_PORT 4
+  #else
+  #define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
+  #endif
 #endif
 
 #if SPI_ENABLE && !defined(SPI_PORT)
