@@ -29,11 +29,11 @@
 #include "driver.h"
 #include "serial.h"
 
-#include "grbl/limits.h"
 #include "grbl/protocol.h"
 #include "grbl/motor_pins.h"
 #include "grbl/pin_bits_masks.h"
 #include "grbl/state_machine.h"
+#include "grbl/machine_limits.h"
 
 #if I2C_ENABLE
 #include "i2c.h"
@@ -1682,7 +1682,7 @@ static char *port2char (GPIO_TypeDef *port)
     return name;
 }
 
-static void enumeratePins (bool low_level, pin_info_ptr pin_info)
+static void enumeratePins (bool low_level, pin_info_ptr pin_info, void *data)
 {
     static xbar_t pin = {0};
     uint32_t i = sizeof(inputpin) / sizeof(input_signal_t);
@@ -1697,7 +1697,7 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info)
         pin.description = inputpin[i].description;
         pin.mode.pwm = pin.group == PinGroup_SpindlePWM;
 
-        pin_info(&pin);
+        pin_info(&pin, data);
     };
 
     pin.mode.mask = 0;
@@ -1710,7 +1710,7 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info)
         pin.port = low_level ? (void *)outputpin[i].port : (void *)port2char(outputpin[i].port);
         pin.description = outputpin[i].description;
 
-        pin_info(&pin);
+        pin_info(&pin, data);
     };
 
     periph_signal_t *ppin = periph_pins;
@@ -1723,7 +1723,7 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info)
         pin.mode = ppin->pin.mode;
         pin.description = ppin->pin.description;
 
-        pin_info(&pin);
+        pin_info(&pin, data);
 
         ppin = ppin->next;
     } while(ppin);
@@ -1957,8 +1957,85 @@ static bool driver_setup (settings_t *settings)
     return IOInitDone;
 }
 
+#if RTC_ENABLE
+
+static bool rtc_started = false;
+
+static RTC_HandleTypeDef hrtc = {
+    .Instance = RTC,
+    .Init.HourFormat = RTC_HOURFORMAT_24,
+    .Init.AsynchPrediv = 127,
+    .Init.SynchPrediv = 255,
+    .Init.OutPut = RTC_OUTPUT_DISABLE,
+    .Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH,
+    .Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN
+};
+
+static bool set_rtc_time (struct tm *time)
+{
+    RTC_TimeTypeDef sTime = {0};
+    RTC_DateTypeDef sDate = {0};
+
+    if(!rtc_started) {
+
+        RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {
+            .PeriphClockSelection = RCC_PERIPHCLK_RTC,
+            .RTCClockSelection = RCC_RTCCLKSOURCE_LSE
+        };
+
+        if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) == HAL_OK) {
+            __HAL_RCC_RTC_ENABLE();
+            rtc_started = HAL_RTC_Init(&hrtc) == HAL_OK;
+        }
+    }
+
+    if(rtc_started) {
+
+        sTime.Hours = time->tm_hour;
+        sTime.Minutes = time->tm_min;
+        sTime.Seconds = time->tm_sec;
+        sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+        sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+        if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) == HAL_OK) {
+            sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+            sDate.Month = time->tm_mon + 1;
+            sDate.Date = time->tm_mday;
+            sDate.Year = time->tm_year - 100;
+            HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+        }
+    }
+
+    return rtc_started;
+}
+
+static bool get_rtc_time (struct tm *time)
+{
+    bool ok = false;
+
+    if(rtc_started) {
+
+        RTC_TimeTypeDef sTime = {0};
+        RTC_DateTypeDef sDate = {0};
+
+        if((ok = HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN) == HAL_OK &&
+                  HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN) == HAL_OK)) {
+
+            time->tm_hour = sTime.Hours;
+            time->tm_min = sTime.Minutes;
+            time->tm_sec = sTime.Seconds;
+            time->tm_mon = sDate.Month - 1;
+            time->tm_mday = sDate.Date;
+            time->tm_year = sDate.Year + 100;
+        }
+    }
+
+    return ok;
+}
+
+#endif
+
 // Initialize HAL pointers, setup serial comms and enable EEPROM
-// NOTE: Grbl is not yet configured (from EEPROM data), driver_setup() will be called when done
+// NOTE: grblHAL is not yet configured (from EEPROM data), driver_setup() will be called when done
 
 bool driver_init (void)
 {
@@ -1996,7 +2073,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "220722";
+    hal.driver_version = "220907";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
 #endif
@@ -2044,6 +2121,11 @@ bool driver_init (void)
     hal.enumerate_pins = enumeratePins;
     hal.periph_port.register_pin = registerPeriphPin;
     hal.periph_port.set_pin_description = setPeriphPinDescription;
+
+#if RTC_ENABLE
+    hal.rtc.get_datetime = get_rtc_time;
+    hal.rtc.set_datetime = set_rtc_time;
+#endif
 
     serialRegisterStreams();
 
@@ -2177,7 +2259,7 @@ bool driver_init (void)
 
     // No need to move version check before init.
     // Compiler will fail any signature mismatch for existing entries.
-    return hal.version == 9;
+    return hal.version == 10;
 }
 
 /* interrupt handlers */

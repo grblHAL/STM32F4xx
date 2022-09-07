@@ -49,7 +49,6 @@ int main(void)
   */
 static void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   __HAL_RCC_PWR_CLK_ENABLE();
@@ -60,16 +59,23 @@ static void SystemClock_Config(void)
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLM = 16;
-    RCC_OscInitStruct.PLL.PLLN = 360;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 2;
-    RCC_OscInitStruct.PLL.PLLR = 2;
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+#if RTC_ENABLE
+        .OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE,
+        .LSEState       = RCC_LSE_ON,
+#else
+        .OscillatorType = RCC_OSCILLATORTYPE_HSI,
+#endif
+        .HSIState = RCC_HSI_ON,
+        .HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSI,
+        .PLL.PLLM = 16,
+        .PLL.PLLN = 360,
+        .PLL.PLLP = RCC_PLLP_DIV2,
+        .PLL.PLLQ = 2,
+        .PLL.PLLR = 2
+    };
 
     #define APB1CLKDIV RCC_HCLK_DIV4
     #define APB2CLKDIV RCC_HCLK_DIV2
@@ -78,16 +84,17 @@ static void SystemClock_Config(void)
   #elif defined(BOARD_FYSETC_S6)
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = 12; // Input clock divider (12MHz crystal) = Base clock 1MHz
-    RCC_OscInitStruct.PLL.PLLN = 336; // Main clock multiplier
-    RCC_OscInitStruct.PLL.PLLP = 2; // Main clock divider = Main clock 168MHz
-    RCC_OscInitStruct.PLL.PLLQ = 7; // Special peripheral (USB) clock divider (relative to main clock multiplier) = USB clock 48MHz
-    RCC_OscInitStruct.PLL.PLLR = 2;
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+        .PLL.PLLM = 12, // Input clock divider (12MHz crystal) = Base clock 1MHz
+        .PLL.PLLN = 336, // Main clock multiplier
+        .PLL.PLLP = 2, // Main clock divider = Main clock 168MHz
+        .PLL.PLLQ = 7, // Special peripheral (USB) clock divider (relative to main clock multiplier) = USB clock 48MHz
+        .PLL.PLLR = 2
+    };
 
     #define APB1CLKDIV RCC_HCLK_DIV2
     #define APB2CLKDIV RCC_HCLK_DIV1
@@ -97,23 +104,25 @@ static void SystemClock_Config(void)
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-#if HSE_VALUE == 8000000
-    RCC_OscInitStruct.PLL.PLLM = 7;
-    RCC_OscInitStruct.PLL.PLLN = 294;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 7;
-    RCC_OscInitStruct.PLL.PLLR = 7;
-#else
-    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
-    RCC_OscInitStruct.PLL.PLLN = 336;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 2;
-    RCC_OscInitStruct.PLL.PLLR = 2;
-#endif
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+  #if HSE_VALUE == 8000000
+        .PLL.PLLM = 7,
+        .PLL.PLLN = 294,
+        .PLL.PLLP = RCC_PLLP_DIV2,
+        .PLL.PLLQ = 7,
+        .PLL.PLLR = 7
+  #else
+        .PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL,
+        .PLL.PLLN = 336,
+        .PLL.PLLP = RCC_PLLP_DIV2,
+        .PLL.PLLQ = 2,
+        .PLL.PLLR = 2
+  #endif
+    };
 
     #define APB1CLKDIV RCC_HCLK_DIV4
     #define APB2CLKDIV RCC_HCLK_DIV2
@@ -128,28 +137,37 @@ static void SystemClock_Config(void)
 
   #ifdef NUCLEO_F411
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLM = 16;
-    RCC_OscInitStruct.PLL.PLLN = 336;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-    RCC_OscInitStruct.PLL.PLLQ = 4;
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+#if RTC_ENABLE
+        .OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE,
+        .LSEState       = RCC_LSE_ON,
+#else
+        .OscillatorType = RCC_OSCILLATORTYPE_HSI,
+#endif
+        .HSIState = RCC_HSI_ON,
+        .HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSI,
+        .PLL.PLLM = 16,
+        .PLL.PLLN = 336,
+        .PLL.PLLP = RCC_PLLP_DIV4,
+        .PLL.PLLQ = 4
+    };
 
     #define FLASH_LATENCY FLASH_LATENCY_2
 
   #else // BlackPill
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
-    RCC_OscInitStruct.PLL.PLLN = 192;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 4;
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+        .PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL,
+        .PLL.PLLN = 192,
+        .PLL.PLLP = RCC_PLLP_DIV2,
+        .PLL.PLLQ = 4
+    };
 
     #define FLASH_LATENCY FLASH_LATENCY_3
 
@@ -160,14 +178,16 @@ static void SystemClock_Config(void)
     /** Configure the main internal regulator output voltage  */
    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
-    RCC_OscInitStruct.PLL.PLLN = 336;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 7;
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+        .PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL,
+        .PLL.PLLN = 336,
+        .PLL.PLLP = RCC_PLLP_DIV2,
+        .PLL.PLLQ = 7
+    };
 
     #define APB1CLKDIV RCC_HCLK_DIV4
     #define APB2CLKDIV RCC_HCLK_DIV2
@@ -178,30 +198,39 @@ static void SystemClock_Config(void)
     /** Configure the main internal regulator output voltage  */
    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
 
-#ifdef NUCLEO_F401
+  #ifdef NUCLEO_F401
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLM = 16;
-    RCC_OscInitStruct.PLL.PLLN = 336;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-    RCC_OscInitStruct.PLL.PLLQ = 4;
-
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+#if RTC_ENABLE
+        .OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE,
+        .LSEState       = RCC_LSE_ON,
 #else
-
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL;
-    RCC_OscInitStruct.PLL.PLLN = 336;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-    RCC_OscInitStruct.PLL.PLLQ = 7;
-
+        .OscillatorType = RCC_OSCILLATORTYPE_HSI,
 #endif
+        .HSIState = RCC_HSI_ON,
+        .HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSI,
+        .PLL.PLLM = 16,
+        .PLL.PLLN = 336,
+        .PLL.PLLP = RCC_PLLP_DIV4,
+        .PLL.PLLQ = 4
+    };
+
+  #else
+
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+        .PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL,
+        .PLL.PLLN = 336,
+        .PLL.PLLP = RCC_PLLP_DIV4,
+        .PLL.PLLQ = 7
+    };
+
+  #endif
 
     #define FLASH_LATENCY FLASH_LATENCY_2
 
