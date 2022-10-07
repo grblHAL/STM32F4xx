@@ -208,6 +208,18 @@
     #define SPINDLE_PWM_TIMER_INV   0
     #define SPINDLE_PWM_TIMER_AF    3
   #endif
+#elif SPINDLE_PWM_PORT_BASE == GPIOE_BASE
+  #if SPINDLE_PWM_PIN == 5 // PE5 - TIM9_CH1
+    #define SPINDLE_PWM_TIMER_N     9
+    #define SPINDLE_PWM_TIMER_CH    1
+    #define SPINDLE_PWM_TIMER_INV   0
+    #define SPINDLE_PWM_TIMER_AF    3
+  #elif SPINDLE_PWM_PIN == 6 // PE6 - TIM9_CH2
+    #define SPINDLE_PWM_TIMER_N     9
+    #define SPINDLE_PWM_TIMER_CH    2
+    #define SPINDLE_PWM_TIMER_INV   0
+    #define SPINDLE_PWM_TIMER_AF    3
+  #endif
 #endif
 
 #if SPINDLE_PWM_TIMER_CH == 1 || SPINDLE_PWM_TIMER_CH == 2
@@ -244,10 +256,16 @@
 #endif
 #endif
 
+#if SPINDLE_PWM_TIMER_N == 9
+#define DEBOUNCE_TIMER_N            13
+#define DEBOUNCE_TIMER_IRQn         TIM8_UP_TIM13_IRQn       // !
+#define DEBOUNCE_TIMER_IRQHandler   TIM8_UP_TIM13_IRQHandler // !
+#else
 #define DEBOUNCE_TIMER_N            9
-#define DEBOUNCE_TIMER              timer(DEBOUNCE_TIMER_N)
 #define DEBOUNCE_TIMER_IRQn         TIM1_BRK_TIM9_IRQn       // !
 #define DEBOUNCE_TIMER_IRQHandler   TIM1_BRK_TIM9_IRQHandler // !
+#endif
+#define DEBOUNCE_TIMER              timer(DEBOUNCE_TIMER_N)
 #define DEBOUNCE_TIMER_CLOCK_ENA    timerCLKENA(DEBOUNCE_TIMER_N)
 
 #if SPINDLE_SYNC_ENABLE

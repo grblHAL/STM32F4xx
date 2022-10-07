@@ -114,6 +114,9 @@
 // Define spindle PWM output pin.
 #define SPINDLE_PWM_PORT_BASE       GPIOB_BASE
 #define SPINDLE_PWM_PIN             0                           // EXP1 - PB0, pin 9
+// Alt. spindle output, comment out definitions above and uncomment these to change:
+//#define SPINDLE_PWM_PORT_BASE       GPIOE_BASE
+//#define SPINDLE_PWM_PIN             5                         // SERVOS - PE5, pin 1
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB
@@ -136,7 +139,7 @@
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOE
-#define PROBE_PIN                   4                       // BLTouch PE4
+#define PROBE_PIN                   4                           // BLTouch PE4
 
 // Safe Power Control
 #define STEPPERS_POWER_PORT         GPIOC
