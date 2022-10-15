@@ -293,7 +293,7 @@ void tmc_uart_write (trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
     write_n(dgr->data, sizeof(TMC_uart_write_datagram_t));
 }
 
-static void add_uart_pin (xbar_t *gpio)
+static void add_uart_pin (xbar_t *gpio, void *data)
 {
     if (gpio->group == PinGroup_MotorUART)
       switch (gpio->function) {
@@ -362,7 +362,7 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
         HAL_NVIC_SetPriority(TMC_UART_IRQn, 0, 0);
         HAL_NVIC_EnableIRQ(TMC_UART_IRQn);
 
-        hal.enumerate_pins(true, add_uart_pin);
+        hal.enumerate_pins(true, add_uart_pin, NULL);
     }
 }
 

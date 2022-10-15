@@ -128,7 +128,7 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
     return status;
 }
 
-static void add_cs_pin (xbar_t *gpio)
+static void add_cs_pin (xbar_t *gpio, void *data)
 {
     if (gpio->group == PinGroup_MotorChipSelect)
       switch (gpio->function) {
@@ -217,7 +217,7 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
         hal.periph_port.register_pin(&sck);
         hal.periph_port.register_pin(&sdo);
         hal.periph_port.register_pin(&sdi);
-        hal.enumerate_pins(true, add_cs_pin);
+        hal.enumerate_pins(true, add_cs_pin, NULL);
     }
 }
 
