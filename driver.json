@@ -1,0 +1,344 @@
+{
+  "caps":
+  {
+    "axes": 6,
+    "usb_cdc": 1,
+    "uart": 1,
+    "serial_ports": 2,
+    "eeprom": 1,
+    "ganged_axes": 1,
+    "auto_square": 1,
+    "digital_in": 7,
+    "digital_out": 8,
+    "safety_door": 1,
+    "estop": 1,
+    "mpg_mode": 1,
+    "sdcard": 1,
+    "pio_board": "genericSTM32F407VGT6",
+    "ldscript": "STM32F407VGTX_FLASH.ld",
+    "plugins": [
+      { "id": "bluetooth" },
+      { "id": "eeprom" },
+      { "id": "keypad" },
+      { "id": "laser_ppi" },
+      { "id": "laser_cluster" },
+      { "id": "laser_coolant" },
+      { "id": "motors" },
+      { "id": "odometer" },
+      { "id": "sdcard" },
+      { "id": "spindle" },
+      { "id": "modbus" }
+    ]
+  },
+  "symbols": {
+    "USE_HAL_DRIVER": ""
+  },
+  "boards": [
+    {
+      "name": "BlackPill (STM32F401)",
+      "symbol": "BOARD_BLACKPILL",
+      "URL": "",
+      "caps": {
+        "axes": 4,
+        "digital_in": 1,
+        "digital_out": 2,
+        "eeprom": 0,
+        "fram": 0,
+        "i2c": 0,
+        "sdcard": 0,
+        "keypad": 0,
+        "pio_board": "blackpill_f411ce",
+        "ldscript": "STM32F411CEUX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F401xC": ""
+      }
+    },
+    {
+      "name": "BTT SKR-2",
+      "symbol": "BOARD_BTT_SKR_20",
+      "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-2.html",
+      "caps": {
+        "uart": 0,
+        "axes": 5,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "sdcard": 0,
+        "i2c": 1,
+        "trinamic_spi_cs": 1,
+        "trinamic_spi_chain": 0,
+        "trinamic_uart_n": 1,
+        "trinamic_uart_addr": 0
+      },
+      "symbols": {
+          "STM32F407xx": "",
+          "HSE_VALUE": 8000000
+      }
+    },
+    {
+      "name": "BTT SKR PRO v1.2",
+      "symbol": "BOARD_BTT_SKR_PRO_1_2",
+      "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html",
+      "caps": {
+        "axes": 6,
+        "digital_in": 4,
+        "digital_out": 6,
+        "eeprom": 1,
+        "fram": 1,
+        "i2c": 1,
+        "trinamic_spi_cs": 1,
+        "trinamic_spi_chain": 0,
+        "trinamic_uart_n": 1,
+        "trinamic_uart_addr": 0
+      },
+      "symbols": {
+          "STM32F407xx": "",
+          "HSE_VALUE": 8000000
+      }
+    },
+    {
+      "name": "BTT SKR PRO v1.2 (Bootloader)",
+      "symbol": "BOARD_BTT_SKR_PRO_1_2",
+      "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html",
+      "caps": {
+        "axes": 6,
+        "digital_in": 4,
+        "digital_out": 6,
+        "eeprom": 1,
+        "fram": 1,
+        "i2c": 1,
+        "trinamic_spi_cs": 1,
+        "trinamic_spi_chain": 0,
+        "trinamic_uart_n": 1,
+        "trinamic_uart_addr": 0,
+        "ldscript": "STM32F407VGTX_BL32K_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F407xx": "",
+          "HSE_VALUE": 8000000
+      }
+    },
+    {
+      "name": "CNC 3040",
+      "symbol": "BOARD_CNC3040",
+      "URL": "https://github.com/shaise/GrblCNC",
+      "caps": {
+        "axes": 5,
+        "auto_square": 0,
+        "digital_in": 4,
+        "digital_out": 6,
+        "eeprom": 1,
+        "fram": 1,
+        "i2c": 1,
+        "trinamic_spi_cs": 0,
+        "trinamic_spi_chain": 1,
+        "trinamic_uart_n": 0,
+        "trinamic_uart_addr": 1
+      },
+      "symbols": {
+          "STM32F446xx": "",
+          "NUCLEO_F446": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
+      "name": "Fysetc S6 V2.0",
+      "symbol": "BOARD_FYSETC_S6",
+      "URL": "https://wiki.fysetc.com/FYSETC_S6/",
+      "caps": {
+        "axes": 3,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "fram": 0,
+        "i2c": 0,
+        "trinamic_spi_cs": 0,
+        "trinamic_spi_chain": 0,
+        "trinamic_uart_n": 1,
+        "trinamic_uart_addr": 0,
+        "pio_board": "fysetc_s6",
+        "ldscript": "STM32F446RETX_NO_BL_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F446xx": "",
+          "HSE_VALUE": 12000000
+      }
+    },
+    {
+      "name": "Minimal BlackPill (STM32F401)",
+      "symbol": "BOARD_MINI_BLACKPILL",
+      "URL": "https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL",
+      "caps": {
+        "axes": 4,
+        "digital_in": 1,
+        "digital_out": 2,
+        "eeprom": 0,
+        "fram": 0,
+        "i2c": 0
+      },
+      "symbols": {
+          "STM32F401xC": ""
+      }
+    },
+    {
+      "name": "Protoneer v3 (STM32F411)",
+      "symbol": "BOARD_PROTONEER_3XX",
+      "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
+      "caps": {
+        "axes": 4,
+        "usb_cdc": 0,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "fram": 0,
+        "i2c": 0,
+        "pio_board": "nucleo_f411re",
+        "ldscript": "STM32F411CEUX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F411xE": "",
+          "NUCLEO_F411": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
+      "name": "Protoneer v3 (STM32F446)",
+      "symbol": "BOARD_PROTONEER_3XX",
+      "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
+      "caps": {
+        "axes": 4,
+        "usb_cdc": 0,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "fram": 0,
+        "i2c": 0,
+        "pio_board": "nucleo_f446re",
+        "ldscript": "STM32F446RETX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F446xx": "",
+          "NUCLEO_F446": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
+      "name": "Nucleo-64 CNC Breakout (STM32F401)",
+      "symbol": "BOARD_MORPHO_CNC",
+      "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
+      "caps": {
+        "axes": 4,
+        "usb_cdc": 0,
+        "digital_in": 4,
+        "digital_out": 6,
+        "eeprom": 1,
+        "fram": 1,
+        "i2c": 1,
+        "trinamic_spi_cs": 0,
+        "trinamic_spi_chain": 1,
+        "trinamic_uart_n": 0,
+        "trinamic_uart_addr": 1,
+        "pio_board": "nucleo_f401re",
+        "ldscript": "STM32F401CCUX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F401xE": "",
+          "NUCLEO_F401": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
+      "name": "Nucleo-64 CNC Breakout (STM32F411)",
+      "symbol": "BOARD_MORPHO_CNC",
+      "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
+      "caps": {
+        "axes": 4,
+        "usb_cdc": 0,
+        "digital_in": 4,
+        "digital_out": 6,
+        "eeprom": 1,
+        "fram": 1,
+        "i2c": 1,
+        "trinamic_spi_cs": 0,
+        "trinamic_spi_chain": 1,
+        "trinamic_uart_n": 0,
+        "trinamic_uart_addr": 1,
+        "pio_board": "nucleo_f411re",
+        "ldscript": "STM32F411CEUX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F411xE": "",
+          "NUCLEO_F11": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
+      "name": "Nucleo-64 CNC Breakout (STM32F446)",
+      "symbol": "BOARD_MORPHO_CNC",
+      "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
+      "caps": {
+        "axes": 4,
+        "usb_cdc": 0,
+        "digital_in": 4,
+        "digital_out": 6,
+        "eeprom": 1,
+        "fram": 1,
+        "i2c": 1,
+        "trinamic_spi_cs": 0,
+        "trinamic_spi_chain": 1,
+        "trinamic_uart_n": 0,
+        "trinamic_uart_addr": 1,
+        "pio_board": "nucleo_f446re",
+        "ldscript": "STM32F446RETX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F446xx": "",
+          "NUCLEO_F446": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
+      "name": "Generic Uno (STM32F411)",
+      "symbol": "BOARD_GENERIC_UNO",
+      "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
+      "caps": {
+        "axes": 3,
+        "usb_cdc": 0,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "fram": 1,
+        "i2c": 0,
+        "pio_board": "nucleo_f411re",
+        "ldscript": "STM32F411CEUX_FLASH.ld"    
+      },
+      "symbols": {
+          "STM32F411xE": "",
+          "NUCLEO_F11": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
+      "name": "Generic Uno (STM32F446)",
+      "symbol": "BOARD_GENERIC_UNO",
+      "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
+      "caps": {
+        "axes": 3,
+        "usb_cdc": 0,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "fram": 1,
+        "i2c": 0,
+        "pio_board": "nucleo_f446re",
+        "ldscript": "STM32F446RETX_FLASH.ld"    
+      },
+      "symbols": {
+          "STM32F446xx": "",
+          "NUCLEO_F446": "",
+          "RTC_ENABLE": 1
+      }
+    }
+  ]
+}

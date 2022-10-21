@@ -170,6 +170,9 @@
 
 #if TRINAMIC_UART_ENABLE
 
+#undef TRINAMIC_UART_ENABLE
+#define TRINAMIC_UART_ENABLE        2
+
 #define MOTOR_UARTX_PORT            GPIOC
 #define MOTOR_UARTX_PIN             13
 #define MOTOR_UARTY_PORT            GPIOE

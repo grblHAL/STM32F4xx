@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2020-2022 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -65,6 +65,7 @@
 #define Z_LIMIT_PORT            GPIOA // D11
 #define Z_LIMIT_PIN             7
 #define LIMIT_INMODE            GPIO_BITBAND
+#define Z_LIMIT_POLL
 
 // Define ganged axis or A axis step pulse and step direction output pins.
 #if N_ABC_MOTORS == 1
