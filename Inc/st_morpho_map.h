@@ -20,11 +20,11 @@
 */
 
 #if TRINAMIC_ENABLE == 2130
-#include "trinamic\tmc2130.h"
+#include "trinamic/tmc2130.h"
 #endif
 
 #if TRINAMIC_ENABLE == 2209
-#include "trinamic\tmc2209.h"
+#include "trinamic/tmc2209.h"
 #endif
 
 #if N_ABC_MOTORS > 1
