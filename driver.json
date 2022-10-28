@@ -10,6 +10,7 @@
     "auto_square": 1,
     "digital_in": 7,
     "digital_out": 8,
+    "probe": 1,
     "safety_door": 1,
     "estop": 1,
     "mpg_mode": 1,
@@ -17,7 +18,7 @@
     "pio_board": "genericSTM32F407VGT6",
     "ldscript": "STM32F407VGTX_FLASH.ld",
     "plugins": [
-      { "id": "bluetooth" },
+      { "id": "bluetooth_bridge" },
       { "id": "eeprom" },
       { "id": "keypad" },
       { "id": "laser_ppi" },
@@ -47,8 +48,8 @@
         "i2c": 0,
         "sdcard": 0,
         "keypad": 0,
-        "pio_board": "blackpill_f411ce",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
+        "pio_board": "blackpill_f401cc",
+        "ldscript": "STM32F401CCUX_FLASH.ld"
       },
       "symbols": {
           "STM32F401xC": ""
@@ -175,7 +176,9 @@
         "digital_out": 2,
         "eeprom": 0,
         "fram": 0,
-        "i2c": 0
+        "i2c": 0,
+        "pio_board": "blackpill_f401cc",
+        "ldscript": "STM32F401CCUX_FLASH.ld"
       },
       "symbols": {
           "STM32F401xC": ""
