@@ -139,6 +139,8 @@
   #include "st_morpho_dac_map.h"
 #elif defined(BOARD_MINI_BLACKPILL)
   #include "mini_blackpill_map.h"
+#elif defined(BOARD_FLEXI_HAL)
+  #include "flexi_hal_map.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "my_machine_map.h"
 #else // default board
@@ -351,10 +353,12 @@
 #endif
 
 #if MODBUS_TEST || KEYPAD_TEST || MPG_TEST || TRINAMIC_TEST || BLUETOOTH_ENABLE
+#ifndef SERIAL2_MOD
 #if IS_NUCLEO_DEVKIT
 #define SERIAL2_MOD 1
 #else
 #define SERIAL2_MOD 2
+#endif
 #endif
 #endif
 

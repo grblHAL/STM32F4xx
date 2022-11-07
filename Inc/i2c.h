@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2018-2021 Terje Io
+  Copyright (c) 2018-2022 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,7 +23,32 @@
 #define __I2C_DRIVER_H__
 
 #include "driver.h"
+
+#if I2C_ENABLE
+
 #include "grbl/plugins.h"
+
+#ifdef I2C_FASTMODE
+
+#define I2C_GetState HAL_FMPI2C_GetState
+#define I2C_STATE_READY HAL_FMPI2C_STATE_READY
+#define I2C_Mem_Read HAL_FMPI2C_Mem_Read
+#define I2C_Mem_Write HAL_FMPI2C_Mem_Write
+#define I2C_Master_Receive_IT HAL_FMPI2C_Master_Receive_IT
+
+FMPI2C_HandleTypeDef *I2C_GetPort (void);
+
+#else
+
+#define I2C_GetState HAL_I2C_GetState
+#define I2C_STATE_READY HAL_I2C_STATE_READY
+#define I2C_Mem_Read HAL_I2C_Mem_Read
+#define I2C_Mem_Write HAL_I2C_Mem_Write
+#define I2C_Master_Receive_IT HAL_I2C_Master_Receive_IT
+
+I2C_HandleTypeDef *I2C_GetPort (void);
+
+#endif
 
 #if TRINAMIC_ENABLE == 2130 && TRINAMIC_I2C
 
@@ -44,4 +69,5 @@ void I2C_GetKeycode (uint32_t i2cAddr, keycode_callback_ptr callback);
 
 void i2c_init (void);
 
-#endif
+#endif // I2C_ENABLE
+#endif // __I2C_DRIVER_H__
