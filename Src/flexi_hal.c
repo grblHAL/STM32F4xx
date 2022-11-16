@@ -37,17 +37,6 @@ static bool pendant_tx_active = 0;
 
 static FMPI2C_HandleTypeDef *i2c_port;
 
-void I2C_Send (uint32_t i2cAddr, uint8_t *buf, uint16_t bytes, bool block)
-{
-    //wait for bus to be ready
-    while (HAL_FMPI2C_GetState(i2c_port) != HAL_FMPI2C_STATE_READY);
-
-    HAL_FMPI2C_Master_Transmit_IT(i2c_port,  i2cAddr<<1, buf, bytes);
-
-    if (block)
-        while (HAL_FMPI2C_GetState(i2c_port) != HAL_FMPI2C_STATE_READY);
-}
-
 void I2C_PendantRead (uint32_t i2cAddr, uint8_t memaddress, uint8_t size, uint8_t * data, keycode_callback_ptr callback)
 {
 

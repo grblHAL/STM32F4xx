@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2018-2021 Terje Io
+  Copyright (c) 2018-2022 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -176,6 +176,26 @@ void i2c_init (void)
     hal.periph_port.register_pin(&sda);
 }
 
+bool I2C_Send (uint32_t i2cAddr, uint8_t *buf, uint16_t size, bool block)
+{
+    //wait for bus to be ready
+    while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
+        if(!hal.stream_blocking_callback())
+            return false;
+    }
+
+    bool ok = I2C_Master_Transmit_IT(&i2c_port, i2cAddr << 1, buf, size) == HAL_OK;
+
+    if (ok && block) {
+        while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
+            if(!hal.stream_blocking_callback())
+                return false;
+        }
+    }
+
+    return ok;
+}
+
 void I2C_IRQEVT_Handler (void)
 {
     I2C_EV_IRQHandler(&i2c_port);
@@ -190,9 +210,12 @@ void I2C_IRQERR_Handler (void)
 
 nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
 {
-    while (I2C_GetState(&i2c_port) != I2C_STATE_READY);
+    while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
+        if(!hal.stream_blocking_callback())
+            return NVS_TransferResult_Failed;
+    }
 
-//    while (HAL_I2C_IsDeviceReady(&i2c_port, (uint16_t)(0xA0), 3, 100) != HAL_OK);
+    //    while (HAL_I2C_IsDeviceReady(&i2c_port, (uint16_t)(0xA0), 3, 100) != HAL_OK);
     HAL_StatusTypeDef ret;
 
     if(read)
