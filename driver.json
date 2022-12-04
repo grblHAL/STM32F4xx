@@ -103,6 +103,8 @@
       "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html",
       "caps": {
         "axes": 6,
+		"ganged_axes": 3,
+		"auto_square": 3,
         "digital_in": 4,
         "digital_out": 6,
         "eeprom": 1,
@@ -124,6 +126,8 @@
       "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html",
       "caps": {
         "axes": 6,
+		"ganged_axes": 3,
+		"auto_square": 3,
         "digital_in": 4,
         "digital_out": 6,
         "eeprom": 1,
