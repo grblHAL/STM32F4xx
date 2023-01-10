@@ -28,6 +28,7 @@
 #endif
 
 #define BOARD_NAME "BTT SKR-2"
+#define BOARD_URL "https://github.com/bigtreetech/SKR-2"
 #define HAS_BOARD_INIT
 
 #define I2C_PORT 1      // GPIOB, SCL_PIN = 8, SDA_PIN = 9

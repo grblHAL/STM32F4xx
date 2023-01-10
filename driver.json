@@ -100,11 +100,11 @@
     {
       "name": "BTT SKR PRO v1.2",
       "symbol": "BOARD_BTT_SKR_PRO_1_2",
-      "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html",
+      "URL": "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/tree/master/SKR-PRO-V1.2",
       "caps": {
         "axes": 6,
 		"ganged_axes": 3,
-		"auto_square": 3,
+		"auto_square": 1,
         "digital_in": 4,
         "digital_out": 6,
         "eeprom": 1,
@@ -123,11 +123,11 @@
     {
       "name": "BTT SKR PRO v1.2 (Bootloader)",
       "symbol": "BOARD_BTT_SKR_PRO_1_2",
-      "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-pro-v1-2.html",
+      "URL": "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/tree/master/SKR-PRO-V1.2",
       "caps": {
         "axes": 6,
 		"ganged_axes": 3,
-		"auto_square": 3,
+		"auto_square": 1,
         "digital_in": 4,
         "digital_out": 6,
         "eeprom": 1,
@@ -141,7 +141,8 @@
       },
       "symbols": {
           "STM32F407xx": "",
-          "HSE_VALUE": 8000000
+          "HSE_VALUE": 8000000,
+          "HAS_BOOTLOADER": ""
       }
     },
     {
@@ -204,7 +205,8 @@
         "ldscript": "STM32F446RETX_BL64K_NONVS_FLASH.ld"
       },
       "symbols": {
-          "STM32F446xx": ""
+          "STM32F446xx": "",
+          "HAS_BOOTLOADER": ""
       }
     },
     {

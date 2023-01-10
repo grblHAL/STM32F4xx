@@ -19,7 +19,7 @@
 
 // IMPORTANT: Control inputs are mapped differently when build is configured for more than 3 axes!
 
-#if N_ABC_MOTORS > 3
+#if N_ABC_MOTORS > 3 || N_AUTO_SQUARED > 1
 #error "Axis configuration is not supported!"
 #endif
 
@@ -29,8 +29,10 @@
 
 #ifdef BOARD_BTT_SKR_PRO_1_2
 #define BOARD_NAME "BTT SKR PRO v1.2"
+#define BOARD_URL "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/tree/master/SKR-PRO-V1.2"
 #else
 #define BOARD_NAME "BTT SKR PRO v1.1"
+#define BOARD_URL "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1"
 #endif
 
 #if USB_SERIAL_CDC == 0
@@ -101,8 +103,8 @@
 #define M4_STEP_PIN                 15
 #define M4_DIRECTION_PORT           GPIOE
 #define M4_DIRECTION_PIN            7
-#define M4_LIMIT_PORT               GPIOE
-#define M4_LIMIT_PIN                10
+//#define M4_LIMIT_PORT               GPIOE // Conflict with X limit switch IRQ
+//#define M4_LIMIT_PIN                10
 #define M4_ENABLE_PORT              GPIOA
 #define M4_ENABLE_PIN               3
 #endif
@@ -114,8 +116,8 @@
 #define M5_STEP_PIN                 13
 #define M5_DIRECTION_PORT           GPIOG
 #define M5_DIRECTION_PIN            9
-#define M5_LIMIT_PORT               GPIOG
-#define M5_LIMIT_PIN                5
+//#define M5_LIMIT_PORT               GPIOG
+//#define M5_LIMIT_PIN                5
 #define M5_ENABLE_PORT              GPIOF
 #define M5_ENABLE_PIN               0
 #endif
