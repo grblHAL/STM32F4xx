@@ -362,7 +362,7 @@
       },
       "symbols": {
           "STM32F411xE": "",
-          "NUCLEO_F11": "",
+          "NUCLEO_F411": "",
           "RTC_ENABLE": 1
       }
     },
