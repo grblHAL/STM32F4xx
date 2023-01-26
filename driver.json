@@ -21,6 +21,7 @@
       { "id": "bluetooth_bridge" },
       { "id": "eeprom" },
       { "id": "keypad" },
+      { "id": "macros" },
       { "id": "laser_ppi" },
       { "id": "laser_cluster" },
       { "id": "laser_coolant" },
