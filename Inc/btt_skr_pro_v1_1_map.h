@@ -165,10 +165,21 @@
 #define PROBE_PIN                   1                           // BLTouch PA1
 
 #if SDCARD_ENABLE
-#define SD_CS_PORT                  GPIOA
+// Connect to the  EXP2 Header
+#define SD_CS_PORT                  GPIOB
 #define SD_CS_PIN                   12
-#define SPI_PORT                    2 // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15 (EXP2 Header)
+#define SPI_PORT                    2 // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15
 #endif
+
+/*
+#if SDCARD_ENABLE
+// On board socket- flaky?
+#define SD_CS_PORT                  GPIOA
+#define SD_CS_PIN                   4
+#define SPI_PORT                    11 // (MCU port 1) GPIOA: SCK_PIN = 5, MISO_PIN = 5, GBIOB: MOSI_PIN = 5
+// PB11 - TF_SW - card detect
+#endif
+*/
 
 #if TRINAMIC_UART_ENABLE
 
