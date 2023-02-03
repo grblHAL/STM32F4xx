@@ -141,6 +141,8 @@
   #include "mini_blackpill_map.h"
 #elif defined(BOARD_FLEXI_HAL)
   #include "flexi_hal_map.h"
+#elif defined(BOARD_STM32F401_UNI)
+  #include "stm32f401_uni_map.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "my_machine_map.h"
 #else // default board
