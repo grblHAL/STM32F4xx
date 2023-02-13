@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2020-2022 Terje Io
+  Copyright (c) 2020-2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,11 @@
 #define SPIport(p) SPIportI(p)
 #define SPIportI(p) SPI ## p
 
+#if SPI_PORT == 11
+#define SPIPORT SPIport(1)
+#else
 #define SPIPORT SPIport(SPI_PORT)
+#endif
 
 static SPI_HandleTypeDef spi_port = {
     .Instance = SPIPORT,
@@ -163,6 +167,46 @@ void spi_init (void)
             .mode = { .mask = PINMODE_NONE }
         };
 #endif
+#if SPI_PORT == 11
+        __HAL_RCC_SPI1_CLK_ENABLE();
+
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = GPIO_PIN_5|GPIO_PIN_6,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF5_SPI1,
+        };
+        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+        GPIO_InitStruct.Pin = 5;
+        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+        static const periph_pin_t sck = {
+            .function = Output_SCK,
+            .group = PinGroup_SPI,
+            .port = GPIOA,
+            .pin = 5,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        static const periph_pin_t sdo = {
+            .function = Input_MISO,
+            .group = PinGroup_SPI,
+            .port = GPIOA,
+            .pin = 6,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+        static const periph_pin_t sdi = {
+            .function = Output_MOSI,
+            .group = PinGroup_SPI,
+            .port = GPIOB,
+            .pin = 5,
+            .mode = { .mask = PINMODE_NONE }
+        };
+#endif
+
         HAL_SPI_Init(&spi_port);
         __HAL_SPI_ENABLE(&spi_port);
 

@@ -31,9 +31,8 @@
 
 static DAC_HandleTypeDef hdac;
 static void update_dac(uint32_t dac_value);
-static void my_settings_changed (settings_t *settings);
 static void my_set_state (spindle_state_t state, float rpm);
-static settings_changed_ptr settings_changed;
+static on_spindle_select_ptr on_spindle_select;
 static spindle_set_state_ptr set_state;
 #endif
 
@@ -294,15 +293,17 @@ static void my_set_state (spindle_state_t state, float rpm)
     set_state(state, rpm);
 }
 
-static void my_settings_changed (settings_t *settings)
+static bool my_spindle_select (spindle_ptrs_t *spindle)
 {
-  settings_changed(settings);
+  on_spindle_select(spindle);
 
   // claim the set_state pointer in case it gets overwritten
-  if(hal.spindle.set_state != my_set_state) {
-    set_state = hal.spindle.set_state;
-    hal.spindle.set_state = my_set_state;
+  if(spindle->type == SpindleType_PWM && spindle->set_state != my_set_state) {
+    set_state = spindle->set_state;
+    spindle->set_state = my_set_state;
   }
+
+  return true;
 }
 #endif
 
@@ -323,8 +324,9 @@ void board_init (void)
   __HAL_DAC_ENABLE(&hdac, DAC_CHANNEL_2); // enable the dac
 
   // Intercept the settings_changed pointer
-  settings_changed = hal.settings_changed;
-  hal.settings_changed = my_settings_changed;
+  on_spindle_select = grbl.on_spindle_select;
+  grbl.on_spindle_select = my_spindle_select;
+
 #endif
 }
 

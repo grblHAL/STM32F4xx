@@ -1,9 +1,10 @@
 /*
-stm32f401_uni_map.h - driver code for STM32F401CCU6 (Blackpill) breakout board
+  stm32f401_uni_map.h - driver code for STM32F401CCU6 (Blackpill) breakout board
 
-  Part of GrblHAL
+  Part of grblHAL
 
   Copyright (c) 2021 rvalotta
+  Copyright (c) 2023 Am0k-GIT
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -43,6 +44,7 @@ stm32f401_uni_map.h - driver code for STM32F401CCU6 (Blackpill) breakout board
 #endif
 
 #define BOARD_NAME "STM32F401_UNI"
+#define BOARD_URL "https://github.com/Am0k-GIT/STM32F401CCU6_UNI"
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOB
@@ -63,26 +65,26 @@ stm32f401_uni_map.h - driver code for STM32F401CCU6 (Blackpill) breakout board
 #define STEPPERS_ENABLE_MASK    STEPPERS_ENABLE_BIT
 
 // Define homing/hard limit switch input pins.
-#define X_LIMIT_PORT                GPIOB
-#define X_LIMIT_PIN                 2                            // X- Limit
-#define Y_LIMIT_PORT                GPIOB
-#define Y_LIMIT_PIN                 10                           // Y- Limit
-#define Z_LIMIT_PORT                GPIOA
-#define Z_LIMIT_PIN                 14                           // Z- Limit
-#define LIMIT_INMODE                GPIO_BITBAND
+#define X_LIMIT_PORT            GPIOB
+#define X_LIMIT_PIN             2                            // X- Limit
+#define Y_LIMIT_PORT            GPIOB
+#define Y_LIMIT_PIN             10                           // Y- Limit
+#define Z_LIMIT_PORT            GPIOA
+#define Z_LIMIT_PIN             14                           // Z- Limit
+#define LIMIT_INMODE            GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
 
 #if N_ABC_MOTORS > 0
-#define M3_AVAILABLE                // E0
-#define M3_STEP_PORT                GPIOB
-#define M3_STEP_PIN                 13
-#define M3_DIRECTION_PORT           GPIOB
-#define M3_DIRECTION_PIN            12
-#define M3_LIMIT_PORT               GPIOB
-#define M3_LIMIT_PIN                1
-#define M3_ENABLE_PORT              STEPPERS_ENABLE_PORT
-#define M3_ENABLE_PIN               STEPPERS_ENABLE_PIN
+#define M3_AVAILABLE            // E0
+#define M3_STEP_PORT            GPIOB
+#define M3_STEP_PIN             13
+#define M3_DIRECTION_PORT       GPIOB
+#define M3_DIRECTION_PIN        12
+#define M3_LIMIT_PORT           GPIOB
+#define M3_LIMIT_PIN            1
+#define M3_ENABLE_PORT          STEPPERS_ENABLE_PORT
+#define M3_ENABLE_PIN           STEPPERS_ENABLE_PIN
 #endif
 
   // Define spindle enable and spindle direction output pins.

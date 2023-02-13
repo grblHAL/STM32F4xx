@@ -23,8 +23,8 @@
 #error "BTT SKR-2 supports 5 motors max."
 #endif
 
-#if !defined(STM32F407xx) || HSE_VALUE != 8000000
-#error "This board has STM32F407 processor with a 8MHz crystal, select a corresponding build!"
+#if !(defined(STM32F407xx) || defined(STM32F429xx)) || HSE_VALUE != 8000000
+#error "This board has a STM32F407 or STM32F429 processor with a 8MHz crystal, select a corresponding build!"
 #endif
 
 #define BOARD_NAME "BTT SKR-2"
