@@ -115,18 +115,18 @@
 #define MPG_MODE_BIT 0
 #endif
 
-#if CONTROL_MASK != (RESET_BIT+FEED_HOLD_BIT+CYCLE_START_BIT+SAFETY_DOOR_BIT)
+#if CONTROL_MASK != CONTROL_MASK_SUM
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 
 #define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|I2C_STROBE_BIT|SPINDLE_INDEX_BIT|MPG_MODE_BIT|QEI_A_BIT|QEI_B_BIT|QEI_SELECT_BIT)
 
 #ifdef Z_LIMIT_POLL
-#if (DRIVER_IRQMASK-Z_LIMIT_BIT) != (LIMIT_MASK-Z_LIMIT_BIT+CONTROL_MASK+I2C_STROBE_BIT+SPINDLE_INDEX_BIT+MPG_MODE_BIT+QEI_A_BIT+QEI_B_BIT+QEI_SELECT_BIT)
+#if (DRIVER_IRQMASK-Z_LIMIT_BIT) != (LIMIT_MASK_SUM+CONTROL_MASK_SUM+I2C_STROBE_BIT+SPINDLE_INDEX_BIT+MPG_MODE_BIT+QEI_A_BIT+QEI_B_BIT+QEI_SELECT_BIT-Z_LIMIT_BIT)
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 #else
-#if DRIVER_IRQMASK != (LIMIT_MASK+CONTROL_MASK+I2C_STROBE_BIT+SPINDLE_INDEX_BIT+MPG_MODE_BIT+QEI_A_BIT+QEI_B_BIT+QEI_SELECT_BIT)
+#if DRIVER_IRQMASK != (LIMIT_MASK_SUM+CONTROL_MASK_SUM+I2C_STROBE_BIT+SPINDLE_INDEX_BIT+MPG_MODE_BIT+QEI_A_BIT+QEI_B_BIT+QEI_SELECT_BIT)
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 #endif
@@ -146,6 +146,12 @@ typedef union {
 #define QEI_DEBOUNCE 3
 #define QEI_VELOCITY_TIMEOUT 100
 
+typedef enum {
+   QEI_DirUnknown = 0,
+   QEI_DirCW,
+   QEI_DirCCW
+} qei_dir_t;
+
 typedef union {
     uint_fast8_t pins;
     struct {
@@ -159,6 +165,7 @@ typedef struct {
     int32_t count;
     int32_t vel_count;
     uint_fast16_t state;
+    qei_dir_t dir;
     volatile uint32_t dbl_click_timeout;
     volatile uint32_t vel_timeout;
     uint32_t vel_timestamp;
@@ -431,7 +438,7 @@ static output_signal_t outputpin[] = {
 };
 
 extern __IO uint32_t uwTick;
-static uint32_t pulse_length, pulse_delay, aux_irq = 0;;
+static uint32_t pulse_length, pulse_delay, aux_irq = 0;
 static bool IOInitDone = false;
 static axes_signals_t next_step_outbits;
 static delay_t delay = { .ms = 1, .callback = NULL }; // NOTE: initial ms set to 1 for "resetting" systick timer on startup
@@ -1639,7 +1646,7 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                     input->irq_mode = limit_fei.c ? IRQ_Mode_Falling : IRQ_Mode_Rising;
                     break;
 
-                case Input_ModeSelect:
+                case Input_MPGSelect:
                     pullup = true;
                     input->irq_mode = IRQ_Mode_Change;
                     break;
@@ -1859,17 +1866,21 @@ static void qei_update (void)
 
     if(encoder_valid_state[idx] ) {
 
+//        int32_t count = qei.count;
+
         qei.state = ((qei.state << 4) | idx) & 0xFF;
 
         if (qei.state == 0x42 || qei.state == 0xD4 || qei.state == 0x2B || qei.state == 0xBD) {
             qei.count--;
-            if(qei.vel_timeout == 0) {
+            if(qei.vel_timeout == 0 || qei.dir == QEI_DirCW) {
+                qei.dir = QEI_DirCCW;
                 qei.encoder.event.position_changed = hal.encoder.on_event != NULL;
                 hal.encoder.on_event(&qei.encoder, qei.count);
             }
         } else if(qei.state == 0x81 || qei.state == 0x17 || qei.state == 0xE8 || qei.state == 0x7E) {
             qei.count++;
-            if(qei.vel_timeout == 0) {
+            if(qei.vel_timeout == 0 || qei.dir == QEI_DirCCW) {
+                qei.dir = QEI_DirCW;
                 qei.encoder.event.position_changed = hal.encoder.on_event != NULL;
                 hal.encoder.on_event(&qei.encoder, qei.count);
             }
@@ -1880,6 +1891,7 @@ static void qei_update (void)
 static void qei_reset (uint_fast8_t id)
 {
     qei.vel_timeout = 0;
+    qei.dir = QEI_DirUnknown;
     qei.count = qei.vel_count = 0;
     qei.vel_timestamp = uwTick;
     qei.vel_timeout = qei.encoder.axis != 0xFF ? QEI_VELOCITY_TIMEOUT : 0;
@@ -2820,7 +2832,7 @@ void Driver_IncTick (void)
       }
 
   #if QEI_SELECT_ENABLED
-      if(/*!debounce.qei_select &&*/ qei.dbl_click_timeout && !(--qei.dbl_click_timeout)) {
+      if(qei.dbl_click_timeout && !(--qei.dbl_click_timeout)) {
           qei.encoder.event.click = On;
           hal.encoder.on_event(&qei.encoder, qei.count);
       }
