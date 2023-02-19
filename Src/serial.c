@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2022 Terje Io
+  Copyright (c) 2019-2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -380,6 +380,38 @@ const io_stream_t *serialInit (uint32_t baud_rate)
         .description = "UART1"
     };
 
+#elif SERIAL_MOD == 6
+
+    __HAL_RCC_USART6_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+
+    GPIO_InitTypeDef GPIO_InitStructure = {
+        .Mode      = GPIO_MODE_AF_PP,
+        .Pull      = GPIO_NOPULL,
+        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Pin       = GPIO_PIN_6|GPIO_PIN_7,
+        .Alternate = GPIO_AF8_USART6
+    };
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+    static const periph_pin_t tx = {
+        .function = Output_TX,
+        .group = PinGroup_UART1,
+        .port  = GPIOC,
+        .pin   = 6,
+        .mode  = { .mask = PINMODE_OUTPUT },
+        .description = "UART1"
+    };
+
+    static const periph_pin_t rx = {
+        .function = Input_RX,
+        .group = PinGroup_UART1,
+        .port = GPIOC,
+        .pin = 7,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART1"
+    };
+
 #else
 #error Code has to be added to support serial module 1
 #endif
@@ -695,6 +727,38 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
         .group = PinGroup_UART2,
         .port = GPIOD,
         .pin = 9,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART2"
+    };
+
+#elif SERIAL2_MOD == 6
+
+    __HAL_RCC_USART6_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+
+    GPIO_InitTypeDef GPIO_InitStructure = {
+        .Mode      = GPIO_MODE_AF_PP,
+        .Pull      = GPIO_NOPULL,
+        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Pin       = GPIO_PIN_6|GPIO_PIN_7,
+        .Alternate = GPIO_AF8_USART6
+    };
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+    static const periph_pin_t tx = {
+        .function = Output_TX,
+        .group = PinGroup_UART2,
+        .port  = GPIOC,
+        .pin   = 6,
+        .mode  = { .mask = PINMODE_OUTPUT },
+        .description = "UART2"
+    };
+
+    static const periph_pin_t rx = {
+        .function = Input_RX,
+        .group = PinGroup_UART2,
+        .port = GPIOC,
+        .pin = 7,
         .mode = { .mask = PINMODE_NONE },
         .description = "UART2"
     };
