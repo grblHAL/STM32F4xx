@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2020-2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -29,12 +29,13 @@
 #undef CNC_BOOSTERPACK
 #endif
 
+#ifndef WEB_BUILD
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
-
 #define CNC_BOOSTERPACK 1
 #define I2C_ENABLE      0
 #define EEPROM_ENABLE   0 // Disabled for now for BlackPill - pin differences... // Only change if BoosterPack does not have EEPROM mounted
+#endif
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA

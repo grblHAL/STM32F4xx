@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2020-2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,14 +25,15 @@
 
 #define BOARD_NAME "Nucleo-64 CNC Breakout (DAC)"
 
+#ifndef WEB_BUILD
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 #undef EEPROM_IS_FRAM
-
 #define I2C_ENABLE      1
 #define I2C_PORT        1
 #define EEPROM_ENABLE   1
 #define EEPROM_IS_FRAM  1
+#endif
 
 #define HAS_IOPORTS
 #define HAS_BOARD_INIT

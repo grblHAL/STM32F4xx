@@ -197,7 +197,7 @@
         "auto_square": 2,
         "digital_in": 3,
         "digital_out": 4,
-        "eeprom": 2,
+        "eeprom": -2,
         "fram": 0,
         "i2c": 1,
         "sdcard": 1,
@@ -218,7 +218,7 @@
         "axes": 3,
         "digital_in": 0,
         "digital_out": 0,
-        "eeprom": 0,
+        "eeprom": -1,
         "fram": 0,
         "i2c": 0,
         "trinamic_spi_cs": 0,
@@ -274,7 +274,7 @@
       }
     },
     {
-      "name": "Protoneer v3 (STM32F411)",
+      "name": "Protoneer v3/Nucleo-64 (STM32F411)",
       "symbol": "BOARD_PROTONEER_3XX",
       "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
       "caps": {
@@ -296,7 +296,7 @@
       }
     },
     {
-      "name": "Protoneer v3 (STM32F446)",
+      "name": "Protoneer v3/Nucleo-64 (STM32F446)",
       "symbol": "BOARD_PROTONEER_3XX",
       "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
       "caps": {
@@ -393,7 +393,7 @@
       }
     },
     {
-      "name": "Generic Uno (STM32F411)",
+      "name": "Generic Uno/Nucleo-64 (STM32F411)",
       "symbol": "BOARD_GENERIC_UNO",
       "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
       "caps": {
@@ -403,7 +403,7 @@
         "digital_out": 0,
         "safety_door": 0,
         "eeprom": 0,
-        "fram": 1,
+        "fram": 0,
         "i2c": 0,
         "pio_board": "nucleo_f411re",
         "ldscript": "STM32F411CEUX_FLASH.ld"    
@@ -415,7 +415,7 @@
       }
     },
     {
-      "name": "Generic Uno (STM32F446)",
+      "name": "Generic Uno/Nucleo-64 (STM32F446)",
       "symbol": "BOARD_GENERIC_UNO",
       "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
       "caps": {
@@ -425,7 +425,7 @@
         "digital_out": 0,
         "safety_door": 0,
         "eeprom": 0,
-        "fram": 1,
+        "fram": 0,
         "i2c": 0,
         "pio_board": "nucleo_f446re",
         "ldscript": "STM32F446RETX_FLASH.ld"    

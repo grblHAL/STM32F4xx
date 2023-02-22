@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2018-2022 Terje Io
+  Copyright (c) 2018-2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -61,16 +61,10 @@ I2C_HandleTypeDef *I2C_GetPort (void);
 
 #endif
 
-#if KEYPAD_ENABLE == 1
-
-#include "keypad/keypad.h"
-
-void I2C_GetKeycode (uint32_t i2cAddr, keycode_callback_ptr callback);
-
-#endif
-
 void i2c_init (void);
-bool I2C_Send (uint32_t i2cAddr, uint8_t *buf, uint16_t size, bool block);
+bool i2c_probe (uint_fast16_t i2c_address);
+bool i2c_send (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block);
+void i2c_get_keycode (uint_fast16_t i2cAddr, keycode_callback_ptr callback);
 
 #endif // I2C_ENABLE
 #endif // __I2C_DRIVER_H__
