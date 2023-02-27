@@ -1582,6 +1582,11 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                     input->irq_mode = control_fei.reset ? IRQ_Mode_Falling : IRQ_Mode_Rising;
                     break;
 
+                case Input_EStop:
+                    pullup = !settings->control_disable_pullup.e_stop;
+                    input->irq_mode = control_fei.e_stop ? IRQ_Mode_Falling : IRQ_Mode_Rising;
+                    break;
+
                 case Input_FeedHold:
                     pullup = !settings->control_disable_pullup.feed_hold;
                     input->irq_mode = control_fei.feed_hold ? IRQ_Mode_Falling : IRQ_Mode_Rising;
@@ -2234,7 +2239,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230210";
+    hal.driver_version = "230227";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
