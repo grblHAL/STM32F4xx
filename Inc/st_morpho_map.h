@@ -38,9 +38,12 @@
 #undef EEPROM_ENABLE
 //#undef EEPROM_IS_FRAM
 #define I2C_ENABLE      1
-#define I2C_PORT        1
 #define EEPROM_ENABLE   0
 //#define EEPROM_IS_FRAM  1
+#endif
+
+#if I2C_ENABLE
+#define I2C_PORT        1 // PB8 = SCK, PB9 = SDA
 #endif
 
 //#undef SPINDLE_SYNC_ENABLE

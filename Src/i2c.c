@@ -28,6 +28,10 @@
 
 #ifdef I2C_FASTMODE
 
+#ifndef I2C_KHZ
+#define I2C_KHZ 400
+#endif
+
 #define I2CPORT FMPI2C1
 #define I2C_SCL_PIN 6
 #define I2C_SDA_PIN 7
@@ -43,6 +47,10 @@
 #define I2C_ER_IRQHandler HAL_FMPI2C_ER_IRQHandler
 
 #else
+
+#ifndef I2C_KHZ
+#define I2C_KHZ 100
+#endif
 
 #define I2C_GPIO GPIOB
 
@@ -91,9 +99,13 @@
 
 static FMPI2C_HandleTypeDef i2c_port = {
     .Instance = I2CPORT,
-    //.Init.Timing = 0xC0000E12, //100 KHz
-    //.Init.Timing = 0x0020081B, //1000 KHz
-    .Init.Timing =0x00401650, //400 KHz
+#if I2C_KHZ == 100
+    .Init.Timing = 0xC0000E12, //100 KHz
+#elif I2C_KHZ == 1000
+    .Init.Timing = 0x0020081B, //1000 KHz
+#else
+    .Init.Timing = 0x00401650, //400 KHz
+#endif
     .Init.OwnAddress1 = 0,
     .Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT,
     .Init.DualAddressMode = I2C_DUALADDRESS_DISABLE,
@@ -112,7 +124,7 @@ FMPI2C_HandleTypeDef *I2C_GetPort (void)
 
 static I2C_HandleTypeDef i2c_port = {
     .Instance = I2CPORT,
-    .Init.ClockSpeed = 100000,
+    .Init.ClockSpeed = I2C_KHZ * 1000,
     .Init.DutyCycle = I2C_DUTYCYCLE_2,
     .Init.OwnAddress1 = 0,
     .Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT,
@@ -183,7 +195,11 @@ bool i2c_probe (uint_fast16_t i2cAddr)
             return false;
     }
 
+#ifdef I2C_FASTMODE
+    return HAL_FMPI2C_IsDeviceReady(&i2c_port, i2cAddr << 1, 4, 10) == HAL_OK;
+#else
     return HAL_I2C_IsDeviceReady(&i2c_port, i2cAddr << 1, 4, 10) == HAL_OK;
+#endif
 }
 
 bool i2c_send (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block)
