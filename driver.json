@@ -29,7 +29,8 @@
       { "id": "odometer" },
       { "id": "sdcard" },
       { "id": "spindle" },
-      { "id": "modbus" }
+      { "id": "modbus" },
+      { "id": "embroidery" }
     ]
   },
   "symbols": {

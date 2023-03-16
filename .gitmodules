@@ -28,3 +28,6 @@
 [submodule "bluetooth"]
 	path = bluetooth
 	url = https://github.com/grblHAL/Plugins_Bluetooth
+[submodule "embroidery"]
+	path = embroidery
+	url = https://github.com/grblHAL/Plugin_embroidery

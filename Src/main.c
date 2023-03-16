@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2021 Terje Io
+  Copyright (c) 2019-2023 Terje Io
   Some parts (C) COPYRIGHT STMicroelectronics - code created by IDE
 
   Grbl is free software: you can redistribute it and/or modify
@@ -49,8 +49,6 @@ int main(void)
   */
 static void SystemClock_Config(void)
 {
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-
   __HAL_RCC_PWR_CLK_ENABLE();
 
 #ifdef STM32F446xx
@@ -129,6 +127,25 @@ static void SystemClock_Config(void)
     #define FLASH_LATENCY FLASH_LATENCY_5
 
   #endif
+
+#elif defined(STM32F429xx)
+
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+        .PLL.PLLM = (uint32_t)HSE_VALUE / 1000000UL,
+        .PLL.PLLN = 336,
+        .PLL.PLLP = RCC_PLLP_DIV2,
+        .PLL.PLLQ = 7
+    };
+
+    #define APB1CLKDIV RCC_HCLK_DIV4
+    #define APB2CLKDIV RCC_HCLK_DIV2
+    #define FLASH_LATENCY FLASH_LATENCY_5
 
 #elif defined(STM32F411xE)
 
@@ -236,10 +253,9 @@ static void SystemClock_Config(void)
 
 #endif
 
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        Error_Handler();
+    }
 
 #ifndef APB1CLKDIV
 #define APB1CLKDIV RCC_HCLK_DIV2
@@ -248,29 +264,29 @@ static void SystemClock_Config(void)
 #define APB2CLKDIV RCC_HCLK_DIV1
 #endif
 
-  /** Initializes the CPU, AHB and APB busses clocks */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = APB1CLKDIV;
-  RCC_ClkInitStruct.APB2CLKDivider = APB2CLKDIV;
+    /** Initializes the CPU, AHB and APB busses clocks */
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {
+        .ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2,
+        .SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK,
+        .AHBCLKDivider = RCC_SYSCLK_DIV1,
+        .APB1CLKDivider = APB1CLKDIV,
+        .APB2CLKDivider = APB2CLKDIV
+    };
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY) != HAL_OK) {
+        Error_Handler();
+    }
 
 #if USB_SERIAL_CDC && defined(STM32F446xx)
 
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_CLK48;
-  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLQ;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {
+        .PeriphClockSelection = RCC_PERIPHCLK_CLK48,
+        .Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLQ
+    };
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
 #endif
 }
