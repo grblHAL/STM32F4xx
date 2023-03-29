@@ -1493,7 +1493,8 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
              (spindle_encoder.ppr != settings->spindle.ppr || pidf_config_changed(&spindle_tracker.pid, &settings->position.pid))) {
 
             hal.spindle_data.reset = spindleDataReset;
-            spindle_get(spindle_get_current())->set_state((spindle_state_t){0}, 0.0f);
+            if(spindle_get(0))
+                spindle_get(0)->set_state((spindle_state_t){0}, 0.0f);
 
             pidf_init(&spindle_tracker.pid, &settings->position.pid);
 
@@ -2239,7 +2240,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230227";
+    hal.driver_version = "230329";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
