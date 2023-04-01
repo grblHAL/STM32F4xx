@@ -2240,7 +2240,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230329";
+    hal.driver_version = "230331";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2365,6 +2365,7 @@ bool driver_init (void)
 #ifdef SAFETY_DOOR_PIN
     hal.signals_cap.safety_door_ajar = On;
 #endif
+    hal.limits_cap = get_limits_cap();
 
 #if SPINDLE_SYNC_ENABLE
     hal.driver_cap.spindle_sync = On;
