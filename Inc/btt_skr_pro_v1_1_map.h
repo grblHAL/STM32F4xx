@@ -116,8 +116,8 @@
 #define M5_STEP_PIN                 13
 #define M5_DIRECTION_PORT           GPIOG
 #define M5_DIRECTION_PIN            9
-//#define M5_LIMIT_PORT               GPIOG
-//#define M5_LIMIT_PIN                5
+#define M5_LIMIT_PORT               GPIOG
+#define M5_LIMIT_PIN                5
 #define M5_ENABLE_PORT              GPIOF
 #define M5_ENABLE_PIN               0
 #endif
@@ -140,23 +140,23 @@
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #if N_AXIS > 3
-#define RESET_PORT                  GPIOF
-#define RESET_PIN                   13                          // EXP2 PF13
-#define FEED_HOLD_PORT              GPIOF
-#define FEED_HOLD_PIN               11                          // EXP2 PF11
-#define CYCLE_START_PORT            GPIOB
-#define CYCLE_START_PIN             15                          // EXP2 PB15
+#define RESET_PORT                  GPIOG
+#define RESET_PIN                   6                           // EXP1 PG6
+#define FEED_HOLD_PORT              GPIOD
+#define FEED_HOLD_PIN               11                          // EXP1 PD11
+#define CYCLE_START_PORT            GPIOG
+#define CYCLE_START_PIN             2                           // EXP1 PG2
 #else
 #define RESET_PORT                  GPIOG
 #define RESET_PIN                   4                           // E0 Limit
 #define FEED_HOLD_PORT              GPIOD
 #define FEED_HOLD_PIN               11                          // E1 Limit
 #define CYCLE_START_PORT            GPIOG
-#define CYCLE_START_PIN             2                           // E2 Limit
+#define CYCLE_START_PIN             5                           // E2 Limit
 #endif
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOG
-#define SAFETY_DOOR_PIN             6                           // EXP1 PG4
+#define SAFETY_DOOR_PIN             4                           // EXP1 PG4
 #endif
 #define CONTROL_INMODE GPIO_BITBAND
 
