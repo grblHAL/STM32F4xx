@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2022 Terje Io
+  Copyright (c) 2019-2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -67,6 +67,8 @@
 #define timeraf(t, f) GPIO_AF ## f ## _TIM ## t
 #define timerCLKENA(t) timercken(t)
 #define timercken(t) __HAL_RCC_TIM ## t ## _CLK_ENABLE
+#define timerAPB2(t) (t == 1 || t == 8 || t == 9 || t == 10 || t == 11)
+
 #define usart(t) usartN(t)
 #define usartN(t) USART ## t
 #define usartINT(t) usartint(t)
@@ -99,7 +101,9 @@
 
 #ifndef IS_NUCLEO_DEVKIT
 #if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
-#define IS_NUCLEO_DEVKIT 1
+#define IS_NUCLEO_DEVKIT 64
+#elif defined(NUCLEO144_F446)
+#define IS_NUCLEO_DEVKIT 144
 #else
 #define IS_NUCLEO_DEVKIT 0
 #endif
@@ -149,12 +153,12 @@
   #include "generic_map.h"
 #endif
 
-#if IS_NUCLEO_DEVKIT == 1 && !defined(IS_NUCLEO_BOB)
+#if IS_NUCLEO_DEVKIT == 64 && !defined(IS_NUCLEO_BOB)
 #warning "Board map is not for Nucleo based boards and firmware may not work!"
 #endif
 
-#if defined(IS_NUCLEO_BOB) && USB_SERIAL_CDC
-#error "Nucleo based boards does not support USB CDC communication!"
+#if IS_NUCLEO_DEVKIT == 64 && USB_SERIAL_CDC
+#error "Nucleo64 based boards does not support USB CDC communication!"
 #endif
 
 // Define timer allocations.

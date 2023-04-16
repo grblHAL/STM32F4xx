@@ -44,7 +44,9 @@
 //          Note: grblHAL does not check for reversed drivers.
 
 #if defined(NUCLEO_F401) || defined(NUCLEO_F411) || defined(NUCLEO_F446)
-#define IS_NUCLEO_DEVKIT 1
+#define IS_NUCLEO_DEVKIT 64
+#elif defined(NUCLEO144_F446)
+#define IS_NUCLEO_DEVKIT 144
 #else
 #define IS_NUCLEO_DEVKIT 0
 #endif
@@ -52,14 +54,14 @@
 // Configuration
 // Uncomment to enable.
 
-#if !IS_NUCLEO_DEVKIT && !defined(USB_SERIAL_CDC) // The Nucleo boards has an off-chip UART to USB interface.
+#if IS_NUCLEO_DEVKIT != 64 && !defined(USB_SERIAL_CDC) // The Nucleo boards has an off-chip UART to USB interface.
 #define USB_SERIAL_CDC         1 // Serial communication via native USB.
 #endif
 //#define SAFETY_DOOR_ENABLE   1 // Enable safety door input.
 //#define BLUETOOTH_ENABLE     1 // Set to 1 for HC-05 module. Requires and claims one auxillary input pin.
 //#define VFD_ENABLE           1 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
-//#define SDCARD_ENABLE        1 // Run gcode programs from SD card.
+//#define SDCARD_ENABLE        2 // Run gcode programs from SD card.
 //#define MPG_ENABLE           1 // Enable MPG interface. Requires serial port and one handshake pin unless
                                  // KEYPAD_ENABLE is set to 2 when mode switching is done by the CMD_MPG_MODE_TOGGLE (0x8B)
                                  // command character. Set both MPG_ENABLE and KEYPAD_ENABLE to 2 to use a handshake pin anyway.

@@ -40,8 +40,10 @@ static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue
 #endif
 
 #ifndef SERIAL_MOD
-#if IS_NUCLEO_DEVKIT
+#if IS_NUCLEO_DEVKIT == 64
 #define SERIAL_MOD 2
+#elif IS_NUCLEO_DEVKIT == 144
+#define SERIAL_MOD 3
 #else
 #define SERIAL_MOD 1
 #endif
