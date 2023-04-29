@@ -139,25 +139,14 @@
 #define COOLANT_MIST_PIN            14                          // HEAT1
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#if N_AXIS > 3
 #define RESET_PORT                  GPIOG
 #define RESET_PIN                   6                           // EXP1 PG6
 #define FEED_HOLD_PORT              GPIOD
 #define FEED_HOLD_PIN               11                          // EXP1 PD11
 #define CYCLE_START_PORT            GPIOG
 #define CYCLE_START_PIN             2                           // EXP1 PG2
-#else
-#define RESET_PORT                  GPIOG
-#define RESET_PIN                   4                           // E0 Limit
-#define FEED_HOLD_PORT              GPIOD
-#define FEED_HOLD_PIN               11                          // E1 Limit
-#define CYCLE_START_PORT            GPIOG
-#define CYCLE_START_PIN             5                           // E2 Limit
-#endif
-#if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOG
 #define SAFETY_DOOR_PIN             4                           // EXP1 PG4
-#endif
 #define CONTROL_INMODE GPIO_BITBAND
 
 // Define probe switch input pin.
