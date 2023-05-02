@@ -223,7 +223,7 @@
       "name": "Fysetc S6 V2.0",
       "symbol": "BOARD_FYSETC_S6",
       "URL": "https://wiki.fysetc.com/FYSETC_S6/",
-      "MAP": "Inc/fysetc_s6_map.h.h",
+      "MAP": "Inc/fysetc_s6_map.h",
       "caps": {
         "axes": 3,
         "digital_in": 0,
