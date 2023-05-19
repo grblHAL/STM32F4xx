@@ -28,6 +28,7 @@
       { "id": "motors" },
       { "id": "odometer" },
       { "id": "sdcard" },
+      { "id": "wiznet_networking" },
       { "id": "spindle" },
       { "id": "modbus" },
       { "id": "embroidery" }
@@ -50,6 +51,7 @@
         "fram": 0,
         "i2c": 0,
         "sdcard": 0,
+        "spindle_sync": 1,
         "keypad": 0,
         "pio_board": "blackpill_f401cc",
         "ldscript": "STM32F401CCUX_FLASH.ld"
@@ -71,6 +73,7 @@
         "fram": 0,
         "i2c": 0,
         "sdcard": 0,
+        "spindle_sync": 1,
         "keypad": 0,
         "pio_board": "blackpill_f411ce",
         "ldscript": "STM32F411CEUX_FLASH.ld"
@@ -95,7 +98,8 @@
         "trinamic_spi_cs": 1,
         "trinamic_spi_chain": 0,
         "trinamic_uart_n": 1,
-        "trinamic_uart_addr": 0
+        "trinamic_uart_addr": 0,
+        "wiznet": 1
       },
       "symbols": {
           "STM32F407xx": "",
@@ -298,7 +302,9 @@
         "eeprom": 0,
         "fram": 0,
         "i2c": 0,
+        "spindle_sync": 1,
         "sdcard": 0,
+        "wiznet": 1,
         "pio_board": "nucleo_f411re",
         "ldscript": "STM32F411CEUX_FLASH.ld"
       },
@@ -321,7 +327,9 @@
         "eeprom": 0,
         "fram": 0,
         "i2c": 0,
+        "spindle_sync": 1,
         "sdcard": 0,
+        "wiznet": 1,
         "pio_board": "nucleo_f446re",
         "ldscript": "STM32F446RETX_FLASH.ld"
       },
@@ -344,6 +352,7 @@
         "eeprom": 1,
         "fram": 1,
         "i2c": 1,
+        "spindle_sync": 1,
         "trinamic_spi_cs": 0,
         "trinamic_spi_chain": 1,
         "trinamic_uart_n": 0,
@@ -370,10 +379,12 @@
         "eeprom": 1,
         "fram": 1,
         "i2c": 1,
+        "spindle_sync": 1,
         "trinamic_spi_cs": 0,
         "trinamic_spi_chain": 1,
         "trinamic_uart_n": 0,
         "trinamic_uart_addr": 1,
+        "wiznet": 1,
         "pio_board": "nucleo_f411re",
         "ldscript": "STM32F411CEUX_FLASH.ld"
       },
@@ -396,10 +407,13 @@
         "eeprom": 1,
         "fram": 1,
         "i2c": 1,
+        "ethernet": 1,
+        "spindle_sync": 1,
         "trinamic_spi_cs": 0,
         "trinamic_spi_chain": 1,
         "trinamic_uart_n": 0,
         "trinamic_uart_addr": 1,
+        "wiznet": 1,
         "pio_board": "nucleo_f446re",
         "ldscript": "STM32F446RETX_FLASH.ld"
       },

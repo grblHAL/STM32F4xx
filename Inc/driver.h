@@ -36,6 +36,12 @@
 #endif
 
 #include "main.h"
+
+#if defined(_WIZCHIP_) && _WIZCHIP_ > 0
+#undef ETHERNET_ENABLE
+#define ETHERNET_ENABLE 1
+#endif
+
 #include "grbl/driver_opts.h"
 
 #define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
@@ -159,6 +165,10 @@
 
 #if IS_NUCLEO_DEVKIT == 64 && USB_SERIAL_CDC
 #error "Nucleo64 based boards does not support USB CDC communication!"
+#endif
+
+#if ETHERNET_ENABLE && !defined(SPI_IRQ_PIN)
+#error "Board does not support ethernet!"
 #endif
 
 // Define timer allocations.

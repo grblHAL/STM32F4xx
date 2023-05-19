@@ -26,6 +26,7 @@
 #endif
 
 #define BOARD_NAME "Fysetc S6 V2.0"
+#define BOARD_URL "https://github.com/FYSETC/FYSETC-S6"
 
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE

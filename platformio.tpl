@@ -12,6 +12,8 @@ build_flags =
   -I FatFs
   -I Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
   -I Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+  -I lwip/src/include
+  -I networking/wiznet
   -I USB_DEVICE/Target
   -D OVERRIDE_MY_MACHINE
 lib_deps =

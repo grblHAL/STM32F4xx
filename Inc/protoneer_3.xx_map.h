@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2022 Terje Io
+  Copyright (c) 2020-2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,6 +31,10 @@
 #define I2C_PORT 1
 #define IS_NUCLEO_BOB
 //#define PROTONEER_SPINDLE_PWM // Uncomment to use PA5 (D13) as spindle PWM output instead of spindle direction
+
+#if ETHERNET_ENABLE
+#define SPI_PORT                2 // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15
+#endif
 
 // Define step pulse output pins.
 #define X_STEP_PORT             GPIOA // D2
@@ -99,5 +103,16 @@
 #define FEED_HOLD_PIN           1 // A1
 #define CYCLE_START_PIN         4 // A2
 #define CONTROL_INMODE          GPIO_MAP
+
+#if ETHERNET_ENABLE
+#undef SPI_ENABLE
+#define SPI_ENABLE              1
+#define SPI_CS_PORT             GPIOB
+#define SPI_CS_PIN              12
+#define SPI_IRQ_PORT            GPIOB
+#define SPI_IRQ_PIN             2
+#define SPI_RST_PORT            GPIOB
+#define SPI_RST_PIN             1
+#endif
 
 /**/

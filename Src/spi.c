@@ -1,5 +1,5 @@
 /*
-  spi.c - SPI support for SD card & Trinamic plugins
+  spi.c - SPI support for SD card, Trinamic & networking (WizNet) plugins
 
   Part of grblHAL driver for STM32F4xx
 
@@ -27,6 +27,12 @@
 #define SPIport(p) SPIportI(p)
 #define SPIportI(p) SPI ## p
 
+#define DMAirq(d, p) DMAirqI(d, p)
+#define DMAirqI(d, p) DMA ## d ## _Stream ## p ## _IRQn
+
+#define DMAhandler(d, p) DMAhandlerI(d, p)
+#define DMAhandlerI(d, p) DMA ## d ## _Stream ## p ## _IRQHandler
+
 #if SPI_PORT == 11
 #define SPIPORT SPIport(1)
 #else
@@ -48,6 +54,107 @@ static SPI_HandleTypeDef spi_port = {
     .Init.CRCPolynomial = 10
 };
 
+#if SPI_PORT == 1 || SPI_PORT == 11
+
+#define DMA_RX_IRQ DMAirq(2, 2)
+#define DMA_TX_IRQ DMAirq(2, 3)
+#define DMA_RX_IRQ_HANDLER DMAhandler(2, 2)
+#define DMA_TX_IRQ_HANDLER DMAhandler(2, 3)
+
+static DMA_HandleTypeDef spi_dma_rx = {
+    .Instance = DMA2_Stream2,
+    .Init.Channel = DMA_CHANNEL_3,
+    .Init.Direction = DMA_PERIPH_TO_MEMORY,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
+
+static DMA_HandleTypeDef spi_dma_tx = {
+    .Instance = DMA2_Stream3,
+    .Init.Channel = DMA_CHANNEL_3,
+    .Init.Direction = DMA_MEMORY_TO_PERIPH,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
+
+#elif SPI_PORT == 2
+
+#define DMA_RX_IRQ DMAirq(1, 3)
+#define DMA_TX_IRQ DMAirq(1, 4)
+#define DMA_RX_IRQ_HANDLER DMAhandler(1, 3)
+#define DMA_TX_IRQ_HANDLER DMAhandler(1, 4)
+
+static DMA_HandleTypeDef spi_dma_rx = {
+    .Instance = DMA1_Stream3,
+    .Init.Channel = DMA_CHANNEL_0,
+    .Init.Direction = DMA_PERIPH_TO_MEMORY,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
+
+static DMA_HandleTypeDef spi_dma_tx = {
+    .Instance = DMA1_Stream4,
+    .Init.Channel = DMA_CHANNEL_0,
+    .Init.Direction = DMA_MEMORY_TO_PERIPH,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
+
+#elif SPI_PORT == 3
+
+#define DMA_RX_IRQ DMAirq(1, 2)
+#define DMA_TX_IRQ DMAirq(1, 7)
+#define DMA_RX_IRQ_HANDLER DMAhandler(1, 3)
+#define DMA_TX_IRQ_HANDLER DMAhandler(1, 4)
+
+static DMA_HandleTypeDef spi_dma_rx = {
+    .Instance = DMA1_Stream2,
+    .Init.Channel = DMA_CHANNEL_0,
+    .Init.Direction = DMA_PERIPH_TO_MEMORY,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
+
+static DMA_HandleTypeDef spi_dma_tx = {
+    .Instance = DMA1_Stream7,
+    .Init.Channel = DMA_CHANNEL_0,
+    .Init.Direction = DMA_MEMORY_TO_PERIPH,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
+
+#endif
+
 void spi_init (void)
 {
     static bool init = false;
@@ -61,6 +168,7 @@ void spi_init (void)
 
 #if SPI_PORT == 1
         __HAL_RCC_SPI1_CLK_ENABLE();
+        __HAL_RCC_DMA2_CLK_ENABLE();
 
         GPIO_InitTypeDef GPIO_InitStruct = {
             .Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,
@@ -97,6 +205,7 @@ void spi_init (void)
 #endif
 #if SPI_PORT == 2
         __HAL_RCC_SPI2_CLK_ENABLE();
+        __HAL_RCC_DMA1_CLK_ENABLE();
 
         GPIO_InitTypeDef GPIO_InitStruct = {
             .Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15,
@@ -133,6 +242,7 @@ void spi_init (void)
 #endif
 #if SPI_PORT == 3
         __HAL_RCC_SPI3_CLK_ENABLE();
+        __HAL_RCC_DMA1_CLK_ENABLE();
 
         GPIO_InitTypeDef GPIO_InitStruct = {
             .Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12,
@@ -169,6 +279,7 @@ void spi_init (void)
 #endif
 #if SPI_PORT == 11
         __HAL_RCC_SPI1_CLK_ENABLE();
+        __HAL_RCC_DMA2_CLK_ENABLE();
 
         GPIO_InitTypeDef GPIO_InitStruct = {
             .Pin = GPIO_PIN_5|GPIO_PIN_6,
@@ -209,6 +320,18 @@ void spi_init (void)
 
         HAL_SPI_Init(&spi_port);
         __HAL_SPI_ENABLE(&spi_port);
+
+        __HAL_LINKDMA(&spi_port, hdmarx, spi_dma_rx);
+        __HAL_LINKDMA(&spi_port, hdmatx, spi_dma_tx);
+
+        HAL_DMA_Init(&spi_dma_rx);
+        HAL_DMA_Init(&spi_dma_tx);
+
+        HAL_NVIC_SetPriority(DMA_RX_IRQ, 0, 0);
+        HAL_NVIC_EnableIRQ(DMA_RX_IRQ);
+
+        HAL_NVIC_SetPriority(DMA_TX_IRQ, 0, 0);
+        HAL_NVIC_EnableIRQ(DMA_TX_IRQ);
 
         hal.periph_port.register_pin(&sck);
         hal.periph_port.register_pin(&sdo);
@@ -254,6 +377,33 @@ uint8_t spi_put_byte (uint8_t byte)
     __HAL_SPI_CLEAR_OVRFLAG(&spi_port);
 
     return (uint8_t)spi_port.Instance->DR;
+}
+
+void spi_write (uint8_t *data, uint16_t len)
+{
+    if(HAL_SPI_Transmit_DMA(&spi_port, data, len) == HAL_OK)
+        while(spi_port.State != HAL_SPI_STATE_READY);
+
+    __HAL_DMA_DISABLE(&spi_dma_tx);
+}
+
+void spi_read (uint8_t *data, uint16_t len)
+{
+    if(HAL_SPI_Receive_DMA(&spi_port, data, len) == HAL_OK)
+        while(spi_port.State != HAL_SPI_STATE_READY);
+
+    __HAL_DMA_DISABLE(&spi_dma_rx);
+    __HAL_DMA_DISABLE(&spi_dma_tx);
+}
+
+void DMA_RX_IRQ_HANDLER (void)
+{
+  HAL_DMA_IRQHandler(&spi_dma_rx);
+}
+
+void DMA_TX_IRQ_HANDLER(void)
+{
+  HAL_DMA_IRQHandler(&spi_dma_tx);
 }
 
 #endif // SPI_ENABLE

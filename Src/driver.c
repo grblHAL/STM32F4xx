@@ -81,13 +81,17 @@
 #endif
 
 #if ETHERNET_ENABLE
-  #include "enet.h"
+  #include <enet.h>
   #if TELNET_ENABLE
-    #include "networking/TCPStream.h"
+    #include "networking/telnetd.h"
   #endif
   #if WEBSOCKET_ENABLE
-    #include "networking/WsStream.h"
+    #include "networking/websocketd.h"
   #endif
+#endif
+
+#ifndef SPI_IRQ_BIT
+#define SPI_IRQ_BIT 0
 #endif
 
 #if !I2C_STROBE_ENABLE
@@ -119,9 +123,9 @@
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 
-#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|I2C_STROBE_BIT|SPINDLE_INDEX_BIT|MPG_MODE_BIT|QEI_A_BIT|QEI_B_BIT|QEI_SELECT_BIT)
+#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|I2C_STROBE_BIT|SPI_IRQ_BIT|SPINDLE_INDEX_BIT|MPG_MODE_BIT|QEI_A_BIT|QEI_B_BIT|QEI_SELECT_BIT)
 
-#if DRIVER_IRQMASK != (LIMIT_MASK_SUM+CONTROL_MASK_SUM+I2C_STROBE_BIT+SPINDLE_INDEX_BIT+MPG_MODE_BIT+QEI_A_BIT+QEI_B_BIT+QEI_SELECT_BIT)
+#if DRIVER_IRQMASK != (LIMIT_MASK_SUM+CONTROL_MASK_SUM+I2C_STROBE_BIT+SPI_IRQ_BIT+SPINDLE_INDEX_BIT+MPG_MODE_BIT+QEI_A_BIT+QEI_B_BIT+QEI_SELECT_BIT)
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 
@@ -173,13 +177,14 @@ static bool qei_enable = false;
 
 #endif
 
+static spindle_id_t spindle_id = -1;
+
 #if DRIVER_SPINDLE_ENABLE && defined(SPINDLE_ENABLE_PIN)
 
 #define DRIVER_SPINDLE
 
 #if defined(SPINDLE_PWM_TIMER_N)
 static bool pwmEnabled = false;
-static spindle_id_t spindle_id = -1;
 static spindle_pwm_t spindle_pwm;
 static void spindle_set_speed (uint_fast16_t pwm_value);
 #endif
@@ -209,7 +214,7 @@ static input_signal_t inputpin[] = {
     { .id = Input_Probe,          .port = PROBE_PORT,         .pin = PROBE_PIN,           .group = PinGroup_Probe },
 #endif
 #ifdef I2C_STROBE_PIN
-    { .id = Input_KeypadStrobe,   .port = I2C_STROBE_PORT,    .pin = I2C_STROBE_PIN,      .group = PinGroup_Keypad },
+    { .id = Input_I2CStrobe,      .port = I2C_STROBE_PORT,    .pin = I2C_STROBE_PIN,      .group = PinGroup_I2C },
 #endif
 #ifdef MPG_MODE_PIN
     { .id = Input_MPGSelect,      .port = MPG_MODE_PORT,      .pin = MPG_MODE_PIN,        .group = PinGroup_MPG },
@@ -248,6 +253,9 @@ static input_signal_t inputpin[] = {
   #if QEI_INDEX_ENABLED
     { .id = Input_QEI_Index,      .port = QEI_INDEX_PORT,     .pin = QEI_INDEX_PIN,       .group = PinGroup_QEI },
   #endif
+#endif
+#ifdef SPI_IRQ_PORT
+    { .id = Input_SPIIRQ,         .port = SPI_IRQ_PORT,       .pin = SPI_IRQ_PIN,         .group = PinGroup_SPI },
 #endif
 // Aux input pins must be consecutive in this array
 #ifdef AUXINPUT0_PIN
@@ -408,6 +416,12 @@ static output_signal_t outputpin[] = {
 #ifdef SD_CS_PORT
     { .id = Output_SdCardCS,        .port = SD_CS_PORT,             .pin = SD_CS_PIN,               .group = PinGroup_SdCard },
 #endif
+#ifdef SPI_CS_PORT
+    { .id = Output_SPICS,           .port = SPI_CS_PORT,            .pin = SPI_CS_PIN,              .group = PinGroup_SPI },
+#endif
+#ifdef SPI_RST_PORT
+    { .id = Output_SPIRST,          .port = SPI_RST_PORT,           .pin = SPI_RST_PIN,             .group = PinGroup_SPI },
+#endif
 #ifdef AUXOUTPUT0_PORT
     { .id = Output_Aux0,            .port = AUXOUTPUT0_PORT,        .pin = AUXOUTPUT0_PIN,          .group = PinGroup_AuxOutput },
 #endif
@@ -447,15 +461,28 @@ static probe_state_t probe = {
 #endif
 
 #if I2C_STROBE_ENABLE
-
 static driver_irq_handler_t i2c_strobe = { .type = IRQ_I2C_Strobe };
+#endif
+
+#ifdef SPI_IRQ_PIN
+static driver_irq_handler_t spi_irq = { .type = IRQ_SPI };
+#endif
+
+#if I2C_STROBE_ENABLE || defined(SPI_IRQ_PIN)
 
 static bool irq_claim (irq_type_t irq, uint_fast8_t id, irq_callback_ptr handler)
 {
     bool ok;
 
+#if I2C_STROBE_ENABLE
     if((ok = irq == IRQ_I2C_Strobe && i2c_strobe.callback == NULL))
         i2c_strobe.callback = handler;
+#endif
+
+#ifdef SPI_IRQ_PIN
+    if((ok = irq == IRQ_SPI && spi_irq.callback == NULL))
+        spi_irq.callback = handler;
+#endif
 
     return ok;
 }
@@ -542,8 +569,9 @@ static void stepperWakeUp (void)
 {
     stepperEnable((axes_signals_t){AXES_BITMASK});
 
-    STEPPER_TIMER->ARR = 5000; // delay to allow drivers time to wake up
+    STEPPER_TIMER->ARR = hal.f_step_timer / 500; // ~2ms delay to allow drivers time to wake up.
     STEPPER_TIMER->EGR = TIM_EGR_UG;
+    STEPPER_TIMER->SR = ~TIM_SR_UIF;
     STEPPER_TIMER->CR1 |= TIM_CR1_CEN;
 }
 
@@ -1654,9 +1682,14 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                     input->irq_mode = IRQ_Mode_Change;
                     break;
 
-                case Input_KeypadStrobe:
+                case Input_I2CStrobe:
                     pullup = true;
                     input->irq_mode = IRQ_Mode_Change;
+                    break;
+
+                case Input_SPIIRQ:
+                    pullup = true;
+                    input->irq_mode = IRQ_Mode_Falling;
                     break;
 
                 case Input_SpindleIndex:
@@ -1971,7 +2004,7 @@ static bool driver_setup (settings_t *settings)
             GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
 
-            if(outputpin[i].group == PinGroup_MotorChipSelect || outputpin[i].group == PinGroup_MotorUART)
+            if(outputpin[i].group == PinGroup_MotorChipSelect || outputpin[i].group == PinGroup_MotorUART || outputpin[i].id == Output_SPICS)
                 DIGITAL_OUT(outputpin[i].port, outputpin[i].pin, 1);
         }
     }
@@ -2255,7 +2288,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230414";
+    hal.driver_version = "230513";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2297,7 +2330,7 @@ bool driver_init (void)
 
     hal.irq_enable = __enable_irq;
     hal.irq_disable = __disable_irq;
-#if I2C_STROBE_ENABLE
+#if I2C_STROBE_ENABLE || defined(SPI_IRQ_PIN)
     hal.irq_claim = irq_claim;
 #endif
     hal.set_bits_atomic = bitsSetAtomic;
@@ -2611,6 +2644,9 @@ void EXTI0_IRQHandler(void)
 #elif defined(I2C_STROBE_ENABLE) && I2C_STROBE_BIT & (1<<0)
         if(i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
+#elif SPI_IRQ_BIT & (1<<0)
+        if(spi_irq.callback)
+            spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #elif LIMIT_MASK & (1<<0)
         if(!(debounce.limits = debounce_start()))
             hal.limits.interrupt_callback(limitsGetState());
@@ -2643,6 +2679,9 @@ void EXTI1_IRQHandler(void)
             hal.limits.interrupt_callback(limitsGetState());
 #elif AUXINPUT_MASK & (1<<1)
         ioports_event(ifg);
+#elif SPI_IRQ_BIT & (1<<1)
+        if(spi_irq.callback)
+            spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #elif QEI_SELECT_ENABLED && (QEI_SELECT_BIT & (1<<1))
         if(!(debounce.qei_select = debounce_start()))
             qei_select_handler();
@@ -2674,6 +2713,9 @@ void EXTI2_IRQHandler(void)
             hal.limits.interrupt_callback(limitsGetState());
 #elif AUXINPUT_MASK & (1<<2)
         ioports_event(ifg);
+#elif SPI_IRQ_BIT & (1<<2)
+        if(spi_irq.callback)
+            spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #endif
     }
 }
@@ -2698,6 +2740,9 @@ void EXTI3_IRQHandler(void)
             hal.limits.interrupt_callback(limitsGetState());
 #elif AUXINPUT_MASK & (1<<3)
         ioports_event(ifg);
+#elif SPI_IRQ_BIT & (1<<3)
+        if(spi_irq.callback)
+            spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #elif SPINDLE_INDEX_PIN == 3
         if(ifg & SPINDLE_INDEX_BIT) {
             uint32_t rpm_count = RPM_COUNTER->CNT;
@@ -2733,6 +2778,9 @@ void EXTI4_IRQHandler(void)
             hal.limits.interrupt_callback(limitsGetState());
 #elif AUXINPUT_MASK & (1<<4)
         ioports_event(ifg);
+#elif SPI_IRQ_BIT & (1<<4)
+        if(spi_irq.callback)
+            spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #endif
     }
 }
@@ -2748,6 +2796,10 @@ void EXTI9_5_IRQHandler(void)
     if(ifg) {
         __HAL_GPIO_EXTI_CLEAR_IT(ifg);
 
+#if SPI_IRQ_BIT & 0x03E0
+        if((ifg & SPI_IRQ_BIT) && spi_irq.callback)
+            spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
+#endif
 #if CONTROL_MASK & 0x03E0
         if(ifg & CONTROL_MASK) {
   #if SAFETY_DOOR_BIT & 0x03E0
@@ -2788,6 +2840,10 @@ void EXTI15_10_IRQHandler(void)
     if(ifg) {
         __HAL_GPIO_EXTI_CLEAR_IT(ifg);
 
+#if SPI_IRQ_BIT & 0xFC00
+        if((ifg & SPI_IRQ_BIT) && spi_irq.callback)
+            spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
+#endif
 #ifdef SPINDLE_INDEX_PORT
         if(ifg & SPINDLE_INDEX_BIT) {
             uint32_t rpm_count = RPM_COUNTER->CNT;

@@ -61,6 +61,7 @@
 //#define BLUETOOTH_ENABLE     2 // Set to 2 for HC-05 module. Requires and claims one auxillary input pin.
 //#define VFD_ENABLE           1 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
+//#define _WIZCHIP_            5500 // Enables ethernet via WIZnet breakout conected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
 //#define SDCARD_ENABLE        1 // Run gcode programs from SD card. Set to 2 to enable YModem upload.
 //#define MPG_ENABLE           1 // Enable MPG interface. Requires serial port and one handshake pin unless
                                  // KEYPAD_ENABLE is set to 2 when mode switching is done by the CMD_MPG_MODE_TOGGLE (0x8B)
@@ -101,3 +102,35 @@
 //#define Y_GANGED_LIM_MAX    1
 //#define Z_GANGED_LIM_MAX    1
 //
+
+#ifdef _WIZCHIP_
+#define ETHERNET_ENABLE 1
+#endif
+
+#if ETHERNET_ENABLE || WEBUI_ENABLE
+#define TELNET_ENABLE       1 // Telnet daemon - requires Ethernet streaming enabled.
+#define WEBSOCKET_ENABLE    1 // Websocket daemon - requires Ethernet streaming enabled.
+//#define MDNS_ENABLE         1 // mDNS daemon.
+//#define SSDP_ENABLE         1 // SSDP daemon - requires HTTP enabled.
+//#define MQTT_ENABLE         1 // MQTT client API, only enable if needed by plugin code.
+#if SDCARD_ENABLE  || WEBUI_ENABLE
+//#define FTP_ENABLE         1 // Ftp daemon - requires SD card enabled.
+//#define HTTP_ENABLE         1 // http daemon - requires SD card enabled.
+//#define WEBDAV_ENABLE       1 // webdav protocol - requires http daemon and SD card enabled.
+#endif
+
+// The following symbols have the default values as shown, uncomment and change as needed.
+//#define NETWORK_HOSTNAME        "grblHAL"
+//#define NETWORK_IPMODE          1 // 0 = static, 1 = DHCP, 2 = AutoIP
+//#define NETWORK_IP              "192.168.5.1"
+//#define NETWORK_GATEWAY         "192.168.5.1"
+//#define NETWORK_MASK            "255.255.255.0"
+//#define NETWORK_FTP_PORT        21
+//#define NETWORK_TELNET_PORT     23
+//#define NETWORK_HTTP_PORT       80
+#if HTTP_ENABLE
+//#define NETWORK_WEBSOCKET_PORT  81
+#else
+//#define NETWORK_WEBSOCKET_PORT  80
+#endif
+#endif

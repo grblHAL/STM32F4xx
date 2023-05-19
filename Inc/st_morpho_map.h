@@ -31,6 +31,10 @@
 #error "Axis configuration is not supported!"
 #endif
 
+#if SDCARD_ENABLE && ETHERNET_ENABLE
+#error "SD card and networking plugins cannot be enabled together!"
+#endif
+
 #define BOARD_NAME "Nucleo-64 CNC Breakout"
 
 #ifndef WEB_BUILD
@@ -53,7 +57,7 @@
 #define HAS_IOPORTS
 #define HAS_BOARD_INIT
 
-#if SDCARD_ENABLE || TRINAMIC_SPI_ENABLE
+#if SDCARD_ENABLE || TRINAMIC_SPI_ENABLE || ETHERNET_ENABLE
 #define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
 #endif
 
@@ -191,8 +195,10 @@
 
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          15
+#if !ETHERNET_ENABLE
 #define AUXOUTPUT1_PORT         GPIOB
 #define AUXOUTPUT1_PIN          2
+#endif
 
 #if I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         GPIOB
@@ -214,6 +220,17 @@
 #if TRINAMIC_SPI_ENABLE
 #define MOTOR_CS_PORT           GPIOB
 #define MOTOR_CS_PIN            7
+#endif
+
+#if ETHERNET_ENABLE
+#undef SPI_ENABLE
+#define SPI_ENABLE 1
+#define SPI_CS_PORT             GPIOC
+#define SPI_CS_PIN              8
+#define SPI_IRQ_PORT            GPIOB
+#define SPI_IRQ_PIN             0
+#define SPI_RST_PORT            GPIOB // AUXOUTPUT1
+#define SPI_RST_PIN             2
 #endif
 
 #else
