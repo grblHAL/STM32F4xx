@@ -31,3 +31,9 @@
 [submodule "embroidery"]
 	path = embroidery
 	url = https://github.com/grblHAL/Plugin_embroidery
+[submodule "lwip"]
+	path = lwip
+	url = https://github.com/grblHAL/lwip
+[submodule "networking"]
+	path = networking
+	url = https://github.com/grblHAL/Plugin_networking
