@@ -37,3 +37,6 @@
 [submodule "networking"]
 	path = networking
 	url = https://github.com/grblHAL/Plugin_networking
+[submodule "encoder"]
+	path = encoder
+	url = https://github.com/grblHAL/Plugin_encoder
