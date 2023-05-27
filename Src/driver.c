@@ -130,7 +130,6 @@
 #endif
 
 #define STEPPER_TIMER_DIV 4
-#define TIMER_CLOCK_MUL(d) (d == RCC_HCLK_DIV1 ? 1 : 2)
 
 typedef union {
     uint8_t mask;
@@ -444,7 +443,19 @@ static output_signal_t outputpin[] = {
     { .id = Output_Aux6,            .port = AUXOUTPUT6_PORT,        .pin = AUXOUTPUT6_PIN,          .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT7_PORT
-    { .id = Output_Aux7,            .port = AUXOUTPUT7_PORT,        .pin = AUXOUTPUT7_PIN,          .group = PinGroup_AuxOutput }
+    { .id = Output_Aux7,            .port = AUXOUTPUT7_PORT,        .pin = AUXOUTPUT7_PIN,          .group = PinGroup_AuxOutput },
+#endif
+#ifdef AUXOUTPUT0_PWM_PORT
+    { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_PWM_PORT,    .pin = AUXOUTPUT0_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
+#endif
+#ifdef AUXOUTPUT0_ANALOG_PORT
+    { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_ANALOG_PORT, .pin = AUXOUTPUT0_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog },
+#endif
+#ifdef AUXOUTPUT1_PWM_PORT
+    { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_PWM_PORT,    .pin = AUXOUTPUT1_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
+#endif
+#ifdef AUXOUTPUT1_ANALOG_PORT
+    { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_ANALOG_PORT, .pin = AUXOUTPUT1_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog }
 #endif
 };
 
@@ -1234,7 +1245,7 @@ static bool spindleConfig (spindle_ptrs_t *spindle)
         return false;
 
     RCC_ClkInitTypeDef clock;
-    uint32_t latency, prescaler = settings.spindle.pwm_freq > 4000.0f ? 1 : (settings.spindle.pwm_freq > 200.0f ? 12 : 25);
+    uint32_t latency, prescaler = 1;
 
     HAL_RCC_GetClockConfig(&clock, &latency);
 
@@ -1243,6 +1254,15 @@ static bool spindleConfig (spindle_ptrs_t *spindle)
 #else
     if((spindle->cap.variable = !settings.spindle.flags.pwm_disable && spindle_precompute_pwm_values(spindle, &spindle_pwm, (HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock.APB1CLKDivider)) / prescaler))) {
 #endif
+
+        while(spindle_pwm.period > 65534) {
+            prescaler++;
+#if SPINDLE_PWM_TIMER_N == 1
+            spindle_precompute_pwm_values(spindle, &spindle_pwm, (HAL_RCC_GetPCLK2Freq() * TIMER_CLOCK_MUL(clock.APB2CLKDivider)) / prescaler);
+#else
+            ispindle_precompute_pwm_values(spindle, &spindle_pwm, (HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock.APB1CLKDivider)) / prescaler);
+#endif
+        }
 
         spindle->set_state = spindleSetStateVariable;
 
@@ -1999,7 +2019,7 @@ static bool driver_setup (settings_t *settings)
     hal.delay_ms(100, NULL);
 
     for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
-        if(outputpin[i].group != PinGroup_StepperPower) {
+        if(!(outputpin[i].group == PinGroup_StepperPower || outputpin[i].group == PinGroup_AuxOutputAnalog)) {
             GPIO_Init.Pin = 1 << outputpin[i].pin;
             GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
@@ -2432,14 +2452,14 @@ bool driver_init (void)
 
     uint32_t i;
     input_signal_t *input;
-    static pin_group_pins_t aux_inputs = {0}, aux_outputs = {0};
+    static pin_group_pins_t aux_digital_in = {0}, aux_digital_out = {0}, aux_analog_out = {0};
 
     for(i = 0 ; i < sizeof(inputpin) / sizeof(input_signal_t); i++) {
         input = &inputpin[i];
         if(input->group == PinGroup_AuxInput) {
-            if(aux_inputs.pins.inputs == NULL)
-                aux_inputs.pins.inputs = input;
-            input->id = (pin_function_t)(Input_Aux0 + aux_inputs.n_pins++);
+            if(aux_digital_in.pins.inputs == NULL)
+                aux_digital_in.pins.inputs = input;
+            input->id = (pin_function_t)(Input_Aux0 + aux_digital_in.n_pins++);
             input->bit = 1 << input->pin;
             input->cap.pull_mode = PullMode_UpDown;
             input->cap.irq_mode = (DRIVER_IRQMASK & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
@@ -2450,14 +2470,23 @@ bool driver_init (void)
     for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
         output = &outputpin[i];
         if(output->group == PinGroup_AuxOutput) {
-            if(aux_outputs.pins.outputs == NULL)
-                aux_outputs.pins.outputs = output;
-            output->id = (pin_function_t)(Output_Aux0 + aux_outputs.n_pins++);
+            if(aux_digital_out.pins.outputs == NULL)
+                aux_digital_out.pins.outputs = output;
+            output->id = (pin_function_t)(Output_Aux0 + aux_digital_out.n_pins++);
+        } else if(output->group == PinGroup_AuxOutputAnalog) {
+            if(aux_analog_out.pins.outputs == NULL)
+                aux_analog_out.pins.outputs = output;
+            output->id = (pin_function_t)(Output_Analog_Aux0 + aux_analog_out.n_pins++);
         }
     }
 
 #ifdef HAS_IOPORTS
-    ioports_init(&aux_inputs, &aux_outputs);
+    if(aux_digital_in.n_pins || aux_digital_out.n_pins)
+        ioports_init(&aux_digital_in, &aux_digital_out);
+  #if AUX_ANALOG
+    if(aux_analog_out.n_pins)
+        ioports_init_analog(NULL, &aux_analog_out);
+  #endif
 #endif
 
 #ifdef HAS_BOARD_INIT

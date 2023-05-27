@@ -95,15 +95,20 @@ static void add_pin (xbar_t *gpio, void *data)
 
 void wizchip_reset (void)
 {
-    DIGITAL_OUT(hw.rst.port, hw.rst.pin, 0);
-    hal.delay_ms(2, NULL);
-    DIGITAL_OUT(hw.rst.port, hw.rst.pin, 1);
-    hal.delay_ms(10, NULL);
+    if(hw.rst.port) {
+        DIGITAL_OUT(hw.rst.port, hw.rst.pin, 0);
+        hal.delay_ms(2, NULL);
+        DIGITAL_OUT(hw.rst.port, hw.rst.pin, 1);
+        hal.delay_ms(10, NULL);
+    }
 }
 
 wizchip_init_err_t wizchip_initialize (void)
 {
     hal.enumerate_pins(true, add_pin, NULL);
+
+    // if(hw.cs.port == NULL)
+    //    return error.
 
     wizchip_deselect();
 
