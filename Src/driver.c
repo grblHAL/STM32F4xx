@@ -517,8 +517,10 @@ static spindle_encoder_t spindle_encoder = {
 static spindle_sync_t spindle_tracker;
 #if RPM_COUNTER_N == 2
 static volatile uint32_t rpm_timer_ovf = 0;
+#define RPM_TIMER_RESOLUTION 1
 #define RPM_TIMER_COUNT (RPM_TIMER->CNT | (rpm_timer_ovf << 16))
 #else
+#define RPM_TIMER_RESOLUTION 1
 #define RPM_TIMER_COUNT RPM_TIMER->CNT
 #endif
 
@@ -1558,8 +1560,8 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
             spindle_encoder.ppr = settings->spindle.ppr;
             spindle_encoder.tics_per_irq = max(1, spindle_encoder.ppr / 32);
             spindle_encoder.pulse_distance = 1.0f / spindle_encoder.ppr;
-            spindle_encoder.maximum_tt = (uint32_t)(2.0f / timer_resolution) / spindle_encoder.tics_per_irq;
-            spindle_encoder.rpm_factor = 60.0f / ((timer_resolution * (float)spindle_encoder.ppr));
+            spindle_encoder.maximum_tt = 250000UL / RPM_TIMER_RESOLUTION; // 250ms
+            spindle_encoder.rpm_factor = (60.0f * 1000000.0f / RPM_TIMER_RESOLUTION) / (float)spindle_encoder.ppr;
             spindleDataReset();
         }
 
@@ -2125,15 +2127,15 @@ static bool driver_setup (settings_t *settings)
     RPM_TIMER_CLOCK_ENA();
     RPM_TIMER->CR1 = TIM_CR1_CKD_1|TIM_CR1_URS;
 #if timerAPB2(RPM_TIMER_N)
-    RPM_TIMER->PSC = HAL_RCC_GetPCLK2Freq() * TIMER_CLOCK_MUL(clock_cfg.APB2CLKDivider) / 1000000UL - 1;
+    RPM_TIMER->PSC = HAL_RCC_GetPCLK2Freq() * TIMER_CLOCK_MUL(clock_cfg.APB2CLKDivider) / 1000000UL * RPM_TIMER_RESOLUTION - 1;
 #else
-    RPM_TIMER->PSC = HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock_cfg.APB1CLKDivider) / 1000000UL - 1;
+    RPM_TIMER->PSC = HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock_cfg.APB1CLKDivider) / 1000000UL * RPM_TIMER_RESOLUTION - 1;
 #endif
     RPM_TIMER->DIER |= TIM_DIER_UIE;
     RPM_TIMER->CR1 |= TIM_CR1_CEN;
 
     HAL_NVIC_EnableIRQ(RPM_TIMER_IRQn);
-    HAL_NVIC_SetPriority(RPM_COUNTER_IRQn, 1, 1);
+    HAL_NVIC_SetPriority(RPM_COUNTER_IRQn, 0, 0);
 
 //    RPM_COUNTER->SMCR = TIM_SMCR_SMS_0|TIM_SMCR_SMS_1|TIM_SMCR_SMS_2|TIM_SMCR_ETF_2|TIM_SMCR_ETF_3|TIM_SMCR_TS_0|TIM_SMCR_TS_1|TIM_SMCR_TS_2;
     RPM_COUNTER_CLOCK_ENA();
@@ -2308,7 +2310,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230513";
+    hal.driver_version = "230529";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
