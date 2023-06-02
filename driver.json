@@ -84,6 +84,28 @@
       }
     },
     {
+      "name": "BlackPill Alt. 2 (STM32F411)",
+      "symbol": "BOARD_BLACKPILL_ALT2",
+      "URL": "",
+      "MAP": "Inc/blackpill_alt2_map.h",
+      "caps": {
+        "axes": 4,
+        "digital_in": 1,
+        "digital_out": 2,
+        "eeprom": 1,
+        "fram": 0,
+        "i2c": 1,
+        "sdcard": 0,
+        "spindle_sync": 1,
+        "keypad": 1,
+        "pio_board": "blackpill_f411ce",
+        "ldscript": "STM32F411CEUX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F411xE": ""
+      }
+    },
+    {
       "name": "BTT SKR-2",
       "symbol": "BOARD_BTT_SKR_20",
       "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-2.html",

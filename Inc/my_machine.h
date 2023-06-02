@@ -28,6 +28,7 @@
 //#define BOARD_MORPHO_CNC      // For use with Nucleo-F411RE and F446RE boards. Work in progress.
 //#define BOARD_MORPHO_DAC_CNC  // For use with F446RE boards and a 32-bit I2S stereo DAC for X and Y output. **EXPERIMENTAL**
 //#define BOARD_BLACKPILL       // For use with F411 BlackPill, with optional auto square support for one axis
+//#define BOARD_BLACKPILL_ALT2  // For use with F411 BlackPill, with optional auto square support for one axis, I2C and spindle sync
 //#define BOARD_MINI_BLACKPILL  // For use with F411 BlackPill, https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL
 //#define BOARD_BTT_SKR_PRO_1_1 // F407 based 3D Printer board
 //#define BOARD_BTT_SKR_PRO_1_2 // F407 based 3D Printer board
@@ -61,7 +62,7 @@
 //#define BLUETOOTH_ENABLE     2 // Set to 2 for HC-05 module. Requires and claims one auxillary input pin.
 //#define VFD_ENABLE           1 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
-//#define _WIZCHIP_            5500 // Enables ethernet via WIZnet breakout conected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
+//#define _WIZCHIP_            5500 // Enables ethernet via WIZnet breakout connected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
 //#define SDCARD_ENABLE        1 // Run gcode programs from SD card. Set to 2 to enable YModem upload.
 //#define MPG_ENABLE           1 // Enable MPG interface. Requires serial port and one handshake pin unless
                                  // KEYPAD_ENABLE is set to 2 when mode switching is done by the CMD_MPG_MODE_TOGGLE (0x8B)

@@ -132,6 +132,8 @@
   #include "cnc3040_map.h"
 #elif defined(BOARD_BLACKPILL)
   #include "blackpill_map.h"
+#elif defined(BOARD_BLACKPILL_ALT2)
+  #include "blackpill_alt2_map.h"
 #elif defined(BOARD_BTT_SKR_PRO_1_1)
   #include "btt_skr_pro_v1_1_map.h"
 #elif defined(BOARD_BTT_SKR_20)
