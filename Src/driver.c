@@ -1542,6 +1542,8 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 
 #if SPINDLE_SYNC_ENABLE
 
+        spindle_tracker.min_cycles_per_tick = hal.f_step_timer / (uint32_t)(settings->axis[Z_AXIS].max_rate * settings->axis[Z_AXIS].steps_per_mm / 60.0f);
+
         if((hal.spindle_data.get = settings->spindle.ppr > 0 ? spindleGetData : NULL) &&
              (spindle_encoder.ppr != settings->spindle.ppr || pidf_config_changed(&spindle_tracker.pid, &settings->position.pid))) {
 
@@ -1551,12 +1553,6 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 
             pidf_init(&spindle_tracker.pid, &settings->position.pid);
 
-#if RPM_COUNTER_N == 2
-            float timer_resolution = 1.0f / 50000.0f; // 50 us resolution
-#else
-            float timer_resolution = 1.0f / 1000000.0f; // 1 us resolution
-#endif
-            spindle_tracker.min_cycles_per_tick = HAL_RCC_GetPCLK2Freq() / (uint32_t)(settings->axis[Z_AXIS].max_rate * settings->axis[Z_AXIS].steps_per_mm / 60.0f);
             spindle_encoder.ppr = settings->spindle.ppr;
             spindle_encoder.tics_per_irq = max(1, spindle_encoder.ppr / 32);
             spindle_encoder.pulse_distance = 1.0f / spindle_encoder.ppr;
@@ -2310,7 +2306,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230602";
+    hal.driver_version = "230605";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
