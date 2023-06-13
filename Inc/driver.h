@@ -533,10 +533,6 @@
 #endif
 
 #if MODBUS_ENABLE
-#include "spindle/modbus.h"
-#endif
-
-#if MODBUS_ENABLE
 #define MODBUS_TEST 1
 #else
 #define MODBUS_TEST 0
