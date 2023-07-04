@@ -63,17 +63,6 @@
 
 #if QEI_ENABLE
 #include "encoder/encoder.h"
-#define QEI_A_BIT (1<<QEI_A_PIN)
-#define QEI_B_BIT (1<<QEI_B_PIN)
- #ifdef QEI_SELECT_PIN
-  #define QEI_SELECT_BIT (1<<QEI_SELECT_PIN)
- #else
-  #define QEI_SELECT_BIT 0
- #endif
-#else
-#define QEI_A_BIT 0
-#define QEI_B_BIT 0
-#define QEI_SELECT_BIT 0
 #endif
 
 #if FLASH_ENABLE
@@ -90,43 +79,17 @@
   #endif
 #endif
 
-#ifndef SPI_IRQ_BIT
-#define SPI_IRQ_BIT 0
-#endif
+#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|DEVICES_IRQ_MASK)
 
-#if !I2C_STROBE_ENABLE
-#define I2C_STROBE_BIT 0
-#endif
-
-#if !SPINDLE_SYNC_ENABLE
-#define SPINDLE_INDEX_BIT 0
-#else
-#ifndef SPINDLE_INDEX_BIT
-#define SPINDLE_INDEX_BIT (1<<SPINDLE_INDEX_PIN)
-#endif
-#ifndef SPINDLE_PULSE_BIT
-#define SPINDLE_PULSE_BIT (1<<SPINDLE_PULSE_PIN)
-#endif
-#endif
-
-#if !SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_BIT 0
-#endif
-
-#ifdef MPG_MODE_PIN
-#define MPG_MODE_BIT (1<<MPG_MODE_PIN)
-#else
-#define MPG_MODE_BIT 0
-#endif
-
-#if CONTROL_MASK != CONTROL_MASK_SUM
+#if DRIVER_IRQMASK != (LIMIT_MASK_SUM+CONTROL_MASK_SUM+DEVICES_IRQ_MASK_SUM)
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
 
-#define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|I2C_STROBE_BIT|SPI_IRQ_BIT|SPINDLE_INDEX_BIT|MPG_MODE_BIT|QEI_A_BIT|QEI_B_BIT|QEI_SELECT_BIT)
-
-#if DRIVER_IRQMASK != (LIMIT_MASK_SUM+CONTROL_MASK_SUM+I2C_STROBE_BIT+SPI_IRQ_BIT+SPINDLE_INDEX_BIT+MPG_MODE_BIT+QEI_A_BIT+QEI_B_BIT+QEI_SELECT_BIT)
-#error Interrupt enabled input pins must have unique pin numbers!
+// TODO: Use IRQ based SR latch for probe input if possible
+#if defined(PROBE_PIN) && (DRIVER_IRQMASK & PROBE_BIT) == 0
+#define PROBE_IRQ_BIT 0 // PROBE_BIT
+#else
+#define PROBE_IRQ_BIT 0
 #endif
 
 #define STEPPER_TIMER_DIV 4
@@ -465,40 +428,54 @@ static bool IOInitDone = false, limits_irq_enabled = false;
 static axes_signals_t next_step_outbits;
 static delay_t delay = { .ms = 1, .callback = NULL }; // NOTE: initial ms set to 1 for "resetting" systick timer on startup
 static debounce_t debounce;
+
 #ifdef PROBE_PIN
 static probe_state_t probe = {
     .connected = On
 };
+#if PROBE_IRQ_BIT
+static input_signal_t *probe_input;
 #endif
+#endif // PROBE_PIN
 
-#if I2C_STROBE_ENABLE
+#if I2C_STROBE_BIT || SPI_IRQ_BIT
+
+#if I2C_STROBE_BIT
 static driver_irq_handler_t i2c_strobe = { .type = IRQ_I2C_Strobe };
 #endif
 
-#ifdef SPI_IRQ_PIN
+#if SPI_IRQ_BIT
 static driver_irq_handler_t spi_irq = { .type = IRQ_SPI };
 #endif
 
-#if I2C_STROBE_ENABLE || defined(SPI_IRQ_PIN)
-
 static bool irq_claim (irq_type_t irq, uint_fast8_t id, irq_callback_ptr handler)
 {
-    bool ok;
+    bool ok = false;
 
-#if I2C_STROBE_ENABLE
-    if((ok = irq == IRQ_I2C_Strobe && i2c_strobe.callback == NULL))
-        i2c_strobe.callback = handler;
+    switch(irq) {
+
+#if I2C_STROBE_BIT
+        case IRQ_I2C_Strobe:
+            if((ok = i2c_strobe.callback == NULL))
+                i2c_strobe.callback = handler;
+            break;
 #endif
 
-#ifdef SPI_IRQ_PIN
-    if((ok = irq == IRQ_SPI && spi_irq.callback == NULL))
-        spi_irq.callback = handler;
+#ifdef SPI_IRQ_BIT
+        case IRQ_SPI:
+            if((ok = spi_irq.callback == NULL))
+                spi_irq.callback = handler;
+            break;
 #endif
+
+        default:
+            break;
+    }
 
     return ok;
 }
 
-#endif
+#endif // I2C_STROBE_BIT || SPI_IRQ_BIT
 
 #include "grbl/stepdir_map.h"
 
@@ -1109,14 +1086,25 @@ static control_signals_t systemGetState (void)
 
 #ifdef PROBE_PIN
 
+// Toggle probe connected status. Used when no input pin is available.
+static void probeConnectedToggle (void)
+{
+    probe.connected = !probe.connected;
+}
+
 // Sets up the probe pin invert mask to
 // appropriately set the pin logic according to setting for normal-high/normal-low operation
 // and the probing cycle modes for toward-workpiece/away-from-workpiece.
 static void probeConfigure (bool is_probe_away, bool probing)
 {
-    probe.triggered = Off;
-    probe.is_probing = probing;
     probe.inverted = is_probe_away ? !settings.probe.invert_probe_pin : settings.probe.invert_probe_pin;
+#if PROBE_IRQ_BIT
+    probe.triggered = hal.probe.get_state().triggered;
+    gpio_irq_enable(probe_input, probing && !probe.triggered ? (probe.inverted ? IRQ_Mode_Falling : IRQ_Mode_Rising) : IRQ_Mode_None);
+#else
+    probe.triggered = Off;
+#endif
+    probe.is_probing = probing;
 }
 
 // Returns the probe connected and triggered pin states.
@@ -1125,12 +1113,15 @@ probe_state_t probeGetState (void)
     probe_state_t state = {0};
 
     state.connected = probe.connected;
+#if PROBE_IRQ_BIT
+    state.triggered = probe.is_probing ? probe.triggered : DIGITAL_IN(PROBE_PORT, PROBE_PIN) ^ probe.inverted;
+#else
     state.triggered = DIGITAL_IN(PROBE_PORT, PROBE_PIN) ^ probe.inverted;
-
+#endif
     return state;
 }
 
-#endif
+#endif // PROBE_PIN
 
 #ifdef DRIVER_SPINDLE
 
@@ -1512,6 +1503,24 @@ static uint32_t getElapsedTicks (void)
     return uwTick;
 }
 
+void gpio_irq_enable (const input_signal_t *input, pin_irq_mode_t irq_mode)
+{
+    if(irq_mode == IRQ_Mode_Rising) {
+        EXTI->RTSR |= input->bit;
+        EXTI->FTSR &= ~input->bit;
+    } else if(irq_mode == IRQ_Mode_Falling) {
+        EXTI->RTSR &= ~input->bit;
+        EXTI->FTSR |= input->bit;
+    } else if(irq_mode == IRQ_Mode_Change) {
+        EXTI->RTSR |= input->bit;
+        EXTI->FTSR |= input->bit;
+    } else
+        EXTI->IMR &= ~input->bit;   // Disable pin interrupt
+
+    if(irq_mode != IRQ_Mode_None)
+        EXTI->IMR |= input->bit;    // Enable pin interrupt
+}
+
 // Configures peripherals when settings are initialized or changed
 void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 {
@@ -1584,25 +1593,25 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
          *  Control pins config  *
          *************************/
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<0)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<0)
         HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 #endif
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<1)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<1)
         HAL_NVIC_DisableIRQ(EXTI1_IRQn);
 #endif
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<2)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<2)
         HAL_NVIC_DisableIRQ(EXTI2_IRQn);
 #endif
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<3)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<3)
         HAL_NVIC_DisableIRQ(EXTI3_IRQn);
 #endif
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<4)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<4)
         HAL_NVIC_DisableIRQ(EXTI4_IRQn);
 #endif
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & 0x03E0
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & 0x03E0
         HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 #endif
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & 0xFC00
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & 0xFC00
         HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
 #endif
 
@@ -1652,9 +1661,14 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                     input->irq_mode = control_fei.safety_door_ajar ? IRQ_Mode_Falling : IRQ_Mode_Rising;
                     break;
 
+#ifdef PROBE_PIN
                 case Input_Probe:
-                    pullup = hal.driver_cap.probe_pull_up;
-                    break;
+                   pullup = hal.driver_cap.probe_pull_up;
+  #if PROBE_IRQ_BIT
+                   input->irq_mode = hal.probe.get_state().triggered ? IRQ_Mode_Falling : IRQ_Mode_Rising;
+  #endif
+                   break;
+#endif
 
                 case Input_LimitX:
                 case Input_LimitX_2:
@@ -1778,7 +1792,7 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 
         } while(i);
 
-        uint32_t irq_mask = DRIVER_IRQMASK|aux_irq;
+        uint32_t irq_mask = DRIVER_IRQMASK|PROBE_IRQ_BIT|aux_irq;
 
         __HAL_GPIO_EXTI_CLEAR_IT(irq_mask);
 
@@ -2306,7 +2320,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230605";
+    hal.driver_version = "230701";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2342,6 +2356,7 @@ bool driver_init (void)
 #ifdef PROBE_PIN
     hal.probe.get_state = probeGetState;
     hal.probe.configure = probeConfigure;
+    hal.probe.connected_toggle = probeConnectedToggle;
 #endif
 
     hal.control.get_state = systemGetState;
@@ -2460,8 +2475,12 @@ bool driver_init (void)
             input->id = (pin_function_t)(Input_Aux0 + aux_digital_in.n_pins++);
             input->bit = 1 << input->pin;
             input->cap.pull_mode = PullMode_UpDown;
-            input->cap.irq_mode = (DRIVER_IRQMASK & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
+            input->cap.irq_mode = ((DRIVER_IRQMASK|PROBE_IRQ_BIT) & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
         }
+#if PROBE_IRQ_BIT
+        else if(input->group == PinGroup_Probe)
+            probe_input = input;
+#endif
     }
 
     output_signal_t *output;
@@ -2653,9 +2672,9 @@ void RPM_TIMER_IRQHandler (void)
 
 #endif
 
-#endif
+#endif // SPINDLE_SYNC_ENABLE
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<0)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<0)
 
 void EXTI0_IRQHandler(void)
 {
@@ -2668,17 +2687,30 @@ void EXTI0_IRQHandler(void)
         if(!(debounce.door = debounce_start()))
   #endif
         hal.control.interrupt_callback(systemGetState());
-#elif defined(I2C_STROBE_ENABLE) && I2C_STROBE_BIT & (1<<0)
+#elif LIMIT_MASK & (1<<0)
+        if(!(debounce.limits = debounce_start()))
+            hal.limits.interrupt_callback(limitsGetState());
+#elif PROBE_IRQ_BIT & (1<<0)
+        probe.triggered = On;
+#elif MPG_MODE_BIT && (1<<0)
+        protocol_enqueue_rt_command(mpg_select);
+#elif I2C_STROBE_BIT & (1<<0)
         if(i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #elif SPI_IRQ_BIT & (1<<0)
         if(spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
-#elif LIMIT_MASK & (1<<0)
-        if(!(debounce.limits = debounce_start()))
-            hal.limits.interrupt_callback(limitsGetState());
 #elif AUXINPUT_MASK & (1<<0)
         ioports_event(ifg);
+#elif SPINDLE_INDEX_BIT & (1<<0)
+        uint32_t rpm_count = RPM_COUNTER->CNT;
+        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
+
+        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
+            spindle_encoder.error_count++;
+
+        spindle_encoder.counter.last_index = rpm_count;
+        spindle_encoder.counter.index_count++;
 #elif QEI_SELECT_ENABLED && (QEI_SELECT_BIT & (1<<0))
         if(!(debounce.qei_select = debounce_start()))
             qei_select_handler();
@@ -2688,7 +2720,7 @@ void EXTI0_IRQHandler(void)
 
 #endif
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<1)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<1)
 
 void EXTI1_IRQHandler(void)
 {
@@ -2704,11 +2736,27 @@ void EXTI1_IRQHandler(void)
 #elif LIMIT_MASK & (1<<1)
         if(!(debounce.limits = debounce_start()))
             hal.limits.interrupt_callback(limitsGetState());
-#elif AUXINPUT_MASK & (1<<1)
-        ioports_event(ifg);
+#elif PROBE_IRQ_BIT & (1<<1)
+        probe.triggered = On;
+#elif MPG_MODE_BIT && (1<<1)
+        protocol_enqueue_rt_command(mpg_select);
+#elif I2C_STROBE_BIT & (1<<1)
+        if(i2c_strobe.callback)
+            i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #elif SPI_IRQ_BIT & (1<<1)
         if(spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
+#elif AUXINPUT_MASK & (1<<1)
+        ioports_event(ifg);
+#elif SPINDLE_INDEX_BIT & (1<<1)
+        uint32_t rpm_count = RPM_COUNTER->CNT;
+        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
+
+        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
+            spindle_encoder.error_count++;
+
+        spindle_encoder.counter.last_index = rpm_count;
+        spindle_encoder.counter.index_count++;
 #elif QEI_SELECT_ENABLED && (QEI_SELECT_BIT & (1<<1))
         if(!(debounce.qei_select = debounce_start()))
             qei_select_handler();
@@ -2718,7 +2766,7 @@ void EXTI1_IRQHandler(void)
 
 #endif
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<2)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<2)
 
 void EXTI2_IRQHandler(void)
 {
@@ -2732,24 +2780,39 @@ void EXTI2_IRQHandler(void)
  #endif
         hal.control.interrupt_callback(systemGetState());
 #elif LIMIT_MASK & (1<<2)
-        if(hal.driver_cap.software_debounce) {
-            debounce.limits = On;
-            DEBOUNCE_TIMER->EGR = TIM_EGR_UG;
-            DEBOUNCE_TIMER->CR1 |= TIM_CR1_CEN; // Start debounce timer (40ms)
-        } else
+        if(!(debounce.limits = debounce_start()))
             hal.limits.interrupt_callback(limitsGetState());
-#elif AUXINPUT_MASK & (1<<2)
-        ioports_event(ifg);
+#elif PROBE_IRQ_BIT & (1<<2)
+        probe.triggered = On;
+#elif MPG_MODE_BIT && (1<<2)
+        protocol_enqueue_rt_command(mpg_select);
+#elif I2C_STROBE_BIT & (1<<2)
+        if(i2c_strobe.callback)
+            i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #elif SPI_IRQ_BIT & (1<<2)
         if(spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
+#elif AUXINPUT_MASK & (1<<2)
+        ioports_event(ifg);
+#elif SPINDLE_INDEX_BIT & (1<<2)
+        uint32_t rpm_count = RPM_COUNTER->CNT;
+        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
+
+        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
+            spindle_encoder.error_count++;
+
+        spindle_encoder.counter.last_index = rpm_count;
+        spindle_encoder.counter.index_count++;
+#elif QEI_SELECT_ENABLED && (QEI_SELECT_BIT & (1<<2))
+        if(!(debounce.qei_select = debounce_start()))
+            qei_select_handler();
 #endif
     }
 }
 
 #endif
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<3)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<3)
 
 void EXTI3_IRQHandler(void)
 {
@@ -2765,29 +2828,37 @@ void EXTI3_IRQHandler(void)
 #elif LIMIT_MASK & (1<<3)
         if(!(debounce.limits = debounce_start()))
             hal.limits.interrupt_callback(limitsGetState());
-#elif AUXINPUT_MASK & (1<<3)
-        ioports_event(ifg);
+#elif PROBE_IRQ_BIT & (1<<3)
+        probe.triggered = On;
+#elif MPG_MODE_BIT && (1<<3)
+        protocol_enqueue_rt_command(mpg_select);
+#elif I2C_STROBE_BIT & (1<<3)
+        if(i2c_strobe.callback)
+            i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #elif SPI_IRQ_BIT & (1<<3)
         if(spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
-#elif SPINDLE_INDEX_PIN == 3
-        if(ifg & SPINDLE_INDEX_BIT) {
-            uint32_t rpm_count = RPM_COUNTER->CNT;
-            spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
+#elif AUXINPUT_MASK & (1<<3)
+        ioports_event(ifg);
+#elif SPINDLE_INDEX_BIT & (1<<3)
+        uint32_t rpm_count = RPM_COUNTER->CNT;
+        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
 
-            if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-                spindle_encoder.error_count++;
+        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
+            spindle_encoder.error_count++;
 
-            spindle_encoder.counter.last_index = rpm_count;
-            spindle_encoder.counter.index_count++;
-        }
+        spindle_encoder.counter.last_index = rpm_count;
+        spindle_encoder.counter.index_count++;
+#elif QEI_SELECT_ENABLED && (QEI_SELECT_BIT & (1<<3))
+        if(!(debounce.qei_select = debounce_start()))
+            qei_select_handler();
 #endif
     }
 }
 
 #endif
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<4)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (1<<4)
 
 void EXTI4_IRQHandler(void)
 {
@@ -2803,18 +2874,37 @@ void EXTI4_IRQHandler(void)
 #elif LIMIT_MASK & (1<<4)
         if(!(debounce.limits = debounce_start()))
             hal.limits.interrupt_callback(limitsGetState());
-#elif AUXINPUT_MASK & (1<<4)
-        ioports_event(ifg);
+#elif PROBE_IRQ_BIT & (1<<4)
+        probe.triggered = On;
+#elif MPG_MODE_BIT && (1<<4)
+        protocol_enqueue_rt_command(mpg_select);
+#elif I2C_STROBE_BIT & (1<<4)
+        if(i2c_strobe.callback)
+            i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #elif SPI_IRQ_BIT & (1<<4)
         if(spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
+#elif AUXINPUT_MASK & (1<<4)
+        ioports_event(ifg);
+#elif SPINDLE_INDEX_BIT & (1<<4)
+        uint32_t rpm_count = RPM_COUNTER->CNT;
+        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
+
+        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
+            spindle_encoder.error_count++;
+
+        spindle_encoder.counter.last_index = rpm_count;
+        spindle_encoder.counter.index_count++;
+#elif QEI_SELECT_ENABLED && (QEI_SELECT_BIT & (1<<4))
+        if(!(debounce.qei_select = debounce_start()))
+            qei_select_handler();
 #endif
     }
 }
 
 #endif
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK|MPG_MODE_BIT) & (0x03E0)
+#if ((DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & 0x03E0)
 
 void EXTI9_5_IRQHandler(void)
 {
@@ -2826,6 +2916,24 @@ void EXTI9_5_IRQHandler(void)
 #if SPI_IRQ_BIT & 0x03E0
         if((ifg & SPI_IRQ_BIT) && spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
+#endif
+#if SPINDLE_INDEX_BIT & 0x03E0
+        if(ifg & SPINDLE_INDEX_BIT) {
+            uint32_t rpm_count = RPM_COUNTER->CNT;
+            spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
+
+            if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
+                spindle_encoder.error_count++;
+
+            spindle_encoder.counter.last_index = rpm_count;
+            spindle_encoder.counter.index_count++;
+        }
+#endif
+#if QEI_SELECT_ENABLED && (QEI_SELECT_BIT & 0x03E0)
+        if(ifg & QEI_SELECT_BIT) {
+            if(!(debounce.qei_select = debounce_start()))
+                qei_select_handler();
+        }
 #endif
 #if CONTROL_MASK & 0x03E0
         if(ifg & CONTROL_MASK) {
@@ -2841,11 +2949,15 @@ void EXTI9_5_IRQHandler(void)
                 hal.limits.interrupt_callback(limitsGetState());
         }
 #endif
-#if I2C_STROBE_ENABLE && (I2C_STROBE_BIT & 0x03E0)
+#if PROBE_IRQ_BIT & 0x03E0
+        if(ifg & PROBE_IRQ_BIT)
+            probe.triggered = On;
+#endif
+#if I2C_STROBE_BIT & 0x03E0
         if((ifg & I2C_STROBE_BIT) && i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #endif
-#if MPG_MODE_BIT && (MPG_MODE_BIT & 0x03E0)
+#if MPG_MODE_BIT & 0x03E0
         if(ifg & MPG_MODE_BIT)
             protocol_enqueue_rt_command(mpg_select);
 #endif
@@ -2858,7 +2970,7 @@ void EXTI9_5_IRQHandler(void)
 
 #endif
 
-#if (DRIVER_IRQMASK|AUXINPUT_MASK) & (0xFC00)
+#if (DRIVER_IRQMASK|PROBE_IRQ_BIT|AUXINPUT_MASK) & (0xFC00)
 
 void EXTI15_10_IRQHandler(void)
 {
@@ -2871,7 +2983,7 @@ void EXTI15_10_IRQHandler(void)
         if((ifg & SPI_IRQ_BIT) && spi_irq.callback)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #endif
-#ifdef SPINDLE_INDEX_PORT
+#if SPINDLE_INDEX_BIT & 0xFC00
         if(ifg & SPINDLE_INDEX_BIT) {
             uint32_t rpm_count = RPM_COUNTER->CNT;
             spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
@@ -2897,17 +3009,19 @@ void EXTI15_10_IRQHandler(void)
 #endif
 #if LIMIT_MASK & 0xFC00
         if(ifg & LIMIT_MASK) {
-            DIGITAL_OUT(COOLANT_FLOOD_PORT, COOLANT_FLOOD_PIN, 1);
-
             if(!(debounce.limits = debounce_start()))
                 hal.limits.interrupt_callback(limitsGetState());
         }
 #endif
-#if I2C_STROBE_ENABLE && (I2C_STROBE_BIT & 0xFC00)
+#if PROBE_IRQ_BIT & 0xFC00
+        if(ifg & PROBE_IRQ_BIT)
+            probe.triggered = On;
+#endif
+#if I2C_STROBE_BIT & 0xFC00
         if((ifg & I2C_STROBE_BIT) && i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
 #endif
-#if MPG_MODE_BIT && (MPG_MODE_BIT & 0xFC00)
+#if MPG_MODE_BIT & 0xFC00
         if(ifg & MPG_MODE_BIT)
             protocol_enqueue_rt_command(mpg_select);
 #endif

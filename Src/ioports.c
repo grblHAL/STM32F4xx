@@ -43,24 +43,6 @@ static void digital_out (uint8_t port, bool on)
     }
 }
 
-static void enable_irq (const input_signal_t *input, pin_irq_mode_t irq_mode)
-{
-    if(irq_mode == IRQ_Mode_Rising) {
-        EXTI->RTSR |= input->bit;
-        EXTI->FTSR &= ~input->bit;
-    } else if(irq_mode == IRQ_Mode_Falling) {
-        EXTI->RTSR &= ~input->bit;
-        EXTI->FTSR |= input->bit;
-    } else if(irq_mode == IRQ_Mode_Change) {
-        EXTI->RTSR |= input->bit;
-        EXTI->FTSR |= input->bit;
-    } else
-        EXTI->IMR &= ~input->bit;   // Disable pin interrupt
-
-    if(irq_mode != IRQ_Mode_None)
-        EXTI->IMR |= input->bit;    // Enable pin interrupt
-}
-
 inline static __attribute__((always_inline)) int32_t get_input (const input_signal_t *input, bool invert, wait_mode_t wait_mode, float timeout)
 {
     if(wait_mode == WaitMode_Immediate)
@@ -76,7 +58,7 @@ inline static __attribute__((always_inline)) int32_t get_input (const input_sign
         if(input->cap.irq_mode & irq_mode) {
 
             event_bits &= ~input->bit;
-            enable_irq(input, irq_mode);
+            gpio_irq_enable(input, irq_mode);
 
             do {
                 if(event_bits & input->bit) {
@@ -90,7 +72,7 @@ inline static __attribute__((always_inline)) int32_t get_input (const input_sign
                     break;
             } while(--delay && !sys.abort);
 
-            enable_irq(input, input->irq_mode);    // Restore pin interrupt status
+            gpio_irq_enable(input, input->irq_mode);    // Restore pin interrupt status
         }
 
     } else {
@@ -154,7 +136,7 @@ static bool register_interrupt_handler (uint8_t port, pin_irq_mode_t irq_mode, i
         if((ok = (irq_mode & input->cap.irq_mode) == irq_mode && interrupt_callback != NULL)) {
             input->irq_mode = irq_mode;
             input->interrupt_callback = interrupt_callback;
-            enable_irq(input, irq_mode);
+            gpio_irq_enable(input, irq_mode);
         }
 
         if(irq_mode == IRQ_Mode_None || !ok) {

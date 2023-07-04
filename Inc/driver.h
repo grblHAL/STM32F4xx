@@ -651,6 +651,7 @@ typedef struct {
 
 bool driver_init (void);
 void Driver_IncTick (void);
+void gpio_irq_enable (const input_signal_t *input, pin_irq_mode_t irq_mode);
 #ifdef HAS_BOARD_INIT
 void board_init (void);
 #endif
