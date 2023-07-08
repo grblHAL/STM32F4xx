@@ -156,7 +156,7 @@ HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT;  /* 1KHz */
   */
 HAL_StatusTypeDef HAL_Init(void)
 {
-  /* Configure Flash prefetch, Instruction cache, Data cache */ 
+  /* Configure Flash prefetch, Instruction cache, Data cache */
 #if (INSTRUCTION_CACHE_ENABLE != 0U)
   __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
 #endif /* INSTRUCTION_CACHE_ENABLE */

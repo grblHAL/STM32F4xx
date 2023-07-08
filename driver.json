@@ -116,7 +116,7 @@
         "digital_in": 0,
         "digital_out": 0,
         "eeprom": 0,
-        "sdcard": 0,
+        "sdcard": 1,
         "i2c": 1,
         "trinamic_spi_cs": 1,
         "trinamic_spi_chain": 0,

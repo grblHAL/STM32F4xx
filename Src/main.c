@@ -282,6 +282,15 @@ static void SystemClock_Config(void)
         Error_Handler();
     }
 
+#if defined(NUCLEO144_F446)
+
+    if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+#endif
+
 #ifndef APB1CLKDIV
 #define APB1CLKDIV RCC_HCLK_DIV2
 #endif

@@ -594,8 +594,13 @@
 #error I2C strobe not supported!
 #endif
 
-#if SDCARD_ENABLE && !defined(SD_CS_PORT)
+#if SDCARD_ENABLE
+#ifndef SDCARD_SDIO
+#define SDCARD_SDIO 0
+#endif
+#if !SDCARD_SDIO && !defined(SD_CS_PORT)
 #error SD card plugin not supported!
+#endif
 #endif
 
 #if I2C_ENABLE && !defined(I2C_PORT)

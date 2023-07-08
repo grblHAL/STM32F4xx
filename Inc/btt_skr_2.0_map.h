@@ -43,7 +43,7 @@
 
 // If we want to debug, we need to use USART1
 #if defined(DEBUG) && defined(USB_SERIAL_CDC)
-#undef USB_SERIAL_CDC
+//#undef USB_SERIAL_CDC
 #endif
 
 // Define step pulse output pins.
@@ -153,21 +153,19 @@
 #define STEPPERS_POWER_PORT         GPIOC
 #define STEPPERS_POWER_PIN          13
 
-// XXXXX
-// SKR-2 has SD/MMC interface and does not work in SPI mode
 #if SDCARD_ENABLE
-#error "SD SDIO/MMC interface does not support SPI."
+#define SDCARD_SDIO                 1
 #endif
 
 #if ETHERNET_ENABLE
 #undef SPI_ENABLE
 #define SPI_ENABLE 1
-#define SPI_CS_PORT             GPIOB
-#define SPI_CS_PIN              12                              // ESP-CS
-#define SPI_IRQ_PORT            GPIOB
-#define SPI_IRQ_PIN             10                              // ESP-IO0
-#define SPI_RST_PORT            GPIOB
-#define SPI_RST_PIN             11                              // ESP-IO1
+#define SPI_CS_PORT                 GPIOB
+#define SPI_CS_PIN                  12                              // ESP-CS
+#define SPI_IRQ_PORT                GPIOB
+#define SPI_IRQ_PIN                 10                              // ESP-IO0
+#define SPI_RST_PORT                GPIOB
+#define SPI_RST_PIN                 11                              // ESP-IO1
 #endif
 
 #if TRINAMIC_UART_ENABLE

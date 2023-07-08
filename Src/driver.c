@@ -40,9 +40,13 @@
 #endif
 
 #if SDCARD_ENABLE
+
 #include "sdcard/sdcard.h"
 #include "ff.h"
 #include "diskio.h"
+
+extern void disk_timerproc (void);
+
 #endif
 
 #if USB_SERIAL_CDC
@@ -1992,6 +1996,84 @@ static void encoder_event (encoder_t *encoder, int32_t position)
 
 #endif // QEI_ENABLE
 
+#if SDCARD_SDIO
+
+#include "Drivers/FATFS/App/fatfs.h"
+#include "Drivers/FATFS/App/fatfs.h"
+
+static bool bus_ok = false;
+
+static bool sdcard_unmount (FATFS **fs)
+{
+   /*
+    if(card && esp_vfs_fat_sdcard_unmount("/sdcard", card) == ESP_OK) {
+        card = NULL;
+        bus_ok = false;
+        spi_bus_free(SDSPI_DEFAULT_HOST);
+    }
+*/
+    return false; // card == NULL;
+}
+
+static char *sdcard_mount (FATFS **fs)
+{
+    MX_FATFS_Init();
+
+    if(!bus_ok)
+        bus_ok = BSP_SD_Init() == MSD_OK;
+
+    if(!bus_ok)
+        return NULL;
+
+    if(fs) {
+        if(*fs == NULL)
+            *fs = malloc(sizeof(FATFS));
+
+        if(*fs && f_mount(*fs, "0:/", 1) != FR_OK) {
+           free(*fs );
+           *fs = NULL;
+        }
+    }
+
+/*
+ *
+    if(card == NULL) {
+
+        esp_err_t ret = ESP_FAIL;
+        esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+            .format_if_mount_failed = false,
+            .max_files = 5,
+            .allocation_unit_size = 16 * 1024
+        };
+
+        sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+//        host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
+
+        sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+        slot_config.gpio_cs = PIN_NUM_CS;
+        slot_config.host_id = host.slot;
+
+        gpio_set_drive_capability(PIN_NUM_CS, GPIO_DRIVE_CAP_3);
+
+        if ((ret = esp_vfs_fat_sdspi_mount("/sdcard", &host, &slot_config, &mount_config, &card)) != ESP_OK)
+            report_message(ret == ESP_FAIL ? "Failed to mount filesystem" : "Failed to initialize SD card", Message_Warning);
+    }
+
+    if(card && fs) {
+        if(*fs == NULL)
+            *fs = malloc(sizeof(FATFS));
+
+        if(*fs && f_mount(*fs, "", 1) != FR_OK) {
+           free(*fs );
+           *fs  = NULL;
+        }
+    }
+*/
+    return "";
+}
+
+#endif
+
 // Initializes MCU peripherals for Grbl use
 static bool driver_setup (settings_t *settings)
 {
@@ -2110,7 +2192,15 @@ static bool driver_setup (settings_t *settings)
 
 #endif
 
-#if SDCARD_ENABLE
+#if SDCARD_SDIO
+
+    sdcard_events_t *card = sdcard_init();
+    card->on_mount = sdcard_mount;
+    card->on_unmount = sdcard_unmount;
+
+    sdcard_mount(NULL);
+
+#elif SDCARD_ENABLE
 
     DIGITAL_OUT(SD_CS_PORT, SD_CS_PIN, 1);
 
@@ -2320,7 +2410,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230701";
+    hal.driver_version = "230708";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3071,7 +3161,7 @@ void Driver_IncTick (void)
     }
 #endif
 
-#if SDCARD_ENABLE
+#if SDCARD_ENABLE && !SDCARD_SDIO
     static uint32_t fatfs_ticks = 10;
     if(!(--fatfs_ticks)) {
         disk_timerproc();
