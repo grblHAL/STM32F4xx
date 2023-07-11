@@ -10,10 +10,16 @@ src_dir = Src
 build_flags =
   -I .
   -I FatFs
+  -I FatFs/STM
+  -I Drivers/FATFS/Target
   -I Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
   -I Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+  -I USB_DEVICE/App
   -I USB_DEVICE/Target
   -D OVERRIDE_MY_MACHINE
+  -D _USE_IOCTL=1
+  -D _USE_WRITE=1
+  -D _VOLUMES=1
 lib_deps =
   bluetooth
   grbl
@@ -25,11 +31,13 @@ lib_deps =
   FatFs
   sdcard
   spindle
+  Drivers/FATFS/App
+  Drivers/FATFS/Target
   # USB serial support
-  Core
-  Class
-  App
-  Target
+  Middlewares/ST/STM32_USB_Device_Library/Core
+  Middlewares/ST/STM32_USB_Device_Library/Class
+  USB_DEVICE/App
+  USB_DEVICE/Target
 lib_extra_dirs =
   .
   FatFs
