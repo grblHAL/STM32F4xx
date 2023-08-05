@@ -33,8 +33,11 @@
 
 #define I2C_ENABLE 1
 #define I2C_PORT 1 // PB8 / PB9
-// #define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
-#define EEPROM_ENABLE 1 // 2K single byte addressing
+#define EEPROM_ENABLE 16 // 2K single byte addressing
+
+#if TRINAMIC_ENABLE
+#define HAS_BOARD_INIT
+#endif
 
 // Define step pulse output pins.
 #define X_STEP_PORT                 GPIOE
@@ -73,6 +76,45 @@
 #define Z_LIMIT_PORT                GPIOA
 #define Z_LIMIT_PIN                 0                           // Z- Limit
 #define LIMIT_INMODE                GPIO_BITBAND
+
+// Define ganged axis or A axis step pulse and step direction output pins.
+#if N_ABC_MOTORS > 0
+#define M3_AVAILABLE                // E0
+#define M3_STEP_PORT                GPIOD
+#define M3_STEP_PIN                 5
+#define M3_DIRECTION_PORT           GPIOD
+#define M3_DIRECTION_PIN            6
+//#define M3_LIMIT_PORT               GPIOA
+//#define M3_LIMIT_PIN                1
+#define M3_ENABLE_PORT              GPIOD
+#define M3_ENABLE_PIN               4
+#endif
+
+// Define ganged axis or B axis step pulse and step direction output pins.
+#if N_ABC_MOTORS > 1
+#define M4_AVAILABLE                // E1
+#define M4_STEP_PORT                GPIOE
+#define M4_STEP_PIN                 6
+#define M4_DIRECTION_PORT           GPIOC
+#define M4_DIRECTION_PIN            13
+//#define M4_LIMIT_PORT               GPIOA
+//#define M4_LIMIT_PIN                2
+#define M4_ENABLE_PORT              GPIOE
+#define M4_ENABLE_PIN               5
+#endif
+
+// Define ganged axis or C axis step pulse and step direction output pins.
+#if N_ABC_MOTORS == 3
+#define M5_AVAILABLE                // E2
+#define M5_STEP_PORT                GPIOE
+#define M5_STEP_PIN                 2
+#define M5_DIRECTION_PORT           GPIOE
+#define M5_DIRECTION_PIN            4
+//#define M5_LIMIT_PORT               GPIOA
+//#define M5_LIMIT_PIN                3
+#define M5_ENABLE_PORT              GPIOE
+#define M5_ENABLE_PIN               3
+#endif
 
   // Define spindle enable and spindle direction output pins.
 #define SPINDLE_ENABLE_PORT         GPIOB
@@ -126,5 +168,47 @@
 #define MOTOR_UARTZ_PORT            GPIOD
 #define MOTOR_UARTZ_PIN             12
 
+#ifdef  M3_AVAILABLE
+#define MOTOR_UARTM3_PORT           GPIOA
+#define MOTOR_UARTM3_PIN            15
 #endif
 
+#ifdef  M4_AVAILABLE
+#define MOTOR_UARTM4_PORT           GPIOC
+#define MOTOR_UARTM4_PIN            5
+#endif
+
+#ifdef  M5_AVAILABLE
+#define MOTOR_UARTM5_PORT           GPIOE
+#define MOTOR_UARTM5_PIN            10
+#endif
+
+#endif // TRINAMIC_UART_ENABLE
+
+#if TRINAMIC_SPI_ENABLE
+
+#define TRINAMIC_SPI_PORT           4 // GPIOE, SCK_PIN = 12, MISO_PIN = 13, MOSI_PIN = 14
+
+#define MOTOR_CSX_PORT              GPIOE
+#define MOTOR_CSX_PIN               7
+#define MOTOR_CSY_PORT              GPIOE
+#define MOTOR_CSY_PIN               15
+#define MOTOR_CSZ_PORT              GPIOD
+#define MOTOR_CSZ_PIN               10
+
+#ifdef  M3_AVAILABLE
+#define MOTOR_CSM3_PORT             GPIOD
+#define MOTOR_CSM3_PIN              7
+#endif
+
+#ifdef  M4_AVAILABLE
+#define MOTOR_CSM4_PORT             GPIOC
+#define MOTOR_CSM4_PIN              14
+#endif
+
+#ifdef  M5_AVAILABLE
+#define MOTOR_CSM5_PORT             GPIOC
+#define MOTOR_CSM5_PIN              15
+#endif
+
+#endif // TRINAMIC_SPI_ENABLE

@@ -1,12 +1,9 @@
 /*
-  btt_skr_1.1.c - driver code for STM32F407xx ARM processors
+  tmc_init.c - driver code for STM32F4xx ARM processors
 
   Part of grblHAL
 
-  Copyright (c) 2021-2022 Terje Io
-
-  Some software serial code is ported from Arduino.  Credit belongs to the many
-  authors that contributed to that project.
+  Copyright (c) 2023 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,14 +21,21 @@
 
 #include "driver.h"
 
-#if defined(BOARD_BTT_SKR_PRO_1_1)
-
-#if TRINAMIC_SPI_ENABLE
+#if TRINAMIC_SPI_ENABLE && (defined(BOARD_FYSETC_S6) || defined(BOARD_BTT_SKR_PRO_1_1) || defined(BOARD_BTT_SKR_PRO_1_2))
 
 #include "trinamic/common.h"
 
+#define SPIport(p) SPIportI(p)
+#define SPIportI(p) SPI ## p
+
+#if SPI_PORT == 11
+#define TMC_SPI_PORT SPIport(1)
+#else
+#define TMC_SPI_PORT SPIport(TRINAMIC_SPI_PORT)
+#endif
+
 static SPI_HandleTypeDef spi_port = {
-    .Instance = SPI3,
+    .Instance = TMC_SPI_PORT,
     .Init.Mode = SPI_MODE_MASTER,
     .Init.Direction = SPI_DIRECTION_2LINES,
     .Init.DataSize = SPI_DATASIZE_8BIT,
@@ -176,6 +180,8 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
 
     if (!init_ok) {
 
+#if TRINAMIC_SPI_PORT == 3
+
         __HAL_RCC_SPI3_CLK_ENABLE();
 
         GPIO_InitTypeDef GPIO_InitStruct = {
@@ -211,6 +217,45 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
             .mode = { .mask = PINMODE_NONE }
         };
 
+#elif TRINAMIC_SPI_PORT == 4
+
+        __HAL_RCC_SPI4_CLK_ENABLE();
+
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF6_SPI4
+        };
+        HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+        static const periph_pin_t sck = {
+            .function = Output_SCK,
+            .group = PinGroup_SPI,
+            .port = GPIOE,
+            .pin = 12,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        static const periph_pin_t sdo = {
+            .function = Output_MOSI,
+            .group = PinGroup_SPI,
+            .port = GPIOE,
+            .pin = 14,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+        static const periph_pin_t sdi = {
+            .function = Input_MISO,
+            .group = PinGroup_SPI,
+            .port = GPIOE,
+            .pin = 13,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+#endif
+
         HAL_SPI_Init(&spi_port);
         __HAL_SPI_ENABLE(&spi_port);
 
@@ -229,15 +274,3 @@ void board_init (void)
 }
 
 #endif // TRINAMIC_SPI_ENABLE
-
-#if TRINAMIC_UART_ENABLE
-
-void board_init (void)
-{
-    extern void tmc_uart_init (void);
-    tmc_uart_init();
-}
-
-#endif // TRINAMIC_UART_ENABLE
-
-#endif // BOARD_BTT_SKR_PRO_1_1

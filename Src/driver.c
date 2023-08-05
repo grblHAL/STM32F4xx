@@ -465,7 +465,7 @@ static bool irq_claim (irq_type_t irq, uint_fast8_t id, irq_callback_ptr handler
             break;
 #endif
 
-#ifdef SPI_IRQ_BIT
+#if SPI_IRQ_BIT
         case IRQ_SPI:
             if((ok = spi_irq.callback == NULL))
                 spi_irq.callback = handler;
@@ -2410,7 +2410,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230708";
+    hal.driver_version = "230731";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

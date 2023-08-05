@@ -62,7 +62,7 @@
 //#define BLUETOOTH_ENABLE     2 // Set to 2 for HC-05 module. Requires and claims one auxillary input pin.
 //#define VFD_ENABLE           1 // Set to 1 or 2 for Huanyang VFD spindle. More here https://github.com/grblHAL/Plugins_spindle
 //#define MODBUS_ENABLE        1 // Set to 1 for auto direction, 2 for direction signal on auxillary output pin.
-//#define _WIZCHIP_            5500 // Enables ethernet via WIZnet breakout connected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
+//#define _WIZCHIP_         5500 // Enables ethernet via WIZnet breakout connected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
 //#define SDCARD_ENABLE        1 // Run gcode programs from SD card. Set to 2 to enable YModem upload.
 //#define MPG_ENABLE           1 // Enable MPG interface. Requires serial port and one handshake pin unless
                                  // KEYPAD_ENABLE is set to 2 when mode switching is done by the CMD_MPG_MODE_TOGGLE (0x8B)
@@ -82,7 +82,7 @@
 //#define TRINAMIC_ENABLE   2209 // Trinamic TMC2209 stepper driver support. NOTE: work in progress.
 //#define TRINAMIC_I2C         1 // Trinamic I2C - SPI bridge interface.
 //#define TRINAMIC_DEV         1 // Development mode, adds a few M-codes to aid debugging. Do not enable in production code.
-//#define EEPROM_ENABLE        1 // I2C EEPROM support. Set to 1 for 24LC16 (2K), 3 for 24C32 (4K - 32 byte page) and 2 for other sizes. Enables eeprom plugin.
+//#define EEPROM_ENABLE       16 // I2C EEPROM/FRAM support. Set to 16 for 2K, 32 for 4K, 64 for 8K, 128 for 16K and 256 for 16K capacity.
 //#define EEPROM_IS_FRAM       1 // Uncomment when EEPROM is enabled and chip is FRAM, this to remove write delay.
 //#define SPINDLE_SYNC_ENABLE  1 // Enable spindle sync support (G33, G76). !! NOTE: Alpha quality - enable only for test or verification.
                                  // Currently only available for BOARD_T41BB5X_PRO and BOARD_T41U5XBB_SS.

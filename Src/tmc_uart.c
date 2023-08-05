@@ -458,4 +458,15 @@ void TMC_UART_IRQHandler (void)
     }
 }
 
+#if defined(BOARD_FYSETC_S6) || defined(BOARD_BTT_SKR_PRO_1_1) || defined(BOARD_BTT_SKR_PRO_1_2)
+
+void board_init (void)
+{
+    tmc_uart_init();
+}
+
+#endif
+
 #endif // TRINAMIC_UART_ENABLE == 2
+
+

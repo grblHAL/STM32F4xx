@@ -201,7 +201,7 @@
 
 #if TRINAMIC_SPI_ENABLE
 
-// SPI3 is used: GPIOC pin 10, 11 and 12
+#define TRINAMIC_SPI_PORT           3 // GPIOC, SCK_PIN = 10, MISO_PIN = 12, MOSI_PIN = 11
 
 #define MOTOR_CSX_PORT              GPIOA
 #define MOTOR_CSX_PIN               15
