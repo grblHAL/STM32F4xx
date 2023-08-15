@@ -1113,7 +1113,7 @@ static void probeConfigure (bool is_probe_away, bool probing)
 }
 
 // Returns the probe connected and triggered pin states.
-probe_state_t probeGetState (void)
+static probe_state_t probeGetState (void)
 {
     probe_state_t state = {0};
 
