@@ -277,6 +277,7 @@
       "MAP": "Inc/mini_blackpill_map.h",
       "caps": {
         "axes": 4,
+        "auto_square": 0,
         "digital_in": 1,
         "digital_out": 2,
         "eeprom": 0,
@@ -298,6 +299,7 @@
       "MAP": "Inc/mini_blackpill_map.h",
       "caps": {
         "axes": 4,
+        "auto_square": 0,
         "digital_in": 1,
         "digital_out": 2,
         "eeprom": 0,
