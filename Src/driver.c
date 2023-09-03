@@ -954,9 +954,9 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
 #endif
 
 // Enable/disable limit pins interrupt
-static void limitsEnable (bool on, bool homing)
+static void limitsEnable (bool on, axes_signals_t homing_cycle)
 {
-    if((limits_irq_enabled = on)) {
+    if((limits_irq_enabled = (on && homing_cycle.mask == 0))) {
         EXTI->PR |= LIMIT_MASK;     // Clear any pending limit interrupts
         EXTI->IMR |= LIMIT_MASK;    // and enable
     } else
@@ -1830,7 +1830,7 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
             HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
         }
 
-        hal.limits.enable(settings->limits.flags.hard_enabled, false);
+        hal.limits.enable(settings->limits.flags.hard_enabled, (axes_signals_t){0});
     }
 }
 
@@ -2421,7 +2421,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230807";
+    hal.driver_version = "230828";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2549,7 +2549,7 @@ bool driver_init (void)
     hal.signals_cap.safety_door_ajar = On;
 #endif
     hal.limits_cap = get_limits_cap();
-
+    hal.home_cap = get_home_cap();
 #if SPINDLE_SYNC_ENABLE
     hal.driver_cap.spindle_sync = On;
 #endif

@@ -29,6 +29,7 @@
       { "id": "motors" },
       { "id": "odometer" },
       { "id": "sdcard" },
+      { "id": "fans" },
       { "id": "networking" },
       { "id": "spindle" },
       { "id": "modbus" },

@@ -101,7 +101,7 @@ void tmc_uart_init (void)
 #define TMC_UART_IRQHandler     timerHANDLER(TMC_UART_TIMER_N)
 #define TMC_UART_CLKENA         timerCLKENA(TMC_UART_TIMER_N)
 
-#define SWS_BAUDRATE            100000      // 10us bit period, near upper limit @ 168MHz
+#define SWS_BAUDRATE            100000
 #define START_DELAY             0 // 46          // delay in us * timer clock freq
 #define ABORT_TIMEOUT           5           // ms
 #define TWELVE_BIT_TIMES        1           // in ms rounded up (1 is smallest we can go)
@@ -126,6 +126,7 @@ typedef struct {
     volatile uint_fast16_t irq_count;
     bool overflow;
     bool busy;
+    bool sampling;
     uint8_t data[RCV_BUF_SIZE];
 } tmc_uart_rx_buffer_t;
 
@@ -136,6 +137,7 @@ static tmc_uart_t uart[TMC_N_MOTORS_MAX], *active_uart;
 
 static inline void setTX ()
 {
+//    DIGITAL_OUT(active_uart->port, active_uart->pin, 1);
     static GPIO_InitTypeDef GPIO_InitStruct = {
         .Mode = GPIO_MODE_OUTPUT_PP,
         .Pull = GPIO_NOPULL
@@ -184,7 +186,8 @@ static void write_n (uint8_t data[], uint32_t length)
     tx_buf.busy = true;
     length--;
 
-    TMC_UART_TIMER->CNT = 0;                        // initialize counter and
+    TMC_UART_TIMER->EGR = TIM_EGR_UG;               // initialize counter and
+    TMC_UART_TIMER->CR1 |= TIM_CR1_CEN;
     TMC_UART_TIMER->CR1 &= ~TIM_CR1_UDIS;           // enable interrupt
 
     while(tx_buf.busy);                             // wait for 1st byte to finish
@@ -223,35 +226,40 @@ static int16_t read_byte (void)
   * This is called by the interrupt handler.
   * Tihs is only called if tx_busy == true;
   */
-static void rcv (void)
+static inline void rcv (void)
 {
     static volatile uint32_t rx_byte;
 
-    bool inbit = DIGITAL_IN(active_uart->port, active_uart->pin);
+    if(rx_buf.sampling) {
+
+       bool inbit = DIGITAL_IN(active_uart->port, active_uart->pin);
 
 //    hal.port.digital_out(0, 1);
 
-    if(rx_buf.bit_count == -1) {                                // -1 means waiting for START (0)
-        if(!inbit) {
-            rx_buf.bit_count = 0;                               // 0: START bit received
-            rx_byte = 0;
+        if(rx_buf.bit_count == -1) {                                // -1 means waiting for START (0)
+            if(!inbit) {
+                rx_buf.bit_count = 0;                               // 0: START bit received
+                rx_byte = 0;
+            }
+        } else if(rx_buf.bit_count == 8)
+            rx_buf.sampling = false;                                // 8: stop bit received, tell foreground process to wait for next start bit
+        else {
+            rx_byte >>= 1;                                          // shift previous
+            if (inbit)
+                rx_byte |= 0x80;                                    // OR in new
+            if(++rx_buf.bit_count == 8) {                           // Preprare for next bit
+                uint_fast16_t next = BUFNEXT(rx_buf.head, rx_buf);
+                if (next != rx_buf.tail) {                          // room in buffer?
+                    rx_buf.data[rx_buf.head] = rx_byte;             // save new byte
+                    rx_buf.head = next;
+                } else                                              // rx_bit_cnt = x  with x = [0..7] correspond to new bit x received
+                    rx_buf.overflow = true;
+            }
         }
-    } else if(rx_buf.bit_count >= 8) {                          // >= 8 means waiting for STOP
-        if(inbit) {
-            uint_fast16_t next = BUFNEXT(rx_buf.head, rx_buf);
-            if (next != rx_buf.tail) {                          // room in buffer?
-                rx_buf.data[rx_buf.head] = rx_byte;             // save new byte
-                rx_buf.head = next;
-            } else                                              // rx_bit_cnt = x  with x = [0..7] correspond to new bit x received
-                rx_buf.overflow = true;
-        }
-        rx_buf.bit_count = -1;                                  // wait for next START
-    } else {
-        rx_byte >>= 1;                                          // shift previous
-        if (inbit)
-            rx_byte |= 0x80;                                    // OR in new
-        rx_buf.bit_count++;                                     // Preprare for next bit
+
     }
+
+//    DIGITAL_OUT(GPIOB, 3, 0);
 
 //    hal.port.digital_out(0, 0);
 }
@@ -273,6 +281,7 @@ static void stop_listening (void)
    * Either way, we are not really fighting the PDN_UART pin since both
    * the TMC2209 chip and the STM32 are driving high.
    */
+
     while ((rx_buf.irq_count + 256 - count) % 256 < HALFDUPLEX_SWITCH_DELAY);
 
     setTX();      // turn driver on just before the TMC driver goes off
@@ -296,7 +305,7 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
     // claim the semaphore or wait until free
     //
     // purge anything in buffer
-    rx_buf.tail = rx_buf.head = 0;
+    rx_buf.tail = rx_buf.head = rx_buf.irq_count = 0;
 
     write_n(rdgr->data, sizeof(TMC_uart_read_datagram_t)); // send read request
 
@@ -310,15 +319,15 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
 
     while (DIGITAL_IN(active_uart->port, active_uart->pin)) {
         if (hal.get_elapsed_ticks() - ms > ABORT_TIMEOUT) {
-            hal.delay_ms(TWELVE_BIT_TIMES + 1, NULL);
-            setTX();                // turn on our driver
-            return &bad;            // return {0}
+            hal.delay_ms(TWELVE_BIT_TIMES + 1, NULL);       // delay a bit and
+            setTX();                                        // turn on our driver.
+            return &bad;                                    // return {0}
         }
     }
 
     // Now that we found a START bit, set timer to 1/2 bit width and start interrupts
     // This allows us to sample reliably in the center of each receive bit
-    rx_buf.busy = true;
+    rx_buf.busy = rx_buf.sampling = true;
     rx_buf.bit_count = -1; // look for START bit
 
     TMC_UART_TIMER->CNT = period_div_2 + START_DELAY;
@@ -332,14 +341,29 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
 
         if (hal.get_elapsed_ticks() - ms > ABORT_TIMEOUT) {
             rx_buf.busy = false;
-            TMC_UART_TIMER->CR1 |= TIM_CR1_UDIS;        // turn off interrupts
-            hal.delay_ms(TWELVE_BIT_TIMES + 1, NULL);
-            setTX();                                    // turn on our driver
-            return &bad;
+            TMC_UART_TIMER->CR1 |= TIM_CR1_UDIS;        // turn off interrupts,
+            hal.delay_ms(TWELVE_BIT_TIMES + 1, NULL);   // delay a bit and
+            setTX();                                    // turn on our driver.
+            return &bad;                                // return {0}
         }
 
         if ((res = read_byte()) != -1)
             wdgr.data[i++] = res;
+
+        if(!rx_buf.sampling && i < 8) {
+            // wait for next start bit
+            while (DIGITAL_IN(active_uart->port, active_uart->pin)) {
+                if (hal.get_elapsed_ticks() - ms > ABORT_TIMEOUT) {
+                    TMC_UART_TIMER->CR1 |= TIM_CR1_UDIS;        // turn off interrupts
+                    hal.delay_ms(TWELVE_BIT_TIMES + 1, NULL);   // delay a bit and
+                    setTX();                                    // turn on our driver.
+                    return &bad;                                // return {0}
+                }
+            }
+            rx_buf.sampling = true;                             // Restart sampling and
+            rx_buf.bit_count = -1;                              // verify next START
+            TMC_UART_TIMER->CNT = period_div_2 + START_DELAY;
+        }
     }
 
     // purge anything left in buffer
