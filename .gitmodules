@@ -40,3 +40,6 @@
 [submodule "encoder"]
 	path = encoder
 	url = https://github.com/grblHAL/Plugin_encoder
+[submodule "fans"]
+	path = fans
+	url = https://github.com/grblHAL/Plugin_fans/
