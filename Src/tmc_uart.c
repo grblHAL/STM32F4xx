@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2021-2022 fitch22, Terje Io
+  Copyright (c) 2021-2023 fitch22, Terje Io
 
   Some software serial code is ported from Arduino.  Credit belongs to the many
   authors that contributed to that project.
@@ -102,7 +102,6 @@ void tmc_uart_init (void)
 #define TMC_UART_CLKENA         timerCLKENA(TMC_UART_TIMER_N)
 
 #define SWS_BAUDRATE            100000
-#define START_DELAY             0 // 46          // delay in us * timer clock freq
 #define ABORT_TIMEOUT           5           // ms
 #define TWELVE_BIT_TIMES        1           // in ms rounded up (1 is smallest we can go)
 #define HALFDUPLEX_SWITCH_DELAY 4           // defined in bit-periods
@@ -224,7 +223,7 @@ static int16_t read_byte (void)
   * @param None
   * @retval None
   * This is called by the interrupt handler.
-  * Tihs is only called if tx_busy == true;
+  * This is only called if tx_busy == true;
   */
 static inline void rcv (void)
 {
@@ -330,7 +329,7 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
     rx_buf.busy = rx_buf.sampling = true;
     rx_buf.bit_count = -1; // look for START bit
 
-    TMC_UART_TIMER->CNT = period_div_2 + START_DELAY;
+    TMC_UART_TIMER->CNT = period_div_2;
     TMC_UART_TIMER->CR1 &= ~TIM_CR1_UDIS;
 
     // Wait for read response
@@ -361,8 +360,8 @@ TMC_uart_write_datagram_t *tmc_uart_read (trinamic_motor_t driver, TMC_uart_read
                 }
             }
             rx_buf.sampling = true;                             // Restart sampling and
-            rx_buf.bit_count = -1;                              // verify next START
-            TMC_UART_TIMER->CNT = period_div_2 + START_DELAY;
+            rx_buf.bit_count = -1;                              // verify next START.
+            TMC_UART_TIMER->CNT = period_div_2;                 // Resync sampling timer
         }
     }
 
