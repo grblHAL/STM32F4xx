@@ -290,7 +290,7 @@ void spi_init (void)
         };
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-        GPIO_InitStruct.Pin = 5;
+        GPIO_InitStruct.Pin = GPIO_PIN_5;
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {

@@ -429,10 +429,14 @@ static output_signal_t outputpin[] = {
 
 extern __IO uint32_t uwTick;
 static uint32_t pulse_length, pulse_delay, aux_irq = 0;
-static bool IOInitDone = false, limits_irq_enabled = false;
+static bool IOInitDone = false;
+static pin_group_pins_t limit_inputs = {0};
 static axes_signals_t next_step_outbits;
 static delay_t delay = { .ms = 1, .callback = NULL }; // NOTE: initial ms set to 1 for "resetting" systick timer on startup
 static debounce_t debounce;
+#ifdef Z_LIMIT_POLL
+static bool z_limits_irq_enabled = false;
+#endif
 
 #ifdef PROBE_PIN
 static probe_state_t probe = {
@@ -956,11 +960,24 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
 // Enable/disable limit pins interrupt
 static void limitsEnable (bool on, axes_signals_t homing_cycle)
 {
-    if((limits_irq_enabled = (on && homing_cycle.mask == 0))) {
-        EXTI->PR |= LIMIT_MASK;     // Clear any pending limit interrupts
-        EXTI->IMR |= LIMIT_MASK;    // and enable
-    } else
-        EXTI->IMR &= ~LIMIT_MASK;
+    bool disable = !on;
+    axes_signals_t pin;
+    input_signal_t *limit;
+    uint_fast8_t idx = limit_inputs.n_pins;
+    limit_signals_t homing_source = xbar_get_homing_source_from_cycle(homing_cycle);
+
+    do {
+        limit = &limit_inputs.pins.inputs[--idx];
+        if(on && homing_cycle.mask) {
+            pin = xbar_fn_to_axismask(limit->id);
+            disable = limit->group == PinGroup_Limit ? (pin.mask & homing_source.min.mask) : (pin.mask & homing_source.max.mask);
+        }
+        gpio_irq_enable(limit, disable ? IRQ_Mode_None : limit->irq_mode);
+    } while(idx);
+
+#ifdef Z_LIMIT_POLL
+    z_limits_irq_enabled = on && !homing_cycle.z;
+#endif
 }
 
 // Returns limit state as an axes_signals_t variable.
@@ -2578,6 +2595,10 @@ bool driver_init (void)
             input->bit = 1 << input->pin;
             input->cap.pull_mode = PullMode_UpDown;
             input->cap.irq_mode = ((DRIVER_IRQMASK|PROBE_IRQ_BIT) & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
+        } else if(input->group & (PinGroup_Limit|PinGroup_LimitMax)) {
+            if(limit_inputs.pins.inputs == NULL)
+                limit_inputs.pins.inputs = input;
+            limit_inputs.n_pins++;
         }
 #if PROBE_IRQ_BIT
         else if(input->group == PinGroup_Probe)
@@ -2599,13 +2620,11 @@ bool driver_init (void)
         }
     }
 
-#ifdef HAS_IOPORTS
     if(aux_digital_in.n_pins || aux_digital_out.n_pins)
         ioports_init(&aux_digital_in, &aux_digital_out);
-  #if AUX_ANALOG
+#if AUX_ANALOG
     if(aux_analog_out.n_pins)
         ioports_init_analog(NULL, &aux_analog_out);
-  #endif
 #endif
 
 #ifdef HAS_BOARD_INIT
@@ -3159,7 +3178,7 @@ void Driver_IncTick (void)
 
 #ifdef Z_LIMIT_POLL
     static bool z_limit_state = false;
-    if(limits_irq_enabled) {
+    if(z_limits_irq_enabled) {
         bool z_limit = DIGITAL_IN(Z_LIMIT_PORT, Z_LIMIT_PIN) ^ settings.limits.invert.z;
         if(z_limit_state != z_limit) {
             if((z_limit_state = z_limit)) {
