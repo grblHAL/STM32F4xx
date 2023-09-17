@@ -28,6 +28,7 @@ lib_deps =
   motors
   trinamic
   odometer
+  fans
   FatFs
   sdcard
   spindle
