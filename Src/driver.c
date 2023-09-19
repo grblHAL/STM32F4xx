@@ -2132,12 +2132,16 @@ static bool driver_setup (settings_t *settings)
 
     for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
         if(!(outputpin[i].group == PinGroup_StepperPower || outputpin[i].group == PinGroup_AuxOutputAnalog)) {
+
+            if(outputpin[i].group == PinGroup_MotorChipSelect ||
+                outputpin[i].group == PinGroup_MotorUART ||
+                 outputpin[i].id == Output_SPICS ||
+                  outputpin[i].group == PinGroup_StepperEnable)
+                DIGITAL_OUT(outputpin[i].port, outputpin[i].pin, 1);
+
             GPIO_Init.Pin = 1 << outputpin[i].pin;
             GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
-
-            if(outputpin[i].group == PinGroup_MotorChipSelect || outputpin[i].group == PinGroup_MotorUART || outputpin[i].id == Output_SPICS)
-                DIGITAL_OUT(outputpin[i].port, outputpin[i].pin, 1);
         }
     }
 
@@ -2438,7 +2442,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230828";
+    hal.driver_version = "230919";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

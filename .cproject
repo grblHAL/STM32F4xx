@@ -3394,7 +3394,7 @@
 									<listOptionValue builtIn="false" value="DEBUG"/>
 									<listOptionValue builtIn="false" value="RTC_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="NUCLEO144_F446"/>
-									<listOptionValue builtIn="false" value="HSE_VALUE=16000000UL"/>
+									<listOptionValue builtIn="false" value="HSE_VALUE=8000000UL"/>
 									<listOptionValue builtIn="false" value="_USE_IOCTL=1"/>
 									<listOptionValue builtIn="false" value="_USE_WRITE=1"/>
 									<listOptionValue builtIn="false" value="_VOLUMES=1"/>
