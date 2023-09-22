@@ -6,7 +6,8 @@ Loosely based on code from robomechs [6-AXIS-USBCNC-GRBL](https://github.com/rob
 
 # Quickstart
 
-This project can be built with [PlatformIO](https://platformio.org).  For additional information on howto import the project, configure the driver and compile the firmware, see the Wiki-page [compiling grblHAL](https://github.com/grblHAL/core/wiki/Compiling-GrblHAL).
+This driver can be built with the [Web Builder](http://svn.io-engineering.com:8080/?driver=STM32F4xx).
+Alternatively it can be built with the STM32CubeIDE or [PlatformIO](https://platformio.org).  For additional information on howto import the project, configure the driver and compile the firmware, see the Wiki-page [compiling grblHAL](https://github.com/grblHAL/core/wiki/Compiling-GrblHAL).
 
 Install [PlatformIO Core](https://docs.platformio.org/en/latest/core/installation.html) and then:
 
@@ -122,4 +123,4 @@ CNC breakout boards:
 [CNC breakout for Nucleo-64](https://github.com/terjeio/CNC_Breakout_Nucleo64) by Terje Io.
 
 ---
-2021-09-19
+2023-09-20
