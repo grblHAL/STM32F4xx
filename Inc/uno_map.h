@@ -28,7 +28,10 @@
 #endif
 
 #define BOARD_NAME "Generic Uno"
-#define I2C_PORT 1
+#define BOARD_URL "https://www.makerfabs.com/arduino-cnc-shield-v3.html"
+
+#define SERIAL_PORT     2   // GPIOA: TX = 2, RX = 3
+#define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #define IS_NUCLEO_BOB
 #define VARIABLE_SPINDLE // Comment out to disable variable spindle
 

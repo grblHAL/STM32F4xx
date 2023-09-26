@@ -34,8 +34,9 @@
 #define BOARD_NAME "BTT SKR-2 (DAC)"
 #define HAS_BOARD_INIT
 
-#define I2C_PORT 1      // GPIOB, SCL_PIN = 8, SDA_PIN = 9
-//#define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
+#define SERIAL_PORT     1   // GPIOA: TX = 9, RX = 10
+#define SERIAL1_PORT   32   // GPIOD: TX = 8, RX = 9
+#define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 
 // If we want to debug, we need to use USART1
 #if defined(DEBUG) && defined(USB_SERIAL_CDC)

@@ -26,6 +26,10 @@
 #include "diskio.h"
 #include "spi.h"
 
+#ifndef SDCARD_USE_DMA
+#define SDCARD_USE_DMA 1
+#endif
+
 /* Definitions for MMC/SDC command */
 #define CMD0    (0x40+0)    /* GO_IDLE_STATE */
 #define CMD1    (0x40+1)    /* SEND_OP_COND */
@@ -91,11 +95,15 @@ BYTE PowerFlag = 0;     /* indicates if "power" is on */
 
 #define rcvr_spi() (BYTE)spi_get_byte()
 
-static
+#if !SDCARD_USE_DMA
+
+static inline
 void rcvr_spi_m (BYTE *dst)
 {
     *dst = rcvr_spi();
 }
+
+#endif
 
 /*-----------------------------------------------------------------------*/
 /* Wait for card ready                                                   */
@@ -156,8 +164,11 @@ void power_on (void)
 }
 
 // set the SSI speed to the max setting
-
-#define set_max_speed() spi_set_max_speed()
+static
+void set_max_speed(void)
+{
+    spi_set_speed(SPI_BAUDRATEPRESCALER_16);
+}
 
 static
 void power_off (void)
@@ -189,10 +200,16 @@ BOOL rcvr_datablock (
     } while ((token == 0xFF) && Timer1);
     if(token != 0xFE) return FALSE;    /* If not valid data token, retutn with error */
 
+#if SDCARD_USE_DMA
+    memset(buff, 0xFF, btr);
+    spi_read((uint8_t *)buff, btr); /* Receive the data block into buffer */
+#else
     do {                            /* Receive the data block into buffer */
         rcvr_spi_m(buff++);
         rcvr_spi_m(buff++);
     } while (btr -= 2);
+#endif
+
     rcvr_spi();                        /* Discard CRC */
     rcvr_spi();
 
@@ -212,18 +229,22 @@ BOOL xmit_datablock (
     BYTE token            /* Data/Stop token */
 )
 {
-    BYTE resp, wc;
+    BYTE resp;
 
 
     if (wait_ready() != 0xFF) return FALSE;
 
     xmit_spi(token);                    /* Xmit data token */
     if (token != 0xFD) {    /* Is data token */
-        wc = 0;
+#if SDCARD_USE_DMA
+        spi_write((uint8_t *)buff, 512); /* Xmit the 512 byte data block to MMC */
+#else
+        BYTE wc = 0;
         do {                            /* Xmit the 512 byte data block to MMC */
             xmit_spi(*buff++);
             xmit_spi(*buff++);
         } while (--wc);
+#endif
         xmit_spi(0xFF);                    /* CRC (Dummy) */
         xmit_spi(0xFF);
         resp = rcvr_spi();                /* Reveive data response */

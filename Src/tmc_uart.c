@@ -81,8 +81,13 @@ void tmc_uart_write (trinamic_motor_t driver, TMC_uart_write_datagram_t *dgr)
 
 void tmc_uart_init (void)
 {
-    memcpy(&tmc_uart, serial2Init(230400), sizeof(io_stream_t));
+    io_stream_t const *stream;
 
+    if((stream = stream_open_instance(TRINAMIC_STREAM, 230400, NULL)) == NULL) {
+        stream = stream_null_init(230400);
+    }
+
+    memcpy(&tmc_uart, stream, sizeof(io_stream_t));
     tmc_uart.disable_rx(true);
     tmc_uart.set_enqueue_rt_handler(stream_buffer_all);
 }

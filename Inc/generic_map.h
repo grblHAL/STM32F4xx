@@ -27,6 +27,8 @@
 #error "Trinamic plugin not supported!"
 #endif
 
+#define SERIAL_PORT             1 // GPIOA: TX = 9, RX = 10
+
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA
 #define X_STEP_PIN              0

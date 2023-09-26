@@ -2442,7 +2442,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "230919";
+    hal.driver_version = "230922";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2506,8 +2506,9 @@ bool driver_init (void)
 
 #if USB_SERIAL_CDC
     stream_connect(usbInit());
-#elif !defined(UART_INSTANCE)
-    stream_connect(serialInit(BAUD_RATE));
+#else
+    if(!stream_connect_instance(SERIAL_STREAM, BAUD_RATE))
+        while(true); // Cannot boot if no communication channel is available!
 #endif
 
 #if I2C_ENABLE
@@ -2633,11 +2634,6 @@ bool driver_init (void)
 
 #ifdef HAS_BOARD_INIT
     board_init();
-#endif
-
-#if defined(UART_INSTANCE) && USB_SERIAL_CDC == 0
-    if(!stream_connect_instance(UART_INSTANCE, BAUD_RATE))
-        while(true); // Cannot boot if no communication channel is available!
 #endif
 
 #if MPG_MODE == 1

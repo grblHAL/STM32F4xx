@@ -28,7 +28,10 @@
 #endif
 
 #define BOARD_NAME "Protoneer v3"
-#define I2C_PORT 1
+#define BOARD_URL "https://blog.protoneer.co.nz/arduino-cnc-shield/"
+
+#define SERIAL_PORT     2   // GPIOA: TX = 2, RX = 3
+#define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #define IS_NUCLEO_BOB
 //#define PROTONEER_SPINDLE_PWM // Uncomment to use PA5 (D13) as spindle PWM output instead of spindle direction
 

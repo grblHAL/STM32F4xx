@@ -36,18 +36,22 @@
 #endif
 
 #define BOARD_NAME "Nucleo-64 CNC Breakout"
+#define BOARD_URL "https://github.com/terjeio/CNC_Breakout_Nucleo64"
 
+/*
 #ifndef WEB_BUILD
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 //#undef EEPROM_IS_FRAM
 #define I2C_ENABLE      1
-#define EEPROM_ENABLE   0
+#define EEPROM_ENABLE   16
 //#define EEPROM_IS_FRAM  1
 #endif
-
+*/
+#define SERIAL_PORT     2   // GPIOA: TX = 2, RX = 3
+#define SERIAL1_PORT    1   // GPIOA: TX = 9, RX = 10
 #if I2C_ENABLE
-#define I2C_PORT        1 // PB8 = SCK, PB9 = SDA
+#define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #endif
 
 //#undef SPINDLE_SYNC_ENABLE

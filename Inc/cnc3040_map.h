@@ -17,6 +17,32 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* Pin Assignments:
+ *
+ *                             -----------
+ *                         VB |           | +3V
+ *                        C13 |           | GND
+ *         Coolant Flood  C14 |           | +5V
+ *          Coolant Mist  C15 | *     - * | B9   Steppers enable
+ *                        RST |      |K|  | B8   Safety door
+ *                X Step   A0 |       -   | B7   Feed Hold
+ *           X Direction   A1 |           | B6   Cycle Start
+ *                Y Step   A2 |           | B5   Reset/EStop Probe
+ *           Y Direction   A3 |    / \    | B4   Coolant Mist
+ *                Z Step   A4 |   <MCU>   | B3   Coolant Flood
+ *           Z Direction   A5 |    \ /    | A15
+ *               M3 Step   A6 |           | A12  USB D+
+ *          M3 Direction   A7 |   -   -   | A11  USB D-
+ *     Spindle Direction   B0 |  |R| |B|  | A10  M4 Direction
+ *        Spindle Enable   B1 |   -   -   | A9   M4 Step
+ *               X Limit   B2 |           | A8   Spindle PWM
+ *               Y Limit  B10 |           | B15  Cycle Start
+ *                        +3V |   -----   | B14  Feed Hold
+ *                        GND |  |     |  | B13  Probe
+ *                        +5V |  | USB |  | B12  Z Limit
+ *                             -----------
+ */
+
 #if N_ABC_MOTORS > 2
 #error "Axis configuration is not supported!"
 #endif
@@ -32,6 +58,9 @@
 #else
 #define BOARD_NAME "CNC 3040"
 #endif
+#define BOARD_URL "https://github.com/shaise/GrblCNC/tree/master/Hardware/GrblCnc3040"
+
+#define SERIAL_PORT             11  // GPIOB: TX = 6, RX = 7
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA
@@ -77,6 +106,8 @@
 #define M4_STEP_PIN             9
 #define M4_DIRECTION_PORT       DIRECTION_PORT
 #define M4_DIRECTION_PIN        10
+#else
+//#define SERIAL1_PORT             1   // GPIOA: TX = 9, RX = 10
 #endif
 
   // Define spindle enable and spindle direction output pins.

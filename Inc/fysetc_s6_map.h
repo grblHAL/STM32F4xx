@@ -31,9 +31,10 @@
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 
-#define I2C_ENABLE 1
-#define I2C_PORT 1 // PB8 / PB9
-#define EEPROM_ENABLE 16 // 2K single byte addressing
+#define SERIAL_PORT     1   // GPIOA: TX = 9, RX = 10
+#define I2C_ENABLE      1
+#define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
+#define EEPROM_ENABLE   16  // 2K single byte addressing
 
 #if TRINAMIC_ENABLE
 #define HAS_BOARD_INIT

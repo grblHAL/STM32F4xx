@@ -19,23 +19,30 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* Default Pin Assignments:
- * A0  X Step       | B0  Step En/Dis       | C0  (N/A)
- * A1  X Direction  | B1  Spindle Enable    | C1  (N/A)
- * A2  Y Step       | B2  Spindle Direction | C2  (N/A)
- * A3  Y Direction  | B3                    | C3  (N/A)
- * A4  Z Step       | B4                    | C4  (N/A)
- * A5  Z Direction  | B5                    | C5  (N/A)
- * A6  A Step       | B6  Reset             | C6  (N/A)
- * A7  A Direction  | B7  Feed Hold         | C7  (N/A)
- * A8  Spindle PWM  | B8  Cycle Start       | C8  (N/A)
- * A9  Y2 Step      | B9  Door Safety       | C9  (N/A)
- * A10 Y2 Direction | B10 Y2 Limit          | C10 (N/A)
- * A11 USB D-       | B11                   | C11 (N/A)
- * A12 USB D+       | B12 X Limit           | C12 (N/A)
- * A13              | B13 Y Limit           | C13
- * A14              | B14 Z Limit           | C14 Coolant Flood
- * A15              | B15 Probe             | C15 coolant Mist
+/* Pin Assignments:
+ *
+ *                               -----------
+ *                           VB |           | +3V
+ *                          C13 |           | GND
+ *           Coolant Flood  C14 |           | +5V
+ *            Coolant Mist  C15 | *     - * | B9   Safety door / Aux In 0
+ *                          RST |      |K|  | B8   Cycle Start
+ *                  X Step   A0 |       -   | B7   Feed Hold
+ *             X Direction   A1 |           | B6   Reset/EStop
+ *                  Y Step   A2 |           | B5
+ *             Y Direction   A3 |    / \    | B4   Coolant Mist
+ *                  Z Step   A4 |   <MCU>   | B3   Spindle Index
+ *             Z Direction   A5 |    \ /    | A15  Spindle Pulse
+ *    Aux In 0/1 / M3 Step   A6 |           | A12  USB D+
+ * Aux In 1 / M3 Direction   A7 |   -   -   | A11  USB D-
+ *          Steppers enable  B0 |  |R| |B|  | A10  M4 Direction
+ *          Spindle Enable   B1 |   -   -   | A9   M4 Step
+ *       Spindle Direction   B2 |           | A8   Spindle PWM
+ *                M4 Limit  B10 |           | B15  Probe / M3 Limit
+ *                          +3V |   -----   | B14  Z Limit
+ *                          GND |  |     |  | B13  Y Limit
+ *                          +5V |  | USB |  | B12  X Limit
+ *                               -----------
  */
 
 #if N_ABC_MOTORS > 1

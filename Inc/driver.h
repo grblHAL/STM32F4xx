@@ -82,7 +82,8 @@
 #define usartint(t) USART ## t ## _IRQn
 #define usartHANDLER(t) usarthandler(t)
 #define usarthandler(t) USART ## t ## _IRQHandler
-
+#define usartCLKEN(t) usartclken(t)
+#define usartclken(t) __HAL_RCC_USART ## t ## _CLK_ENABLE
 // Configuration, do not change here
 
 #define CNC_BOOSTERPACK     0
@@ -156,6 +157,8 @@
   #include "flexi_hal_map.h"
 #elif defined(BOARD_STM32F401_UNI)
   #include "stm32f401_uni_map.h"
+#elif defined(BOARD_MKS_ROBIN_NANO_30)
+  #include "mks_robin_nano_v3.0_map.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "my_machine_map.h"
 #else // default board
@@ -532,6 +535,24 @@
 #define FLASH_ENABLE 0
 #endif
 
+#if USB_SERIAL_CDC && defined(SERIAL_PORT)
+#define SP0 1
+#else
+#define SP0 0
+#endif
+
+#ifdef SERIAL1_PORT
+#define SP1 1
+#else
+#define SP1 0
+#endif
+
+#ifdef SERIAL2_PORT
+#define SP2 1
+#else
+#define SP3 0
+#endif
+
 #if MODBUS_ENABLE
 #define MODBUS_TEST 1
 #else
@@ -556,20 +577,13 @@
 #define KEYPAD_TEST 0
 #endif
 
-#if MODBUS_TEST + KEYPAD_TEST + MPG_TEST + TRINAMIC_TEST + (BLUETOOTH_ENABLE ? 1 : 0) > 1
-#error "Only one option that uses the serial port can be enabled!"
+#if (MODBUS_TEST + KEYPAD_TEST + MPG_TEST + TRINAMIC_TEST + (BLUETOOTH_ENABLE ? 1 : 0)) > (SP0 + SP1 + SP2)
+#error "Too many options that uses a serial port are enabled!"
 #endif
 
-#if MODBUS_TEST || KEYPAD_TEST || MPG_TEST || TRINAMIC_TEST || BLUETOOTH_ENABLE
-#ifndef SERIAL2_MOD
-#if IS_NUCLEO_DEVKIT
-#define SERIAL2_MOD 1
-#else
-#define SERIAL2_MOD 2
-#endif
-#endif
-#endif
-
+#undef SP0
+#undef SP1
+#undef SP2
 #undef MODBUS_TEST
 #undef KEYPAD_TEST
 #undef MPG_TEST
@@ -660,12 +674,11 @@ void gpio_irq_enable (const input_signal_t *input, pin_irq_mode_t irq_mode);
 #ifdef HAS_BOARD_INIT
 void board_init (void);
 #endif
-#ifdef HAS_IOPORTS
+
 void ioports_init(pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
 #if AUX_ANALOG
 void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
 #endif
 void ioports_event (uint32_t bit);
-#endif
 
 #endif // __DRIVER_H__

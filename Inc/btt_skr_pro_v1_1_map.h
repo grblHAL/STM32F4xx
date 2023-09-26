@@ -35,12 +35,11 @@
 #define BOARD_URL "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1"
 #endif
 
-#if USB_SERIAL_CDC == 0
-//#define SERIAL_MOD 3
-#endif
-
-#define I2C_PORT 1
-#define I2C1_ALT_PINMAP // GPIOB, SCL_PIN = 6, SDA_PIN = 7
+#define SERIAL_PORT     1       // GPIOA: TX = 9, RX = 10
+#define SERIAL1_PORT   32       // GPIOD: TX = 8, RX = 9
+#define SERIAL2_PORT    6       // GPIOC: TX = 6, RX = 7
+#define I2C_PORT        1
+#define I2C1_ALT_PINMAP         // GPIOB: SCL = 6, SDA = 7
 #if TRINAMIC_ENABLE
 #define HAS_BOARD_INIT
 #endif

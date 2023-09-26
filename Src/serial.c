@@ -23,56 +23,293 @@
 
 #include <string.h>
 
-#include "serial.h"
+#include "main.h"
+#include "driver.h"
+
 #include "grbl/hal.h"
 #include "grbl/protocol.h"
 
-#include "main.h"
-
+#ifdef SERIAL_PORT
 static stream_rx_buffer_t rxbuf = {0};
 static stream_tx_buffer_t txbuf = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command = protocol_enqueue_realtime_command;
+static const io_stream_t *serialInit (uint32_t baud_rate);
+#else
+#define SERIAL_PORT -1
+#endif
 
-#ifdef SERIAL2_MOD
+#ifdef SERIAL1_PORT
+static stream_rx_buffer_t rxbuf1 = {0};
+static stream_tx_buffer_t txbuf1 = {0};
+static enqueue_realtime_command_ptr enqueue_realtime_command1 = protocol_enqueue_realtime_command;
+static const io_stream_t *serial1Init(uint32_t baud_rate);
+#else
+#define SERIAL1_PORT -1
+#endif
+
+#ifdef SERIAL2_PORT
 static stream_rx_buffer_t rxbuf2 = {0};
 static stream_tx_buffer_t txbuf2 = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue_realtime_command;
-#endif
-
-#ifndef SERIAL_MOD
-#if IS_NUCLEO_DEVKIT == 64
-#define SERIAL_MOD 2
-#elif IS_NUCLEO_DEVKIT == 144
-#define SERIAL_MOD 3
+static const io_stream_t *serial2Init(uint32_t baud_rate);
 #else
-#define SERIAL_MOD 1
-#endif
+#define SERIAL2_PORT -1
 #endif
 
-#define USART usart(SERIAL_MOD)
-#define USART_IRQ usartINT(SERIAL_MOD)
-#define USART_IRQHandler usartHANDLER(SERIAL_MOD)
-#if SERIAL_MOD == 1 || SERIAL_MOD == 6
-#define USART_CLK HAL_RCC_GetPCLK2Freq()
+#if SERIAL_PORT >= 0
+
+#if SERIAL_PORT == SERIAL1_PORT || SERIAL_PORT == SERIAL2_PORT
+#error Conflicting use of UART peripherals!
+#endif
+
+#if (SERIAL_PORT >= 10 && SERIAL_PORT < 19)
+#define UART0            usart(1)
+#define UART0_IRQ        usartINT(1)
+#define UART0_IRQHandler usartHANDLER(1)
+#define UART0_CLK_En     usartCLKEN(1)
+#elif (SERIAL_PORT >= 20 && SERIAL_PORT < 29)
+#define UART0            usart(2)
+#define UART0_IRQ        usartINT(2)
+#define UART0_IRQHandler usartHANDLER(2)
+#define UART0_CLK_En     usartCLKEN(2)
+#elif (SERIAL_PORT >= 30 && SERIAL_PORT < 39)
+#define UART0            usart(3)
+#define UART0_IRQ        usartINT(3)
+#define UART0_IRQHandler usartHANDLER(3)
+#define UART0_CLK_En     usartCLKEN(3)
 #else
-#define USART_CLK HAL_RCC_GetPCLK1Freq()
+#define UART0            usart(SERIAL_PORT)
+#define UART0_IRQ        usartINT(SERIAL_PORT)
+#define UART0_IRQHandler usartHANDLER(SERIAL_PORT)
+#define UART0_CLK_En     usartCLKEN(SERIAL_PORT)
+#endif
+#if SERIAL_PORT == 1 || (SERIAL_PORT >= 10 && SERIAL_PORT < 19) || SERIAL_PORT == 6
+#define UART0_CLK HAL_RCC_GetPCLK2Freq()
+#else
+#define UART0_CLK HAL_RCC_GetPCLK1Freq()
 #endif
 
-#ifdef SERIAL2_MOD
-#if SERIAL_MOD == SERIAL_MOD2
-#error Conflicting use of USART ports!
+#if SERIAL_PORT == 1
+#define UART0_TX_PIN 9
+#define UART0_RX_PIN 10
+#define UART0_PORT GPIOA
+#define UART0_AF GPIO_AF7_USART1
+#elif SERIAL_PORT == 11
+#define UART0_TX_PIN 6
+#define UART0_RX_PIN 7
+#define UART0_PORT GPIOB
+#define UART0_AF GPIO_AF7_USART1
+#elif SERIAL_PORT == 2
+#define UART0_TX_PIN 2
+#define UART0_RX_PIN 3
+#define UART0_PORT GPIOA
+#define UART0_AF GPIO_AF7_USART2
+#elif SERIAL_PORT == 21
+#define UART0_TX_PIN 5
+#define UART0_RX_PIN 6
+#define UART0_PORT GPIOD
+#define UART0_AF GPIO_AF7_USART2
+#elif SERIAL_PORT == 3
+#define UART0_TX_PIN 10
+#define UART0_RX_PIN 11
+#define UART0_PORT GPIOB
+#define UART0_AF GPIO_AF7_USART3
+#elif SERIAL_PORT == 31
+#define UART0_TX_PIN 10
+#define UART0_RX_PIN 11
+#define UART0_PORT GPIOC
+#define UART0_AF GPIO_AF7_USART3
+#elif SERIAL_PORT == 32
+#define UART0_TX_PIN 8
+#define UART0_RX_PIN 9
+#define UART0_PORT GPIOD
+#define UART0_AF GPIO_AF7_USART3
+#elif SERIAL_PORT == 33
+#define UART0_TX_PIN 10
+#define UART0_RX_PIN 5
+#define UART0_PORT GPIOC
+#define UART0_AF GPIO_AF7_USART3
+#elif SERIAL_PORT == 6
+#define UART0_TX_PIN 6
+#define UART0_RX_PIN 7
+#define UART0_PORT GPIOC
+#define UART0_AF GPIO_AF8_USART6
+#else
+#error Code has to be added to support serial port
 #endif
-#define UART2 usart(SERIAL2_MOD)
-#define UART2_IRQ usartINT(SERIAL2_MOD)
-#define UART2_IRQHandler usartHANDLER(SERIAL2_MOD)
-#if SERIAL2_MOD == 1 || SERIAL2_MOD == 6
+
+#endif // SERIAL_PORT
+
+#if SERIAL1_PORT >= 0
+
+#if SERIAL_PORT1 == SERIAL_PORT || SERIAL1_PORT == SERIAL2_PORT
+#error Conflicting use of UART peripherals!
+#endif
+
+#if (SERIAL1_PORT >= 10 && SERIAL1_PORT < 19)
+#define UART1            usart(1)
+#define UART1_IRQ        usartINT(1)
+#define UART1_IRQHandler usartHANDLER(1)
+#define UART1_CLK_En     usartCLKEN(1)
+#elif (SERIAL1_PORT >= 20 && SERIAL1_PORT < 29)
+#define UART1            usart(2)
+#define UART1_IRQ        usartINT(2)
+#define UART1_IRQHandler usartHANDLER(2)
+#define UART1_CLK_En     usartCLKEN(2)
+#elif (SERIAL1_PORT >= 30 && SERIAL1_PORT < 39)
+#define UART1            usart(3)
+#define UART1_IRQ        usartINT(3)
+#define UART1_IRQHandler usartHANDLER(3)
+#define UART1_CLK_En     usartCLKEN(3)
+#else
+#define UART1            usart(SERIAL1_PORT)
+#define UART1_IRQ        usartINT(SERIAL1_PORT)
+#define UART1_IRQHandler usartHANDLER(SERIAL1_PORT)
+#define UART1_CLK_En     usartCLKEN(SERIAL1_PORT)
+#endif
+#if SERIAL1_PORT == 1 || (SERIAL1_PORT >= 10 && SERIAL1_PORT < 19) || SERIAL1_PORT == 6
+#define UART1_CLK HAL_RCC_GetPCLK2Freq()
+#else
+#define UART1_CLK HAL_RCC_GetPCLK1Freq()
+#endif
+
+#if SERIAL1_PORT == 1
+#define UART1_TX_PIN 9
+#define UART1_RX_PIN 10
+#define UART1_PORT GPIOA
+#define UART1_AF GPIO_AF7_USART1
+#elif SERIAL1_PORT == 11
+#define UART1_TX_PIN 6
+#define UART1_RX_PIN 7
+#define UART1_PORT GPIOB
+#define UART1_AF GPIO_AF7_USART1
+#elif SERIAL1_PORT == 2
+#define UART1_TX_PIN 2
+#define UART1_RX_PIN 3
+#define UART1_PORT GPIOA
+#define UART1_AF GPIO_AF7_USART2
+#elif SERIAL1_PORT == 21
+#define UART1_TX_PIN 5
+#define UART1_RX_PIN 6
+#define UART1_PORT GPIOD
+#define UART1_AF GPIO_AF7_USART2
+#elif SERIAL1_PORT == 3
+#define UART1_TX_PIN 10
+#define UART1_RX_PIN 11
+#define UART1_PORT GPIOB
+#define UART1_AF GPIO_AF7_USART3
+#elif SERIAL1_PORT == 31
+#define UART1_TX_PIN 10
+#define UART1_RX_PIN 11
+#define UART1_PORT GPIOC
+#define UART1_AF GPIO_AF7_USART3
+#elif SERIAL1_PORT == 32
+#define UART1_TX_PIN 8
+#define UART1_RX_PIN 9
+#define UART1_PORT GPIOD
+#define UART1_AF GPIO_AF7_USART3
+#elif SERIAL1_PORT == 33
+#define UART1_TX_PIN 10
+#define UART1_RX_PIN 5
+#define UART1_PORT GPIOC
+#define UART1_AF GPIO_AF7_USART3
+#elif SERIAL1_PORT == 6
+#define UART1_TX_PIN 6
+#define UART1_RX_PIN 7
+#define UART1_PORT GPIOC
+#define UART1_AF GPIO_AF8_USART6
+#else
+#error Code has to be added to support serial port 1
+#endif
+
+#endif // SERIAL1_PORT
+
+#if SERIAL2_PORT >= 0
+
+#if SERIAL2_PORT == SERIAL_PORT || SERIAL2_PORT == SERIAL1_PORT
+#error Conflicting use of UART peripherals!
+#endif
+
+#if (SERIAL2_PORT >= 10 && SERIAL2_PORT < 19)
+#define UART2            usart(1)
+#define UART2_IRQ        usartINT(1)
+#define UART2_IRQHandler usartHANDLER(1)
+#define UART2_CLK_En     usartCLKEN(1)
+#elif (SERIAL2_PORT >= 20 && SERIAL2_PORT < 29)
+#define UART2            usart(2)
+#define UART2_IRQ        usartINT(2)
+#define UART2_IRQHandler usartHANDLER(2)
+#define UART2_CLK_En     usartCLKEN(2)
+#elif (SERIAL2_PORT >= 30 && SERIAL2_PORT < 39)
+#define UART2            usart(3)
+#define UART2_IRQ        usartINT(3)
+#define UART2_IRQHandler usartHANDLER(3)
+#define UART2_CLK_En     usartCLKEN(3)
+#else
+#define UART2            usart(SERIAL2_PORT)
+#define UART2_IRQ        usartINT(SERIAL2_PORT)
+#define UART2_IRQHandler usartHANDLER(SERIAL2_PORT)
+#define UART2_CLK_En     usartCLKEN(SERIAL2_PORT)
+#endif
+#if SERIAL2_PORT == 1 || (SERIAL2_PORT >= 10 && SERIAL2_PORT < 19) || SERIAL2_PORT == 6
 #define UART2_CLK HAL_RCC_GetPCLK2Freq()
 #else
 #define UART2_CLK HAL_RCC_GetPCLK1Freq()
 #endif
+
+#if SERIAL2_PORT == 1
+#define UART2_TX_PIN 9
+#define UART2_RX_PIN 10
+#define UART2_PORT GPIOA
+#define UART2_AF GPIO_AF7_USART1
+#elif SERIAL2_PORT == 11
+#define UART2_TX_PIN 6
+#define UART2_RX_PIN 7
+#define UART2_PORT GPIOB
+#define UART2_AF GPIO_AF7_USART1
+#elif SERIAL2_PORT == 2
+#define UART2_TX_PIN 2
+#define UART2_RX_PIN 3
+#define UART2_PORT GPIOA
+#define UART2_AF GPIO_AF7_USART2
+#elif SERIAL2_PORT == 21
+#define UART2_TX_PIN 5
+#define UART2_RX_PIN 6
+#define UART2_PORT GPIOD
+#define UART2_AF GPIO_AF7_USART2
+#elif SERIAL2_PORT == 3
+#define UART2_TX_PIN 10
+#define UART2_RX_PIN 11
+#define UART2_PORT GPIOB
+#define UART2_AF GPIO_AF7_USART3
+#elif SERIAL2_PORT == 31
+#define UART2_TX_PIN 10
+#define UART2_RX_PIN 11
+#define UART2_PORT GPIOC
+#define UART2_AF GPIO_AF7_USART3
+#elif SERIAL2_PORT == 32
+#define UART2_TX_PIN 8
+#define UART2_RX_PIN 9
+#define UART2_PORT GPIOD
+#define UART2_AF GPIO_AF7_USART3
+#elif SERIAL2_PORT == 33
+#define UART2_TX_PIN 10
+#define UART2_RX_PIN 5
+#define UART2_PORT GPIOC
+#define UART2_AF GPIO_AF7_USART3
+#elif SERIAL2_PORT == 6
+#define UART2_TX_PIN 6
+#define UART2_RX_PIN 7
+#define UART2_PORT GPIOC
+#define UART2_AF GPIO_AF8_USART6
+#else
+#error Code has to be added to support serial port 2
 #endif
 
+#endif // SERIAL2_PORT
+
 static io_stream_properties_t serial[] = {
+#if SERIAL_PORT >= 0
     {
       .type = StreamType_Serial,
       .instance = 0,
@@ -83,10 +320,23 @@ static io_stream_properties_t serial[] = {
       .flags.modbus_ready = On,
       .claim = serialInit
     },
-#ifdef SERIAL2_MOD
+#endif
+#if SERIAL1_PORT >= 0
     {
       .type = StreamType_Serial,
       .instance = 1,
+      .flags.claimable = On,
+      .flags.claimed = Off,
+      .flags.connected = On,
+      .flags.can_set_baud = On,
+      .flags.modbus_ready = On,
+      .claim = serial1Init
+    },
+#endif
+#if SERIAL2_PORT >= 0
+    {
+      .type = StreamType_Serial,
+      .instance = 2,
       .flags.claimable = On,
       .flags.claimed = Off,
       .flags.connected = On,
@@ -104,8 +354,102 @@ void serialRegisterStreams (void)
         .streams = serial,
     };
 
+#if SERIAL_PORT >= 0
+
+    static const periph_pin_t tx0 = {
+        .function = Output_TX,
+        .group = PinGroup_UART1,
+        .port  = UART0_PORT,
+        .pin   = UART0_TX_PIN,
+        .mode  = { .mask = PINMODE_OUTPUT },
+        .description = "UART1"
+    };
+
+    static const periph_pin_t rx0 = {
+        .function = Input_RX,
+        .group = PinGroup_UART1,
+        .port = UART0_PORT,
+        .pin = UART0_RX_PIN,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART1"
+    };
+
+    hal.periph_port.register_pin(&rx0);
+    hal.periph_port.register_pin(&tx0);
+
+#endif
+
+#if SERIAL1_PORT >= 0
+
+    static const periph_pin_t tx1 = {
+        .function = Output_TX,
+        .group = PinGroup_UART2,
+        .port  = UART1_PORT,
+        .pin   = UART1_TX_PIN,
+        .mode  = { .mask = PINMODE_OUTPUT },
+        .description = "UART2"
+    };
+
+    static const periph_pin_t rx1 = {
+        .function = Input_RX,
+        .group = PinGroup_UART2,
+        .port = UART1_PORT,
+        .pin = UART1_RX_PIN,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART2"
+    };
+
+    hal.periph_port.register_pin(&rx1);
+    hal.periph_port.register_pin(&tx1);
+
+#endif
+
+#if SERIAL2_PORT >= 0
+
+    static const periph_pin_t tx2 = {
+        .function = Output_TX,
+        .group = PinGroup_UART3,
+        .port  = UART2_PORT,
+        .pin   = UART2_TX_PIN,
+        .mode  = { .mask = PINMODE_OUTPUT },
+        .description = "UART3"
+    };
+
+    static const periph_pin_t rx2 = {
+        .function = Input_RX,
+        .group = PinGroup_UART3,
+        .port = UART2_PORT,
+        .pin = UART2_RX_PIN,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "UART3"
+    };
+
+    hal.periph_port.register_pin(&rx2);
+    hal.periph_port.register_pin(&tx2);
+
+#endif
+
     stream_register_streams(&streams);
 }
+
+static bool serialClaimPort (uint8_t instance)
+{
+    bool ok = false;
+    uint_fast8_t idx = sizeof(serial) / sizeof(io_stream_properties_t);
+
+    do {
+        if(serial[--idx].instance == instance) {
+            if((ok = serial[idx].flags.claimable && !serial[idx].flags.claimed))
+                serial[idx].flags.claimed = On;
+            break;
+        }
+
+    } while(idx);
+
+    return ok;
+}
+
+#if SERIAL_PORT >= 0
 
 //
 // Returns number of free characters in serial input buffer
@@ -158,7 +502,7 @@ static bool serialPutC (const char c)
     }
     txbuf.data[txbuf.head] = c;                         // Add data to buffer,
     txbuf.head = next_head;                             // update head pointer and
-    USART->CR1 |= USART_CR1_TXEIE;                      // enable TX interrupts
+    UART0->CR1 |= USART_CR1_TXEIE;                      // enable TX interrupts
 
     return true;
 }
@@ -190,7 +534,7 @@ static void serialWrite (const char *s, uint16_t length)
 //
 static void serialTxFlush (void)
 {
-    USART->CR1 &= ~USART_CR1_TXEIE;     // Disable TX interrupts
+    UART0->CR1 &= ~USART_CR1_TXEIE;     // Disable TX interrupts
     txbuf.tail = txbuf.head;
 }
 
@@ -201,7 +545,7 @@ static uint16_t serialTxCount (void)
 {
     uint32_t tail = txbuf.tail, head = txbuf.head;
 
-    return BUFCOUNT(head, tail, TX_BUFFER_SIZE) + (USART->SR & USART_SR_TC ? 0 : 1);
+    return BUFCOUNT(head, tail, TX_BUFFER_SIZE) + (UART0->SR & USART_SR_TC ? 0 : 1);
 }
 
 //
@@ -227,9 +571,9 @@ static bool serialSuspendInput (bool suspend)
 
 static bool serialSetBaudRate (uint32_t baud_rate)
 {
-    USART->CR1 = USART_CR1_RE|USART_CR1_TE;
-    USART->BRR = UART_BRR_SAMPLING16(USART_CLK, baud_rate);
-    USART->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
+    UART0->CR1 = USART_CR1_RE|USART_CR1_TE;
+    UART0->BRR = UART_BRR_SAMPLING16(UART0_CLK, baud_rate);
+    UART0->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
 
     return true;
 }
@@ -237,9 +581,9 @@ static bool serialSetBaudRate (uint32_t baud_rate)
 static bool serialDisable (bool disable)
 {
     if(disable)
-        USART->CR1 &= ~USART_CR1_RXNEIE;
+        UART0->CR1 &= ~USART_CR1_RXNEIE;
     else
-        USART->CR1 |= USART_CR1_RXNEIE;
+        UART0->CR1 |= USART_CR1_RXNEIE;
 
     return true;
 }
@@ -259,7 +603,7 @@ static enqueue_realtime_command_ptr serialSetRtHandler (enqueue_realtime_command
     return prev;
 }
 
-const io_stream_t *serialInit (uint32_t baud_rate)
+static const io_stream_t *serialInit (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
@@ -281,158 +625,32 @@ const io_stream_t *serialInit (uint32_t baud_rate)
         .set_enqueue_rt_handler = serialSetRtHandler
     };
 
-    if(serial[0].flags.claimed)
+    if(!serialClaimPort(stream.instance))
         return NULL;
 
-    serial[0].flags.claimed = On;
-
-#if SERIAL_MOD == 1
-
-    __HAL_RCC_USART1_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
+    UART0_CLK_En();
 
     GPIO_InitTypeDef GPIO_InitStructure = {
         .Mode      = GPIO_MODE_AF_PP,
         .Pull      = GPIO_NOPULL,
         .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_9|GPIO_PIN_10,
-        .Alternate = GPIO_AF7_USART1
+        .Pin       = (1 << UART0_RX_PIN)|(1 << UART0_TX_PIN),
+        .Alternate = UART0_AF
     };
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART1,
-        .port = GPIOA,
-        .pin = 9,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "UART1"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART1,
-        .port = GPIOA,
-        .pin = 10,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART1"
-    };
-
-#elif SERIAL_MOD == 2
-
-    __HAL_RCC_USART2_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_2|GPIO_PIN_3,
-        .Alternate = GPIO_AF7_USART2
-    };
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART1,
-        .port  = GPIOA,
-        .pin   = 2,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART1"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART1,
-        .port = GPIOA,
-        .pin = 3,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART1"
-    };
-
-#elif SERIAL_MOD == 3
-
-    __HAL_RCC_USART3_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_8|GPIO_PIN_9,
-        .Alternate = GPIO_AF7_USART3
-    };
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART1,
-        .port  = GPIOD,
-        .pin   = 8,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART1"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART1,
-        .port = GPIOD,
-        .pin = 9,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART1"
-    };
-
-#elif SERIAL_MOD == 6
-
-    __HAL_RCC_USART6_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_6|GPIO_PIN_7,
-        .Alternate = GPIO_AF8_USART6
-    };
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART1,
-        .port  = GPIOC,
-        .pin   = 6,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART1"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART1,
-        .port = GPIOC,
-        .pin = 7,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART1"
-    };
-
-#else
-#error Code has to be added to support serial module 1
-#endif
+    HAL_GPIO_Init(UART0_PORT, &GPIO_InitStructure);
 
     serialSetBaudRate(baud_rate);
 
-    HAL_NVIC_SetPriority(USART_IRQ, 0, 0);
-    HAL_NVIC_EnableIRQ(USART_IRQ);
-
-    hal.periph_port.register_pin(&rx);
-    hal.periph_port.register_pin(&tx);
+    HAL_NVIC_SetPriority(UART0_IRQ, 0, 0);
+    HAL_NVIC_EnableIRQ(UART0_IRQ);
 
     return &stream;
 }
 
-void USART_IRQHandler (void)
+void UART0_IRQHandler (void)
 {
-    if(USART->SR & USART_SR_RXNE) {
-        uint32_t data = USART->DR;
+    if(UART0->SR & USART_SR_RXNE) {
+        uint32_t data = UART0->DR;
         if(!enqueue_realtime_command((char)data)) {             // Check and strip realtime commands...
             uint16_t next_head = BUFNEXT(rxbuf.head, rxbuf);    // Get and increment buffer pointer
             if(next_head == rxbuf.tail)                         // If buffer full
@@ -444,16 +662,246 @@ void USART_IRQHandler (void)
         }
     }
 
-    if((USART->SR & USART_SR_TXE) && (USART->CR1 & USART_CR1_TXEIE)) {
+    if((UART0->SR & USART_SR_TXE) && (UART0->CR1 & USART_CR1_TXEIE)) {
         uint_fast16_t tail = txbuf.tail;            // Get buffer pointer
-        USART->DR = txbuf.data[tail];               // Send next character
+        UART0->DR = txbuf.data[tail];               // Send next character
         txbuf.tail = tail = BUFNEXT(tail, txbuf);   // and increment pointer
         if(tail == txbuf.head)                      // If buffer empty then
-            USART->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
+            UART0->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
    }
 }
 
-#ifdef SERIAL2_MOD
+#endif // SERIAL_PORT
+
+#if SERIAL1_PORT >= 0
+
+//
+// Returns number of free characters in serial input buffer
+//
+static uint16_t serial1RxFree (void)
+{
+    uint32_t tail = rxbuf1.tail, head = rxbuf1.head;
+
+    return (RX_BUFFER_SIZE - 1) - BUFCOUNT(head, tail, RX_BUFFER_SIZE);
+}
+
+//
+// Returns number of characters in serial input buffer
+//
+static uint16_t serial1RxCount (void)
+{
+    uint32_t tail = rxbuf1.tail, head = rxbuf1.head;
+
+    return BUFCOUNT(head, tail, RX_BUFFER_SIZE);
+}
+
+//
+// Flushes the serial input buffer
+//
+static void serial1RxFlush (void)
+{
+    rxbuf1.tail = rxbuf1.head;
+}
+
+//
+// Flushes and adds a CAN character to the serial input buffer
+//
+static void serial1RxCancel (void)
+{
+    rxbuf1.data[rxbuf1.head] = ASCII_CAN;
+    rxbuf1.tail = rxbuf1.head;
+    rxbuf1.head = BUFNEXT(rxbuf1.head, rxbuf1);
+}
+
+//
+// Writes a character to the serial output stream
+//
+static bool serial1PutC (const char c)
+{
+    uint32_t next_head = BUFNEXT(txbuf1.head, txbuf1);   // Set and update head pointer
+
+    while(txbuf1.tail == next_head) {           // While TX buffer full
+        if(!hal.stream_blocking_callback())     // check if blocking for space,
+            return false;                       // exit if not (leaves TX buffer in an inconsistent state)
+        UART1->CR1 |= USART_CR1_TXEIE;          // Enable TX interrupts???
+    }
+
+    txbuf1.data[txbuf1.head] = c;               // Add data to buffer
+    txbuf1.head = next_head;                    // and update head pointer
+
+    UART1->CR1 |= USART_CR1_TXEIE;              // Enable TX interrupts
+
+    return true;
+}
+
+//
+// Writes a null terminated string to the serial output stream, blocks if buffer full
+//
+static void serial1WriteS (const char *s)
+{
+    char c, *ptr = (char *)s;
+
+    while((c = *ptr++) != '\0')
+        serial1PutC(c);
+}
+
+// Writes a number of characters from a buffer to the serial output stream, blocks if buffer full
+//
+static void serial1Write (const char *s, uint16_t length)
+{
+    char *ptr = (char *)s;
+
+    while(length--)
+        serial1PutC(*ptr++);
+}
+
+//
+// Flushes the serial output buffer
+//
+static void serial1TxFlush (void)
+{
+    UART1->CR1 &= ~USART_CR1_TXEIE;     // Disable TX interrupts
+    txbuf1.tail = txbuf1.head;
+}
+
+//
+// Returns number of characters pending transmission
+//
+static uint16_t serial1TxCount (void)
+{
+    uint32_t tail = txbuf1.tail, head = txbuf1.head;
+
+    return BUFCOUNT(head, tail, TX_BUFFER_SIZE) + (UART1->SR & USART_SR_TC ? 0 : 1);
+}
+
+//
+// serialGetC - returns -1 if no data available
+//
+static int16_t serial1GetC (void)
+{
+    uint_fast16_t tail = rxbuf1.tail;       // Get buffer pointer
+
+    if(tail == rxbuf1.head)
+        return -1; // no data available
+
+    char data = rxbuf1.data[tail];          // Get next character
+    rxbuf1.tail = BUFNEXT(tail, rxbuf1);    // and update pointer
+
+    return (int16_t)data;
+}
+
+static bool serial1SuspendInput (bool suspend)
+{
+    return stream_rx_suspend(&rxbuf1, suspend);
+}
+
+static bool serial1SetBaudRate (uint32_t baud_rate)
+{
+    UART1->CR1 = USART_CR1_RE|USART_CR1_TE;
+    UART1->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
+    UART1->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
+
+    return true;
+}
+
+static bool serial1Disable (bool disable)
+{
+    if(disable)
+        UART1->CR1 &= ~USART_CR1_RXNEIE;
+    else
+        UART1->CR1 |= USART_CR1_RXNEIE;
+
+    return true;
+}
+
+static bool serial1EnqueueRtCommand (char c)
+{
+    return enqueue_realtime_command1(c);
+}
+
+static enqueue_realtime_command_ptr serial1SetRtHandler (enqueue_realtime_command_ptr handler)
+{
+    enqueue_realtime_command_ptr prev = enqueue_realtime_command1;
+
+    if(handler)
+        enqueue_realtime_command1 = handler;
+
+    return prev;
+}
+
+static const io_stream_t *serial1Init (uint32_t baud_rate)
+{
+    static const io_stream_t stream = {
+        .type = StreamType_Serial,
+        .instance = 1,
+        .state.connected = On,
+        .read = serial1GetC,
+        .write = serial1WriteS,
+        .write_n =  serial1Write,
+        .write_char = serial1PutC,
+        .enqueue_rt_command = serial1EnqueueRtCommand,
+        .get_rx_buffer_free = serial1RxFree,
+        .get_rx_buffer_count = serial1RxCount,
+        .get_tx_buffer_count = serial1TxCount,
+        .reset_write_buffer = serial1TxFlush,
+        .reset_read_buffer = serial1RxFlush,
+        .cancel_read_buffer = serial1RxCancel,
+        .suspend_read = serial1SuspendInput,
+        .disable_rx = serial1Disable,
+        .set_baud_rate = serial1SetBaudRate,
+        .set_enqueue_rt_handler = serial1SetRtHandler
+    };
+
+    if(!serialClaimPort(stream.instance))
+        return NULL;
+
+    UART1_CLK_En();
+
+    GPIO_InitTypeDef GPIO_InitStructure = {
+        .Mode      = GPIO_MODE_AF_PP,
+        .Pull      = GPIO_NOPULL,
+        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Pin       = (1 << UART1_RX_PIN)|(1 << UART1_TX_PIN),
+        .Alternate = UART1_AF
+    };
+    HAL_GPIO_Init(UART1_PORT, &GPIO_InitStructure);
+
+    serial1SetBaudRate(baud_rate);
+
+    HAL_NVIC_SetPriority(UART1_IRQ, 0, 0);
+    HAL_NVIC_EnableIRQ(UART1_IRQ);
+
+
+    return &stream;
+}
+
+void UART1_IRQHandler (void)
+{
+    if(UART1->SR & USART_SR_RXNE) {
+        uint32_t data = UART1->DR;
+        if(!enqueue_realtime_command1((char)data)) {            // Check and strip realtime commands...
+            uint16_t next_head = BUFNEXT(rxbuf1.head, rxbuf1);  // Get and increment buffer pointer
+            if(next_head == rxbuf1.tail)                        // If buffer full
+                rxbuf1.overflow = 1;                            // flag overflow
+            else {
+                rxbuf1.data[rxbuf1.head] = (char)data;          // if not add data to buffer
+                rxbuf1.head = next_head;                        // and update pointer
+            }
+        }
+    }
+
+    if((UART1->SR & USART_SR_TXE) && (UART1->CR1 & USART_CR1_TXEIE)) {
+        uint_fast16_t tail = txbuf1.tail;           // Get buffer pointer
+        UART1->DR = txbuf1.data[tail];              // Send next character
+        txbuf1.tail = tail = BUFNEXT(tail, txbuf1); // and increment pointer
+        if(tail == txbuf1.head)                     // If buffer empty then
+            UART1->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
+   }
+}
+
+#endif // SERIAL1_PORT
+
+#if SERIAL2_PORT >= 0
 
 //
 // Returns number of free characters in serial input buffer
@@ -609,11 +1057,11 @@ static enqueue_realtime_command_ptr serial2SetRtHandler (enqueue_realtime_comman
     return prev;
 }
 
-const io_stream_t *serial2Init (uint32_t baud_rate)
+static const io_stream_t *serial2Init (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .instance = 1,
+        .instance = 2,
         .state.connected = On,
         .read = serial2GetC,
         .write = serial2WriteS,
@@ -632,150 +1080,24 @@ const io_stream_t *serial2Init (uint32_t baud_rate)
         .set_enqueue_rt_handler = serial2SetRtHandler
     };
 
-    if(serial[1].flags.claimed)
+    if(!serialClaimPort(stream.instance))
         return NULL;
 
-    serial[1].flags.claimed = On;
-
-#if SERIAL2_MOD == 1
-
-    __HAL_RCC_USART1_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
+    UART2_CLK_En();
 
     GPIO_InitTypeDef GPIO_InitStructure = {
         .Mode      = GPIO_MODE_AF_PP,
         .Pull      = GPIO_NOPULL,
         .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_9|GPIO_PIN_10,
-        .Alternate = GPIO_AF7_USART1
+        .Pin       = (1 << UART2_RX_PIN)|(1 << UART2_TX_PIN),
+        .Alternate = UART2_AF
     };
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART2,
-        .port = GPIOA,
-        .pin = 9,
-        .mode = { .mask = PINMODE_OUTPUT },
-        .description = "UART2"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART2,
-        .port = GPIOA,
-        .pin = 10,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART2"
-    };
-
-#elif SERIAL2_MOD == 2
-
-    __HAL_RCC_USART2_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_2|GPIO_PIN_3,
-        .Alternate = GPIO_AF7_USART1
-    };
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART2,
-        .port  = GPIOA,
-        .pin   = 2,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART2"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART2,
-        .port = GPIOA,
-        .pin = 3,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART2"
-    };
-
-#elif SERIAL2_MOD == 3
-
-    __HAL_RCC_USART3_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_8|GPIO_PIN_9,
-        .Alternate = GPIO_AF7_USART3
-    };
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART2,
-        .port  = GPIOD,
-        .pin   = 8,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART2"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART2,
-        .port = GPIOD,
-        .pin = 9,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART2"
-    };
-
-#elif SERIAL2_MOD == 6
-
-    __HAL_RCC_USART6_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = GPIO_PIN_6|GPIO_PIN_7,
-        .Alternate = GPIO_AF8_USART6
-    };
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-    static const periph_pin_t tx = {
-        .function = Output_TX,
-        .group = PinGroup_UART2,
-        .port  = GPIOC,
-        .pin   = 6,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART2"
-    };
-
-    static const periph_pin_t rx = {
-        .function = Input_RX,
-        .group = PinGroup_UART2,
-        .port = GPIOC,
-        .pin = 7,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "UART2"
-    };
-
-#else
-#error Code has to be added to support serial module 2
-#endif
+    HAL_GPIO_Init(UART2_PORT, &GPIO_InitStructure);
 
     serial2SetBaudRate(baud_rate);
 
     HAL_NVIC_SetPriority(UART2_IRQ, 0, 0);
     HAL_NVIC_EnableIRQ(UART2_IRQ);
-
-    hal.periph_port.register_pin(&rx);
-    hal.periph_port.register_pin(&tx);
 
     return &stream;
 }
@@ -803,4 +1125,5 @@ void UART2_IRQHandler (void)
             UART2->CR1 &= ~USART_CR1_TXEIE;         // disable UART TX interrupt
    }
 }
-#endif
+
+#endif // SERIAL2_PORT

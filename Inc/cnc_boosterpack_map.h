@@ -36,6 +36,7 @@
 #define I2C_ENABLE      0
 #define EEPROM_ENABLE   0 // Disabled for now for BlackPill - pin differences... // Only change if BoosterPack does not have EEPROM mounted
 #endif
+#define SERIAL_PORT     1   // GPIOA: TX = 9, RX = 10
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA

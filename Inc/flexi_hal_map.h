@@ -37,17 +37,18 @@
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 
-#define I2C_ENABLE 1
+#define SERIAL_PORT     1   // GPIOA: TX =  9, RX = 10
+#define SERIAL1_PORT   31   // GPIOC: TX = 10, RX = 11
+#define I2C_ENABLE      1
 #define I2C_FASTMODE
-#define EEPROM_ENABLE 2
+#define EEPROM_ENABLE 128   // 128 Kbit/16K
 #define HAS_IOPORTS
 #if KEYPAD_ENABLE
 #define HAS_BOARD_INIT
 #endif
 
 #if MODBUS_ENABLE
-#define SERIAL2_MOD 3
-#define MODBUS_SERIAL_PORT 2
+#define MODBUS_RTU_STREAM       1
 #endif
 
 #if MPG_MODE == 1
@@ -184,5 +185,5 @@
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOA
 #define SD_CS_PIN               3
-#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
+#define SPI_PORT                12 // GPIOB, SCK = 3, MISO = 4, MOSI = 5
 #endif

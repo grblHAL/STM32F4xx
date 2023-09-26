@@ -45,7 +45,6 @@
  *                             -----------
  */
 
-
 #if N_ABC_MOTORS > 1
 #error "Axis configuration is not supported!"
 #endif
@@ -56,7 +55,8 @@
 #define BOARD_NAME "BlackPill Alt. 2"
 #endif
 
-#define I2C_PORT 1 // GPIOB, SCL_PIN = 8, SDA_PIN = 9
+#define SERIAL_PORT 1   // GPIOA: TX = 9, RX = 10
+#define I2C_PORT    1   // GPIOB: SCL = 8, SDA = 9
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA
