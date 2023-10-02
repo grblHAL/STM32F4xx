@@ -79,7 +79,7 @@ static void init_pwm0 (xbar_t *pin, pwm_config_t *config)
 
         init_ok = true;
 
-        AUXOUTPUT0_PWM_CLOCK_ENA();
+        AUXOUTPUT0_PWM_CLKEN();
 
         GPIO_InitTypeDef GPIO_Init = {
             .Speed = GPIO_SPEED_FREQ_HIGH,
@@ -177,7 +177,7 @@ static void init_pwm1 (xbar_t *pin, pwm_config_t *config)
 
         init_ok = true;
 
-        AUXOUTPUT1_PWM_CLOCK_ENA();
+        AUXOUTPUT1_PWM_CLKEN();
 
         GPIO_InitTypeDef GPIO_Init = {
             .Speed = GPIO_SPEED_FREQ_HIGH,

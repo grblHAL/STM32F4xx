@@ -35,7 +35,7 @@ static stream_tx_buffer_t txbuf = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command = protocol_enqueue_realtime_command;
 static const io_stream_t *serialInit (uint32_t baud_rate);
 #else
-#define SERIAL_PORT -1
+#define SERIAL_PORT 0
 #endif
 
 #ifdef SERIAL1_PORT
@@ -44,7 +44,7 @@ static stream_tx_buffer_t txbuf1 = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command1 = protocol_enqueue_realtime_command;
 static const io_stream_t *serial1Init(uint32_t baud_rate);
 #else
-#define SERIAL1_PORT -1
+#define SERIAL1_PORT 0
 #endif
 
 #ifdef SERIAL2_PORT
@@ -53,10 +53,10 @@ static stream_tx_buffer_t txbuf2 = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue_realtime_command;
 static const io_stream_t *serial2Init(uint32_t baud_rate);
 #else
-#define SERIAL2_PORT -1
+#define SERIAL2_PORT 0
 #endif
 
-#if SERIAL_PORT >= 0
+#if SERIAL_PORT
 
 #if SERIAL_PORT == SERIAL1_PORT || SERIAL_PORT == SERIAL2_PORT
 #error Conflicting use of UART peripherals!
@@ -140,7 +140,7 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 
 #endif // SERIAL_PORT
 
-#if SERIAL1_PORT >= 0
+#if SERIAL1_PORT
 
 #if SERIAL_PORT1 == SERIAL_PORT || SERIAL1_PORT == SERIAL2_PORT
 #error Conflicting use of UART peripherals!
@@ -224,7 +224,7 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 
 #endif // SERIAL1_PORT
 
-#if SERIAL2_PORT >= 0
+#if SERIAL2_PORT
 
 #if SERIAL2_PORT == SERIAL_PORT || SERIAL2_PORT == SERIAL1_PORT
 #error Conflicting use of UART peripherals!
@@ -309,7 +309,7 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 #endif // SERIAL2_PORT
 
 static io_stream_properties_t serial[] = {
-#if SERIAL_PORT >= 0
+#if SERIAL_PORT
     {
       .type = StreamType_Serial,
       .instance = 0,
@@ -321,7 +321,7 @@ static io_stream_properties_t serial[] = {
       .claim = serialInit
     },
 #endif
-#if SERIAL1_PORT >= 0
+#if SERIAL1_PORT
     {
       .type = StreamType_Serial,
       .instance = 1,
@@ -333,7 +333,7 @@ static io_stream_properties_t serial[] = {
       .claim = serial1Init
     },
 #endif
-#if SERIAL2_PORT >= 0
+#if SERIAL2_PORT
     {
       .type = StreamType_Serial,
       .instance = 2,
@@ -354,7 +354,7 @@ void serialRegisterStreams (void)
         .streams = serial,
     };
 
-#if SERIAL_PORT >= 0
+#if SERIAL_PORT
 
     static const periph_pin_t tx0 = {
         .function = Output_TX,
@@ -379,7 +379,7 @@ void serialRegisterStreams (void)
 
 #endif
 
-#if SERIAL1_PORT >= 0
+#if SERIAL1_PORT
 
     static const periph_pin_t tx1 = {
         .function = Output_TX,
@@ -404,7 +404,7 @@ void serialRegisterStreams (void)
 
 #endif
 
-#if SERIAL2_PORT >= 0
+#if SERIAL2_PORT
 
     static const periph_pin_t tx2 = {
         .function = Output_TX,
@@ -432,6 +432,8 @@ void serialRegisterStreams (void)
     stream_register_streams(&streams);
 }
 
+#if SERIAL_PORT || SERIAL1_PORT || SERIAL2_PORT
+
 static bool serialClaimPort (uint8_t instance)
 {
     bool ok = false;
@@ -449,7 +451,9 @@ static bool serialClaimPort (uint8_t instance)
     return ok;
 }
 
-#if SERIAL_PORT >= 0
+#endif
+
+#if SERIAL_PORT
 
 //
 // Returns number of free characters in serial input buffer
@@ -673,7 +677,7 @@ void UART0_IRQHandler (void)
 
 #endif // SERIAL_PORT
 
-#if SERIAL1_PORT >= 0
+#if SERIAL1_PORT
 
 //
 // Returns number of free characters in serial input buffer
@@ -901,7 +905,7 @@ void UART1_IRQHandler (void)
 
 #endif // SERIAL1_PORT
 
-#if SERIAL2_PORT >= 0
+#if SERIAL2_PORT
 
 //
 // Returns number of free characters in serial input buffer
