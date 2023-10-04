@@ -299,6 +299,7 @@
       "MAP": "Inc/protoneer_3.xx_map.h",
       "caps": {
         "axes": 4,
+        "auto_square": 0,
         "usb_cdc": 0,
         "digital_in": 0,
         "digital_out": 0,
@@ -324,6 +325,7 @@
       "MAP": "Inc/protoneer_3.xx_map.h",
       "caps": {
         "axes": 4,
+        "auto_square": 0,
         "usb_cdc": 0,
         "digital_in": 0,
         "digital_out": 0,
