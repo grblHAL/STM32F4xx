@@ -3,7 +3,7 @@
 
   Part of GrblHAL
 
-  Copyright (c) 2023 @nicshl & Terje Io
+  Copyright (c) 2023 @nickshl & Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

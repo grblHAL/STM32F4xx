@@ -104,7 +104,7 @@ void tmc_uart_init (void)
 #define TMC_UART_TIMER          timer(TMC_UART_TIMER_N)
 #define TMC_UART_IRQn           timerINT(TMC_UART_TIMER_N)
 #define TMC_UART_IRQHandler     timerHANDLER(TMC_UART_TIMER_N)
-#define TMC_UART_CLKENA         timerCLKENA(TMC_UART_TIMER_N)
+#define TMC_UART_CLKENA         timerCLKEN(TMC_UART_TIMER_N)
 
 #define SWS_BAUDRATE            100000
 #define ABORT_TIMEOUT           5           // ms
