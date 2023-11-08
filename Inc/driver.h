@@ -157,6 +157,8 @@
   #include "flexi_hal_map.h"
 #elif defined(BOARD_STM32F401_UNI)
   #include "stm32f401_uni_map.h"
+#elif defined(BOARD_HALCYON_V1)
+  #include "halcyon_v1_map.h"
 #elif defined(BOARD_MKS_ROBIN_NANO_30)
   #include "mks_robin_nano_v3.0_map.h"
 #elif defined(BOARD_MY_MACHINE)
