@@ -19,7 +19,7 @@
 
 // IMPORTANT: Control inputs are mapped differently when build is configured for more than 3 axes!
 
-#if N_ABC_MOTORS > 3 || N_AUTO_SQUARED > 1
+#if N_ABC_MOTORS > 3 || N_AUTO_SQUARED > 2
 #error "Axis configuration is not supported!"
 #endif
 
