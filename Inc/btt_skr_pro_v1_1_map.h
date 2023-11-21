@@ -102,8 +102,8 @@
 #define M4_STEP_PIN                 15
 #define M4_DIRECTION_PORT           GPIOE
 #define M4_DIRECTION_PIN            7
-//#define M4_LIMIT_PORT               GPIOE // Conflict with X limit switch IRQ
-//#define M4_LIMIT_PIN                10
+#define M4_LIMIT_PORT               GPIOG // NOTE: Cannot use the E1 input due to conflict
+#define M4_LIMIT_PIN                5     // with X limit switch IRQ. Using E2 input instead.
 #define M4_ENABLE_PORT              GPIOA
 #define M4_ENABLE_PIN               3
 #endif
@@ -115,8 +115,6 @@
 #define M5_STEP_PIN                 13
 #define M5_DIRECTION_PORT           GPIOG
 #define M5_DIRECTION_PIN            9
-#define M5_LIMIT_PORT               GPIOG
-#define M5_LIMIT_PIN                5
 #define M5_ENABLE_PORT              GPIOF
 #define M5_ENABLE_PIN               0
 #endif
