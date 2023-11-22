@@ -341,6 +341,7 @@
       "symbols": {
           "STM32F411xE": "",
           "NUCLEO_F411": "",
+	      "PROTONEER_SPINDLE_PWM": "",
           "RTC_ENABLE": 1
       }
     },
@@ -367,6 +368,7 @@
       "symbols": {
           "STM32F446xx": "",
           "NUCLEO_F446": "",
+	      "PROTONEER_SPINDLE_PWM": "",
           "RTC_ENABLE": 1
       }
     },
