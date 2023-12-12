@@ -117,15 +117,31 @@
 #define M5_ENABLE_PIN               3
 #endif
 
-  // Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT         GPIOB
-#define SPINDLE_ENABLE_PIN          1                           // FAN1
-#define SPINDLE_DIRECTION_PORT      GPIOB
-#define SPINDLE_DIRECTION_PIN       2                           // FAN2
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
+#if DRIVER_SPINDLE_PWM_ENABLE                                   // FAN0
 #define SPINDLE_PWM_PORT_BASE       GPIOB_BASE
-#define SPINDLE_PWM_PIN             0                           // FAN0
+#define SPINDLE_PWM_PIN             0
+#else
+#define AUXOUTPUT0_PORT             GPIOB
+#define AUXOUTPUT0_PIN              0
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE                                   // FAN2
+#define SPINDLE_DIRECTION_PORT      GPIOB
+#define SPINDLE_DIRECTION_PIN       2
+#else
+#define AUXOUTPUT1_PORT             GPIOB
+#define AUXOUTPUT1_PIN              2
+#endif
+
+#if DRIVER_SPINDLE_ENABLE                                       // FAN1
+#define SPINDLE_ENABLE_PORT         GPIOB
+#define SPINDLE_ENABLE_PIN          1
+#else
+#define AUXOUTPUT2_PORT             GPIOB
+#define AUXOUTPUT2_PIN              1
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB

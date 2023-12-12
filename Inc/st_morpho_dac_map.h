@@ -41,7 +41,6 @@
 #define I2C_PORT        1   // PB8 = SCK, PB9 = SDA
 #endif
 
-#define HAS_IOPORTS
 #define HAS_BOARD_INIT
 #define I2C_PORT 1
 #define IS_NUCLEO_BOB
@@ -78,15 +77,31 @@
 #define Z_LIMIT_PIN             10
 #define LIMIT_INMODE            GPIO_BITBAND
 
-  // Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT     GPIOB
-#define SPINDLE_ENABLE_PIN      3
-#define SPINDLE_DIRECTION_PORT  GPIOB
-#define SPINDLE_DIRECTION_PIN   5
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
+#if DRIVER_SPINDLE_PWM_ENABLE
 #define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
 #define SPINDLE_PWM_PIN         8
+#else
+#define AUXOUTPUT4_PORT         GPIOA
+#define AUXOUTPUT4_PIN          8
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  GPIOB
+#define SPINDLE_DIRECTION_PIN   5
+#else
+#define AUXOUTPUT5_PORT         GPIOB
+#define AUXOUTPUT5_PIN          5
+#endif
+
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     GPIOB
+#define SPINDLE_ENABLE_PIN      3
+#else
+#define AUXOUTPUT6_PORT         GPIOB
+#define AUXOUTPUT6_PIN          3
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOB

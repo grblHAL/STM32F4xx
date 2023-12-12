@@ -54,7 +54,7 @@ I2C_HandleTypeDef *I2C_GetPort (void);
 
 #if TRINAMIC_ENABLE == 2130 && TRINAMIC_I2C
 
-#include "motors\trinamic.h"
+#include "motors/trinamic.h"
 #include "trinamic/tmc_i2c_interface.h"
 
 #define I2C_ADR_I2CBRIDGE 0x47
@@ -64,6 +64,7 @@ I2C_HandleTypeDef *I2C_GetPort (void);
 void i2c_init (void);
 bool i2c_probe (uint_fast16_t i2c_address);
 bool i2c_send (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block);
+bool i2c_receive (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block);
 void i2c_get_keycode (uint_fast16_t i2cAddr, keycode_callback_ptr callback);
 
 #endif // I2C_ENABLE

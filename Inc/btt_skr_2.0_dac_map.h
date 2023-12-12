@@ -110,15 +110,31 @@
 #define M4_ENABLE_PIN               13
 #endif
 
-  // Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT         GPIOB
-#define SPINDLE_ENABLE_PIN          6                           // FAN1
-#define SPINDLE_DIRECTION_PORT      GPIOB
-#define SPINDLE_DIRECTION_PIN       5                           // FAN2
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
+#if DRIVER_SPINDLE_PWM_ENABLE                                   // EXP1 - PB0, pin 2
 #define SPINDLE_PWM_PORT_BASE       GPIOB_BASE
-#define SPINDLE_PWM_PIN             0                           // EXP1 - PB0, pin 2
+#define SPINDLE_PWM_PIN             0
+#else
+#define AUXOUTPUT0_PORT             GPIOB
+#define AUXOUTPUT0_PIN              0
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE                                   // FAN2
+#define SPINDLE_DIRECTION_PORT      GPIOB
+#define SPINDLE_DIRECTION_PIN       5
+#else
+#define AUXOUTPUT1_PORT             GPIOB
+#define AUXOUTPUT1_PIN              5
+#endif
+
+#if DRIVER_SPINDLE_ENABLE                                       // FAN1
+#define SPINDLE_ENABLE_PORT         GPIOB
+#define SPINDLE_ENABLE_PIN          6
+#else
+#define AUXOUTPUT2_PORT             GPIOB
+#define AUXOUTPUT2_PIN              6
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB

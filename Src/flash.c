@@ -1,6 +1,6 @@
 /*
 
-  flash.h - driver code for STM32F4xx ARM processors
+  flash.c - driver code for STM32F4xx ARM processors
 
   Part of grblHAL
 
@@ -25,8 +25,10 @@
 
 #include <string.h>
 
-#include "main.h"
+#include "driver.h"
 #include "grbl/hal.h"
+
+#if FLASH_ENABLE
 
 extern void *_EEPROM_Emul_Start;
 extern uint8_t _EEPROM_Emul_Sector;
@@ -76,3 +78,5 @@ bool memcpy_to_flash (uint8_t *source)
 
     return status == HAL_OK;
 }
+
+#endif

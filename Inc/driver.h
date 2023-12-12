@@ -42,6 +42,10 @@
 #define ETHERNET_ENABLE 1
 #endif
 
+#if defined(MCP3221_ENABLE)
+#define I2C_ENABLE 1
+#endif
+
 #include "grbl/driver_opts.h"
 
 #define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
@@ -157,12 +161,35 @@
   #include "flexi_hal_map.h"
 #elif defined(BOARD_STM32F401_UNI)
   #include "stm32f401_uni_map.h"
+#elif defined(BOARD_HALCYON_V1)
+  #include "halcyon_v1_map.h"
 #elif defined(BOARD_MKS_ROBIN_NANO_30)
   #include "mks_robin_nano_v3.0_map.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "my_machine_map.h"
 #else // default board
   #include "generic_map.h"
+#endif
+
+#if DRIVER_SPINDLE_ENABLE && !defined(SPINDLE_ENABLE_PIN)
+#warning "Selected spindle is not supported!"
+#undef DRIVER_SPINDLE_ENABLE
+#define DRIVER_SPINDLE_ENABLE 0
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE && !defined(SPINDLE_DIRECTION_PIN)
+#warning "Selected spindle is not fully supported - no direction output!"
+#undef DRIVER_SPINDLE_DIR_ENABLE
+#define DRIVER_SPINDLE_DIR_ENABLE 0
+#endif
+
+#if DRIVER_SPINDLE_PWM_ENABLE && (!DRIVER_SPINDLE_ENABLE || !defined(SPINDLE_PWM_PIN))
+#warning "Selected spindle is not supported!"
+#undef DRIVER_SPINDLE_PWM_ENABLE
+#define DRIVER_SPINDLE_PWM_ENABLE 0
+#ifdef SPINDLE_PWM_PORT_BASE
+#undef SPINDLE_PWM_PORT_BASE
+#endif
 #endif
 
 #if IS_NUCLEO_DEVKIT == 64 && !defined(IS_NUCLEO_BOB)
@@ -202,7 +229,12 @@
 #ifdef SPINDLE_PWM_PORT_BASE
 
 #if SPINDLE_PWM_PORT_BASE == GPIOA_BASE
-  #if SPINDLE_PWM_PIN == 5 // PA5 - TIM2_CH1
+  #if SPINDLE_PWM_PIN == 0 // PA0 - TIM2_CH1
+    #define SPINDLE_PWM_TIMER_N     2
+    #define SPINDLE_PWM_TIMER_CH    1
+    #define SPINDLE_PWM_TIMER_INV   0
+    #define SPINDLE_PWM_TIMER_AF    1
+  #elif SPINDLE_PWM_PIN == 5 // PA5 - TIM2_CH1
     #define SPINDLE_PWM_TIMER_N     2
     #define SPINDLE_PWM_TIMER_CH    1
     #define SPINDLE_PWM_TIMER_INV   0
@@ -215,6 +247,11 @@
   #elif SPINDLE_PWM_PIN == 8 // PA8 - TIM1_CH1
     #define SPINDLE_PWM_TIMER_N     1
     #define SPINDLE_PWM_TIMER_CH    1
+    #define SPINDLE_PWM_TIMER_INV   0
+    #define SPINDLE_PWM_TIMER_AF    1
+  #elif SPINDLE_PWM_PIN == 11 // PA11 - TIM1_CH4
+    #define SPINDLE_PWM_TIMER_N     1
+    #define SPINDLE_PWM_TIMER_CH    4
     #define SPINDLE_PWM_TIMER_INV   0
     #define SPINDLE_PWM_TIMER_AF    1
   #endif
@@ -475,7 +512,9 @@
 
 #endif // AUXOUTPUT1_PWM_PORT_BASE
 
-#if defined(AUXOUTPUT0_PWM_PORT_BASE) || defined(AUXOUTPUT1_PWM_PORT_BASE)
+#if defined(AUXOUTPUT0_PWM_PORT_BASE) || defined(AUXOUTPUT1_PWM_PORT_BASE) ||\
+     defined(AUXOUTPUT0_ANALOG_PORT) || defined( AUXOUTPUT1_ANALOG_PORT) ||\
+      defined(MCP3221_ENABLE)
 #define AUX_ANALOG 1
 #else
 #define AUX_ANALOG 0
@@ -505,25 +544,26 @@
 #define DEBOUNCE_TIMER              timer(DEBOUNCE_TIMER_N)
 #define DEBOUNCE_TIMER_CLKEN        timerCLKEN(DEBOUNCE_TIMER_N)
 
-#if SPINDLE_SYNC_ENABLE
+#if SPINDLE_ENCODER_ENABLE
 
-#if SPINDLE_PWM_TIMER_N == 2 || SPINDLE_PWM_TIMER_N == 3
+#ifndef RPM_COUNTER_N
+#define RPM_COUNTER_N   3
+#endif
+#ifndef RPM_TIMER_N
+#define RPM_TIMER_N     2
+#endif
+
+#if SPINDLE_PWM_TIMER_N == RPM_COUNTER_N || SPINDLE_PWM_TIMER_N == RPM_TIMER_N
 #error Timer conflict: spindle sync and spindle PWM!
 #endif
-#if PULSE2_TIMER_N == 2 || PULSE2_TIMER_N == 3
+#if PULSE2_TIMER_N == RPM_COUNTER_N || PULSE2_TIMER_N == RPM_TIMER_N
 #error Timer conflict: spindle sync and step inject!
-#endif
-#ifndef RPM_COUNTER_N
-#define RPM_COUNTER_N               3
 #endif
 #define RPM_COUNTER                 timer(RPM_COUNTER_N)
 #define RPM_COUNTER_CLKEN           timerCLKEN(RPM_COUNTER_N)
 #define RPM_COUNTER_IRQn            timerINT(RPM_COUNTER_N)
 #define RPM_COUNTER_IRQHandler      timerHANDLER(RPM_COUNTER_N)
 
-#ifndef RPM_TIMER_N
-#define RPM_TIMER_N                 2
-#endif
 #define RPM_TIMER                   timer(RPM_TIMER_N)
 #define RPM_TIMER_CLKEN             timerCLKEN(RPM_TIMER_N)
 #define RPM_TIMER_IRQn              timerINT(RPM_TIMER_N)
@@ -573,7 +613,7 @@
 #ifdef SERIAL2_PORT
 #define SP2 1
 #else
-#define SP3 0
+#define SP2 0
 #endif
 
 #if MODBUS_ENABLE
@@ -670,6 +710,7 @@ typedef struct {
     volatile bool debounce;
     pin_irq_mode_t irq_mode;
     pin_mode_t cap;
+    ADC_HandleTypeDef *adc;
     ioport_interrupt_callback_ptr interrupt_callback;
     const char *description;
 } input_signal_t;

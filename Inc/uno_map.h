@@ -33,7 +33,6 @@
 #define SERIAL_PORT     2   // GPIOA: TX = 2, RX = 3
 #define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #define IS_NUCLEO_BOB
-#define VARIABLE_SPINDLE // Comment out to disable variable spindle
 
 // Define step pulse output pins.
 #define X_STEP_PORT             GPIOA // D2
@@ -78,21 +77,35 @@
 
 #define Z_LIMIT_POLL
 
-// Define spindle enable and spindle direction output pins.
-#ifdef VARIABLE_SPINDLE
-  #define SPINDLE_ENABLE_PORT   GPIOB // on morpho header
-  #define SPINDLE_ENABLE_PIN    7
-#else
-  #define SPINDLE_ENABLE_PORT   GPIOA // D12
-  #define SPINDLE_ENABLE_PIN    6
-#endif
-#define SPINDLE_DIRECTION_PORT  GPIOA // D13
-#define SPINDLE_DIRECTION_PIN   5
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
-#ifdef VARIABLE_SPINDLE
-#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE // D11
+#if DRIVER_SPINDLE_PWM_ENABLE // D11
+#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
 #define SPINDLE_PWM_PIN         7
+#else
+#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PIN          7
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE // D13
+#define SPINDLE_DIRECTION_PORT  GPIOA
+#define SPINDLE_DIRECTION_PIN   5
+#else
+#define AUXOUTPUT1_PORT         GPIOA
+#define AUXOUTPUT1_PIN          5
+#endif
+
+#if DRIVER_SPINDLE_ENABLE
+#if DRIVER_SPINDLE_PWM_ENABLE
+#define SPINDLE_ENABLE_PORT     GPIOB // on morpho header
+#define SPINDLE_ENABLE_PIN      7
+#else
+#define SPINDLE_ENABLE_PORT     GPIOA // D12
+#define SPINDLE_ENABLE_PIN      6
+#endif
+#elif !DRIVER_SPINDLE_PWM_ENABLE
+#define AUXOUTPUT2_PORT         GPIOA
+#define AUXOUTPUT2_PIN          6
 #endif
 
 // Define flood and mist coolant enable output pins.

@@ -87,15 +87,31 @@
 #define M3_ENABLE_PIN           STEPPERS_ENABLE_PIN
 #endif
 
-  // Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT     GPIOA
-#define SPINDLE_ENABLE_PIN      0
-#define SPINDLE_DIRECTION_PORT  GPIOA
-#define SPINDLE_DIRECTION_PIN   1
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
+#if DRIVER_SPINDLE_PWM_ENABLE
 #define SPINDLE_PWM_PORT_BASE   GPIOB_BASE
 #define SPINDLE_PWM_PIN         3
+#else
+#define AUXOUTPUT0_PORT         GPIOB
+#define AUXOUTPUT0_PIN          3
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  GPIOA
+#define SPINDLE_DIRECTION_PIN   1
+#else
+#define AUXOUTPUT2_PORT         GPIOA
+#define AUXOUTPUT2_PIN          1
+#endif
+
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     GPIOA
+#define SPINDLE_ENABLE_PIN      0
+#else
+#define AUXOUTPUT3_PORT         GPIOA
+#define AUXOUTPUT3_PIN          0
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOA
@@ -124,7 +140,7 @@
 
 
 // Spindle encoder pins.
-#if SPINDLE_SYNC_ENABLE
+#if SPINDLE_ENCODER_ENABLE
 
 #define RPM_COUNTER_N           2
 #define RPM_TIMER_N             3
@@ -132,12 +148,6 @@
 #define SPINDLE_INDEX_PIN       3
 #define SPINDLE_PULSE_PORT      GPIOA
 #define SPINDLE_PULSE_PIN       15
-
-#endif
-
-#if N_ABC_MOTORS == 0
-
-#define HAS_IOPORTS
 
 #endif
 

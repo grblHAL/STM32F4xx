@@ -87,15 +87,31 @@
 #define Z_LIMIT_PIN             14
 #define LIMIT_INMODE            GPIO_SHIFT12
 
-// Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT     GPIOB
-#define SPINDLE_ENABLE_PIN      1
-#define SPINDLE_DIRECTION_PORT  GPIOB
-#define SPINDLE_DIRECTION_PIN   2
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
+#if DRIVER_SPINDLE_PWM_ENABLE
 #define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
 #define SPINDLE_PWM_PIN         8
+#else
+#define AUXOUTPUT2_PORT         GPIOA
+#define AUXOUTPUT2_PIN          8
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  GPIOB
+#define SPINDLE_DIRECTION_PIN   2
+#else
+#define AUXOUTPUT3_PORT         GPIOB
+#define AUXOUTPUT3_PIN          2
+#endif
+
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     GPIOB
+#define SPINDLE_ENABLE_PIN      1
+#else
+#define AUXOUTPUT4_PORT         GPIOB
+#define AUXOUTPUT4_PIN          1
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOC
@@ -118,7 +134,6 @@
 #define PROBE_PIN               15
 
 #if N_ABC_MOTORS == 0
-#define HAS_IOPORTS
 #if !SAFETY_DOOR_ENABLE
 #define AUXINPUT0_PORT          GPIOB
 #define AUXINPUT0_PIN           9

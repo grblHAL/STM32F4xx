@@ -222,6 +222,26 @@ bool i2c_send (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block)
     return ok;
 }
 
+bool i2c_receive (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block)
+{
+    //wait for bus to be ready
+    while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
+        if(!hal.stream_blocking_callback())
+            return false;
+    }
+
+    bool ok = I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, buf, size) == HAL_OK;
+
+    if (ok && block) {
+        while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
+            if(!hal.stream_blocking_callback())
+                return false;
+        }
+    }
+
+    return ok;
+}
+
 void i2c_get_keycode (uint_fast16_t i2cAddr, keycode_callback_ptr callback)
 {
     keycode = 0;

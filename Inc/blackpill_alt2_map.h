@@ -109,15 +109,31 @@
 #define AUXOUTPUT2_PIN          15
 #endif
 
-// Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT     GPIOB
-#define SPINDLE_ENABLE_PIN      2
-#define SPINDLE_DIRECTION_PORT  GPIOB
-#define SPINDLE_DIRECTION_PIN   10
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
+#if DRIVER_SPINDLE_PWM_ENABLE
 #define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
 #define SPINDLE_PWM_PIN         8
+#else
+#define AUXOUTPUT3_PORT         GPIOA
+#define AUXOUTPUT3_PIN          8
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  GPIOB
+#define SPINDLE_DIRECTION_PIN   10
+#else
+#define AUXOUTPUT4_PORT         GPIOB
+#define AUXOUTPUT4_PIN          10
+#endif
+
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     GPIOB
+#define SPINDLE_ENABLE_PIN      2
+#else
+#define AUXOUTPUT5_PORT         GPIOB
+#define AUXOUTPUT5_PIN          2
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOC
@@ -138,7 +154,7 @@
 #elif I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         GPIOA
 #define I2C_STROBE_PIN          1
-#elif SPINDLE_SYNC_ENABLE && N_ABC_MOTORS == 1
+#elif SPINDLE_ENCODER_ENABLE && N_ABC_MOTORS == 1
 #define AUXOUTPUT0_PORT         GPIOA
 #define AUXOUTPUT0_PIN          1
 #else
@@ -152,7 +168,7 @@
 #define PROBE_PIN               5
 
 // Spindle encoder pins.
-#if SPINDLE_SYNC_ENABLE
+#if SPINDLE_ENCODER_ENABLE
 #define RPM_COUNTER_N           2
 #define RPM_TIMER_N             3
 #define SPINDLE_INDEX_PORT      GPIOB

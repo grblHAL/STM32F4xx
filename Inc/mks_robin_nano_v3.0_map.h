@@ -113,29 +113,45 @@
 #define M4_ENABLE_PIN               3
 #endif
 
-  // Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT         GPIOA
-#define SPINDLE_ENABLE_PIN          0                           // HOTBED
-#define SPINDLE_DIRECTION_PORT      GPIOB
-#define SPINDLE_DIRECTION_PIN       1                           // FAN1
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
-#define SPINDLE_PWM_PORT_BASE       GPIOA_BASE
-#define SPINDLE_PWM_PIN             8                           // 3D touch
+#if DRIVER_SPINDLE_PWM_ENABLE                                   // 3D touch
+#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
+#define SPINDLE_PWM_PIN         8
+#else
+#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PIN          8
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE                                   // FAN1
+#define SPINDLE_DIRECTION_PORT  GPIOB
+#define SPINDLE_DIRECTION_PIN   1
+#else
+#define AUXOUTPUT1_PORT         GPIOB
+#define AUXOUTPUT1_PIN          1
+#endif
+
+#if DRIVER_SPINDLE_ENABLE                                       // HOTBED
+#define SPINDLE_ENABLE_PORT     GPIOA
+#define SPINDLE_ENABLE_PIN      0
+#else
+#define AUXOUTPUT2_PORT         GPIOA
+#define AUXOUTPUT2_PIN          0
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOE
-#define COOLANT_FLOOD_PIN           5                          // HEATER 1
+#define COOLANT_FLOOD_PIN           5                           // HEATER 1
 #define COOLANT_MIST_PORT           GPIOB
-#define COOLANT_MIST_PIN            1                          // HEAT1
+#define COOLANT_MIST_PIN            1                           // HEAT1
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #define RESET_PORT                  GPIOC
 #define RESET_PIN                   0                           // TB
 #define FEED_HOLD_PORT              GPIOC
-#define FEED_HOLD_PIN               1                          // TH1
+#define FEED_HOLD_PIN               1                           // TH1
 #define CYCLE_START_PORT            GPIOD
-#define CYCLE_START_PIN             9                          // ???
+#define CYCLE_START_PIN             9                           // ???
 
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT            GPIOG
@@ -145,7 +161,7 @@
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOC
-#define PROBE_PIN                   4                       // Z+
+#define PROBE_PIN                   4                           // Z+
 
 #if SDCARD_ENABLE
 #define SD_CS_PORT                  GPIOC
