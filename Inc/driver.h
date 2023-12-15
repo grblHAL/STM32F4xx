@@ -50,7 +50,7 @@
 
 #define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
 
-#define DIGITAL_IN(port, pin) BITBAND_PERI(port->IDR, pin)
+#define DIGITAL_IN(port, pin) BITBAND_PERI((port)->IDR, pin)
 #define DIGITAL_OUT(port, pin, on) { BITBAND_PERI((port)->ODR, pin) = on; }
 
 #define timer(t) timerN(t)

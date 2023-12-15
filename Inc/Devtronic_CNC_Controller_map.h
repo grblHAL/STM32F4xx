@@ -60,6 +60,8 @@
 #define BOARD_NAME "Devtronic CNC Controller"
 #endif
 
+#define HAS_BOARD_INIT
+
 #define SERIAL_PORT 1   // GPIOA: TX = 9, RX = 10
 #define I2C_PORT    1   // GPIOB: SCL = 8, SDA = 9
 
