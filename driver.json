@@ -43,6 +43,28 @@
   },
   "boards": [
     {
+      "name": "Devtronic CNC Controller (BlackPill F411)",
+      "symbol": "BOARD_DEVTRONIC_CNC",
+      "URL": "https://github.com/Devtronic-US/CNC-Controller",
+      "MAP": "Inc/Devtronic_CNC_Controller_map.h",
+      "caps": {
+        "axes": 5,
+        "digital_in": 1,
+        "digital_out": 2,
+        "eeprom": 1,
+        "fram": 1,
+        "i2c": 1,
+        "sdcard": 0,
+        "spindle_sync": 1,
+        "keypad": 1,
+        "pio_board": "blackpill_f411ce",
+        "ldscript": "STM32F411CEUX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F411xE": ""
+      }
+    },
+    {
       "name": "BlackPill (STM32F401)",
       "symbol": "BOARD_BLACKPILL",
       "MAP": "Inc/blackpill_map.h",
