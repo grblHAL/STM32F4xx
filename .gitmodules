@@ -43,3 +43,6 @@
 [submodule "fans"]
 	path = fans
 	url = https://github.com/grblHAL/Plugin_fans/
+[submodule "plasma"]
+	path = plasma
+	url = https://github.com/grblHAL/Plugin_plasma/
