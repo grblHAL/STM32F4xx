@@ -124,8 +124,8 @@ static DMA_HandleTypeDef spi_dma_tx = {
 
 #define DMA_RX_IRQ DMAirq(1, 2)
 #define DMA_TX_IRQ DMAirq(1, 7)
-#define DMA_RX_IRQ_HANDLER DMAhandler(1, 3)
-#define DMA_TX_IRQ_HANDLER DMAhandler(1, 4)
+#define DMA_RX_IRQ_HANDLER DMAhandler(1, 2)
+#define DMA_TX_IRQ_HANDLER DMAhandler(1, 7)
 
 static DMA_HandleTypeDef spi_dma_rx = {
     .Instance = DMA1_Stream2,

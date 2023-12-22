@@ -32,6 +32,7 @@ lib_deps =
   FatFs
   sdcard
   spindle
+  embroidery
   Drivers/FATFS/App
   Drivers/FATFS/Target
   # USB serial support
