@@ -2590,7 +2590,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "231202";
+    hal.driver_version = "231223";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2938,7 +2938,7 @@ void DEBOUNCE_TIMER_IRQHandler (void)
         if(state.safety_door_ajar)
             hal.control.interrupt_callback(state);
     }
-    DIGITAL_OUT(COOLANT_FLOOD_PORT, COOLANT_FLOOD_PIN, 0);
+
 #if QEI_SELECT_ENABLED
 
     if(debounce.qei_select) {

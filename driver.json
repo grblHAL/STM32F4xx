@@ -282,7 +282,9 @@
       "URL": "https://wiki.fysetc.com/FYSETC_S6/",
       "MAP": "Inc/fysetc_s6_map.h",
       "caps": {
-        "axes": 3,
+        "axes": 6,
+        "ganged_axes": 3,
+        "auto_square": 0,
         "digital_in": 0,
         "digital_out": 0,
         "eeprom": -1,

@@ -23,7 +23,9 @@
 #error "BTT SKR-2 supports 5 motors max."
 #endif
 
-#if !(defined(STM32F407xx) || defined(STM32F429xx)) || HSE_VALUE != 8000000
+#if IS_NUCLEO_DEVKIT
+// When debugging with Nucleo-144
+#elif !(defined(STM32F407xx) || defined(STM32F429xx)) || HSE_VALUE != 8000000
 #error "This board has a STM32F407 or STM32F429 processor with a 8MHz crystal, select a corresponding build!"
 #endif
 
@@ -180,9 +182,9 @@
 #define SPI_CS_PORT                 GPIOB
 #define SPI_CS_PIN                  12                              // ESP-CS
 #define SPI_IRQ_PORT                GPIOB
-#define SPI_IRQ_PIN                 10                              // ESP-IO0
-#define SPI_RST_PORT                GPIOB
-#define SPI_RST_PIN                 11                              // ESP-IO1
+#define SPI_IRQ_PIN                 11                              // ESP-IO4
+#define SPI_RST_PORT                GPIOC
+#define SPI_RST_PIN                 14                              // ESP-RST
 #endif
 
 #if TRINAMIC_UART_ENABLE
