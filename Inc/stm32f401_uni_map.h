@@ -126,18 +126,26 @@
 #define FEED_HOLD_PIN           6
 #define CYCLE_START_PORT        GPIOB
 #define CYCLE_START_PIN         7
-#if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT        GPIOA
-#define SAFETY_DOOR_PIN         13
-#endif
 #define CONTROL_INMODE          GPIO_BITBAND
+
+#define AUXINPUT0_PORT          GPIOA
+#define AUXINPUT0_PIN           13
+
+#if SAFETY_DOOR_ENABLE
+#define SAFETY_DOOR_PORT        AUXINPUT0_PORT
+#define SAFETY_DOOR_PIN         AUXINPUT0_PIN
+#endif
+
+#if MOTOR_FAULT_ENABLE
+#define MOTOR_FAULT_PORT        AUXINPUT0_PORT
+#define MOTOR_FAULT_PIN         AUXINPUT0_PIN
+#endif
 
 // Define probe switch input pin.
 #if !N_AUTO_SQUARED
 #define PROBE_PORT              GPIOB
 #define PROBE_PIN               0
 #endif
-
 
 // Spindle encoder pins.
 #if SPINDLE_ENCODER_ENABLE

@@ -148,12 +148,20 @@
 #define RESET_PIN                   10                          // Exp1-5
 #define FEED_HOLD_PIN               11                          // Exp1-6
 #define CYCLE_START_PIN             12                          // Exp1-7
+#define CONTROL_INMODE              GPIO_BITBAND
+
+#define AUXINPUT0_PORT              GPIOE
+#define AUXINPUT0_PIN               13                          // EXP1-8
 
 #if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT            GPIOE
-#define SAFETY_DOOR_PIN             13                          // EXP1-8
+#define SAFETY_DOOR_PORT            AUXINPUT0_PORT
+#define SAFETY_DOOR_PIN             AUXINPUT0_PIN
 #endif
-#define CONTROL_INMODE              GPIO_BITBAND
+
+#if MOTOR_FAULT_ENABLE
+#define MOTOR_FAULT_PORT            AUXINPUT0_PORT
+#define MOTOR_FAULT_PIN             AUXINPUT0_PIN
+#endif
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOE

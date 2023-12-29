@@ -158,9 +158,20 @@
 #define FEED_HOLD_PIN               11                          // EXP1 PD11
 #define CYCLE_START_PORT            GPIOG
 #define CYCLE_START_PIN             2                           // EXP1 PG2
-#define SAFETY_DOOR_PORT            GPIOG
-#define SAFETY_DOOR_PIN             4                           // EXP1 PG4
 #define CONTROL_INMODE GPIO_BITBAND
+
+#define AUXINPUT0_PORT              GPIOG
+#define AUXINPUT0_PIN               4                           // EXP1 PG4
+
+#if SAFETY_DOOR_ENABLE
+#define SAFETY_DOOR_PORT            AUXINPUT0_PORT
+#define SAFETY_DOOR_PIN             AUXINPUT0_PIN
+#endif
+
+#if MOTOR_FAULT_ENABLE
+#define MOTOR_FAULT_PORT            AUXINPUT0_PORT
+#define MOTOR_FAULT_PIN             AUXINPUT0_PIN
+#endif
 
 // Define probe switch input pin.
 #define PROBE_PORT                  GPIOA

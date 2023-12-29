@@ -156,11 +156,6 @@
 #define FEED_HOLD_PIN               2                           // Y+ Limit
 #define CYCLE_START_PORT            GPIOA
 #define CYCLE_START_PIN             3                           // Z+ Limit
-
-#if SAFETY_DOOR_ENABLE
-//#define SAFETY_DOOR_PORT            GPIOG
-//#define SAFETY_DOOR_PIN             6                           // EXP1 PG4
-#endif
 #define CONTROL_INMODE GPIO_BITBAND
 
 // Define probe switch input pin.

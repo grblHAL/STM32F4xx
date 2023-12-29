@@ -131,9 +131,9 @@
       }
     },
     {
-      "name": "BTT SKR-2",
+      "name": "BTT SKR-2 STM32F407",
       "symbol": "BOARD_BTT_SKR_20",
-      "URL": "https://www.bigtree-tech.com/products/bigtreetech-skr-2.html",
+      "URL": "https://github.com/bigtreetech/SKR-2",
       "MAP": "Inc/btt_skr_2.0_map.h",
       "caps": {
         "uart": 0,
@@ -148,6 +148,31 @@
         "trinamic_uart_n": 1,
         "trinamic_uart_addr": 0,
         "wiznet": 1
+      },
+      "symbols": {
+          "STM32F407xx": "",
+          "HSE_VALUE": 8000000
+      }
+    },
+    {
+      "name": "BTT SKR-2 STM32F407 (Bootloader)",
+      "symbol": "BOARD_BTT_SKR_20",
+      "URL": "https://github.com/bigtreetech/SKR-2",
+      "MAP": "Inc/btt_skr_2.0_map.h",
+      "caps": {
+        "uart": 0,
+        "axes": 5,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "sdcard": 1,
+        "i2c": 1,
+        "trinamic_spi_cs": 1,
+        "trinamic_spi_chain": 0,
+        "trinamic_uart_n": 1,
+        "trinamic_uart_addr": 0,
+        "wiznet": 1,
+        "ldscript": "STM32F407VGTX_BL32K_FLASH.ld"
       },
       "symbols": {
           "STM32F407xx": "",

@@ -119,7 +119,6 @@
 #define RESET_PIN               0 // A0
 #define FEED_HOLD_PIN           1 // A1
 #define CYCLE_START_PIN         4 // A2
-
 #define CONTROL_INMODE          GPIO_MAP
 
 // Define probe switch input pin.

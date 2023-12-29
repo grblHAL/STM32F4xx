@@ -78,15 +78,15 @@
 //#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pin.
-#define X_ENABLE_PORT               GPIOA
-#define X_ENABLE_PIN                14
-#define Y_ENABLE_PORT               GPIOA
-#define Y_ENABLE_PIN                14
-#define Z_ENABLE_PORT               GPIOA
-#define Z_ENABLE_PIN                13
+#define X_ENABLE_PORT           GPIOA
+#define X_ENABLE_PIN            14
+#define Y_ENABLE_PORT           GPIOA
+#define Y_ENABLE_PIN            14
+#define Z_ENABLE_PORT           GPIOA
+#define Z_ENABLE_PIN            13
 //#define STEPPERS_ENABLE_PORT       GPIOA
 //#define STEPPERS_ENABLE_PIN        14
-#define STEPPERS_ENABLE_OUTMODE    GPIO_BITBAND
+#define STEPPERS_ENABLE_OUTMODE GPIO_BITBAND
 
 // Define homing/hard limit switch input pins.
 #define X_LIMIT_PORT            GPIOA
@@ -164,7 +164,6 @@
 #define AUXOUTPUT2_PIN          4
 #define AUXOUTPUT3_PORT         GPIOA
 #define AUXOUTPUT3_PIN          6
-#define AUXOUTPUT_OUTMODE       GPIO_BITBAND
 
 #define AUXINPUT0_PORT          GPIOA
 #define AUXINPUT0_PIN           0
@@ -172,7 +171,8 @@
 #define AUXINPUT1_PIN           1
 #define AUXINPUT2_PORT          GPIOA
 #define AUXINPUT2_PIN           2
-
+#define AUXINPUT3_PORT          GPIOC
+#define AUXINPUT3_PIN           4
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #define RESET_PORT              GPIOB
@@ -181,11 +181,22 @@
 #define FEED_HOLD_PIN           8
 #define CYCLE_START_PORT        GPIOC
 #define CYCLE_START_PIN         11
-#if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT        GPIOC
-#define SAFETY_DOOR_PIN         4
-#endif
 #define CONTROL_INMODE          GPIO_BITBAND
+
+#if SAFETY_DOOR_ENABLE
+#define SAFETY_DOOR_PORT        AUXINPUT3_PORT
+#define SAFETY_DOOR_PIN         AUXINPUT3_PIN
+#endif
+
+#if MOTOR_FAULT_ENABLE
+#define MOTOR_FAULT_PORT        AUXINPUT1_PORT
+#define MOTOR_FAULT_PIN         AUXINPUT1_PIN
+#endif
+
+#if MOTOR_WARNING_ENABLE
+#define MOTOR_WARNING_PORT      AUXINPUT2_PORT
+#define MOTOR_WARNING_PIN       AUXINPUT2_PIN
+#endif
 
 // Define probe switch input pin.
 #define PROBE_PORT              GPIOB

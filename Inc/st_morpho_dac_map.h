@@ -127,9 +127,6 @@
 #define RESET_PIN               2
 #define FEED_HOLD_PIN           3
 #define CYCLE_START_PIN         4
-#if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PIN         1
-#endif
 #define CONTROL_INMODE GPIO_MAP
 
 // Define probe switch input pin.
@@ -141,6 +138,8 @@
 #define AUXINPUT0_PIN           13
 #define AUXINPUT1_PORT          GPIOB
 #define AUXINPUT1_PIN           14
+#define AUXINPUT2_PORT          GPIOC
+#define AUXINPUT2_PIN           1
 
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          15
@@ -155,6 +154,16 @@
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOC
 #define SD_CS_PIN               8
+#endif
+
+#if SAFETY_DOOR_ENABLE
+#define SAFETY_DOOR_PORT        AUXINPUT2_PORT
+#define SAFETY_DOOR_PIN         AUXINPUT2_PIN
+#endif
+
+#if MOTOR_FAULT_ENABLE
+#define MOTOR_FAULT_PORT        AUXINPUT1_PORT
+#define MOTOR_FAULT_PIN         AUXINPUT1_PIN
 #endif
 
 // EOF

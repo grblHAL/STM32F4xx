@@ -168,10 +168,7 @@
 #define FEED_HOLD_PIN           7
 #define CYCLE_START_PORT        GPIOB
 #define CYCLE_START_PIN         6
-#if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT        GPIOA
-#define SAFETY_DOOR_PIN         1
-#elif I2C_STROBE_ENABLE
+#if I2C_STROBE_ENABLE && !SAFETY_DOOR_ENABLE
 #define I2C_STROBE_PORT         GPIOA
 #define I2C_STROBE_PIN          1
 #else
@@ -201,6 +198,10 @@
 #define AUXINPUT4_PIN          15
 #endif
 
+#if SAFETY_DOOR_ENABLE && defined(AUXINPUT0_PORT)
+#define SAFETY_DOOR_PORT        AUXINPUT0_PORT
+#define SAFETY_DOOR_PIN         AUXINPUT0_PIN
+#endif
 
 #if KEYPAD_ENABLE == 1 && SAFETY_DOOR_ENABLE
 #error I2C keypad not supported when safety door is enabled

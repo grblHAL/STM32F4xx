@@ -124,19 +124,31 @@
 #define M4_ENABLE_PIN           STEPPERS_ENABLE_PIN
 #endif
 
-// Define spindle enable and spindle direction output pins.
-#define SPINDLE_ENABLE_PORT     GPIOC
-#define SPINDLE_ENABLE_PIN      14
-#define SPINDLE_DIRECTION_PORT  GPIOC
-#define SPINDLE_DIRECTION_PIN   15
+// Define driver spindle pins
 
-// Define spindle PWM output pin.
+#if DRIVER_SPINDLE_PWM_ENABLE
 #define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
 #define SPINDLE_PWM_PIN         0
-#define SPINDLE_PWM_TIMER_N     2
-#define SPINDLE_PWM_TIMER_CH    1
-#define SPINDLE_PWM_TIMER_INV   0
-#define SPINDLE_PWM_TIMER_AF    1
+#else
+#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PIN          0
+#endif
+
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  GPIOC
+#define SPINDLE_DIRECTION_PIN   15
+#else
+#define AUXOUTPUT1_PORT         GPIOC
+#define AUXOUTPUT1_PIN          15
+#endif
+
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     GPIOC
+#define SPINDLE_ENABLE_PIN      14
+#else
+#define AUXOUTPUT2_PORT         GPIOC
+#define AUXOUTPUT2_PIN          14
+#endif
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOA
@@ -151,11 +163,20 @@
 #define FEED_HOLD_PIN           13
 #define CYCLE_START_PORT        GPIOC
 #define CYCLE_START_PIN         10
-#if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT        GPIOB
-#define SAFETY_DOOR_PIN         13
-#endif
 #define CONTROL_INMODE          GPIO_BITBAND
+
+#define AUXINPUT0_PORT          GPIOB
+#define AUXINPUT0_PIN           13
+
+#if SAFETY_DOOR_ENABLE
+#define SAFETY_DOOR_PORT        AUXINPUT0_PORT
+#define SAFETY_DOOR_PIN         AUXINPUT0_PIN
+#endif
+
+#if MOTOR_FAULT_ENABLE
+#define MOTOR_FAULT_PORT        AUXINPUT0_PORT
+#define MOTOR_FAULT_PIN         AUXINPUT0_PIN
+#endif
 
 // Define probe switch input pin.
 #if !N_AUTO_SQUARED
@@ -163,43 +184,37 @@
 #define PROBE_PIN               12
 #endif
 
-#if N_ABC_MOTORS == 0
-
-#define HAS_IOPORTS
-
-#endif
-
 #if SDCARD_ENABLE
-  #define SDCARD_SDIO             0
-	#define SPI_PORT                1                                  // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
-	#define SD_CS_PORT              GPIOA
-	#define SD_CS_PIN               4
+  #define SDCARD_SDIO           0
+	#define SPI_PORT            1                                  // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
+	#define SD_CS_PORT          GPIOA
+	#define SD_CS_PIN           4
 #endif
 
 #if TRINAMIC_UART_ENABLE
 
-#define MOTOR_UART_PORT            GPIOA
-#define MOTOR_UART_RX_PIN          10
-#define MOTOR_UART_TX_PIN          09
+#define MOTOR_UART_PORT         GPIOA
+#define MOTOR_UART_RX_PIN       10
+#define MOTOR_UART_TX_PIN       9
 
 #undef TRINAMIC_UART_ENABLE
-#define TRINAMIC_UART_ENABLE        2
+#define TRINAMIC_UART_ENABLE    2
 
-#define MOTOR_UARTX_PORT            MOTOR_UART_PORT
-#define MOTOR_UARTX_PIN             MOTOR_UART_TX_PIN
-#define MOTOR_UARTY_PORT            MOTOR_UART_PORT
-#define MOTOR_UARTY_PIN             MOTOR_UART_TX_PIN
-#define MOTOR_UARTZ_PORT            MOTOR_UART_PORT
-#define MOTOR_UARTZ_PIN             MOTOR_UART_TX_PIN
+#define MOTOR_UARTX_PORT        MOTOR_UART_PORT
+#define MOTOR_UARTX_PIN         MOTOR_UART_TX_PIN
+#define MOTOR_UARTY_PORT        MOTOR_UART_PORT
+#define MOTOR_UARTY_PIN         MOTOR_UART_TX_PIN
+#define MOTOR_UARTZ_PORT        MOTOR_UART_PORT
+#define MOTOR_UARTZ_PIN         MOTOR_UART_TX_PIN
 
 #ifdef  M3_AVAILABLE
-#define MOTOR_UARTM3_PORT           MOTOR_UART_PORT
-#define MOTOR_UARTM3_PIN            MOTOR_UART_TX_PIN
+#define MOTOR_UARTM3_PORT       MOTOR_UART_PORT
+#define MOTOR_UARTM3_PIN        MOTOR_UART_TX_PIN
 #endif
 
 #ifdef  M4_AVAILABLE
-#define MOTOR_UARTM4_PORT           MOTOR_UART_PORT
-#define MOTOR_UARTM4_PIN            MOTOR_UART_TX_PIN
+#define MOTOR_UARTM4_PORT       MOTOR_UART_PORT
+#define MOTOR_UARTM4_PIN        MOTOR_UART_TX_PIN
 #endif
 
 #endif
