@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2023 Terje Io
+  Copyright (c) 2023-2024 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -91,6 +91,24 @@ static void enumerate_pins (bool low_level, pin_info_ptr pin_info, void *data)
 }
 
 #endif // MCP3221_ENABLE
+
+#if AUX_ANALOG_OUT
+
+static void set_pwm_cap (xbar_t *output, bool servo_pwm)
+{
+    uint_fast8_t i = analog.out.n_ports;
+
+    if(output) do {
+        i--;
+        if(aux_out_analog[i].port == (GPIO_TypeDef *)output->port && aux_out_analog[i].pin == output->pin) {
+            aux_out_analog[i].mode.pwm = !servo_pwm;
+            aux_out_analog[i].mode.servo_pwm = servo_pwm;
+            break;
+        }
+    } while(i);
+}
+
+#endif
 
 #ifdef AUXOUTPUT0_PWM_PORT_BASE
 
@@ -189,6 +207,7 @@ static bool init_pwm0 (xbar_t *pin, pwm_config_t *config)
         AUXOUTPUT0_PWM_TIMER->CR1 |= TIM_CR1_CEN;
 
         pwm0_out(config->min);
+        set_pwm_cap(pin, config->servo_mode);
     }
 
     return ok;
@@ -293,6 +312,7 @@ static bool init_pwm1 (xbar_t *pin, pwm_config_t *config)
         AUXOUTPUT1_PWM_TIMER->CR1 |= TIM_CR1_CEN;
 
         pwm1_out(config->min);
+        set_pwm_cap(pin, config->servo_mode);
     }
 
     return ok;
@@ -368,8 +388,9 @@ static xbar_t *get_pin_info (io_port_type_t type, io_port_direction_t dir, uint8
                 else
 #endif
                 {
-                    pin.mode.input = pin.mode.analog = On;
-                    pin.cap = pin.mode;
+                    pin.mode = aux_in_analog[port].mode;
+                    pin.cap = aux_in_analog[port].cap;
+                    pin.cap.claimable = !pin.mode.claimed;
                     pin.function = aux_in_analog[port].id;
                     pin.group = aux_in_analog[port].group;
                     pin.pin = aux_in_analog[port].pin;
@@ -387,9 +408,10 @@ static xbar_t *get_pin_info (io_port_type_t type, io_port_direction_t dir, uint8
 
             if(port < analog.out.n_ports) {
                 port = ioports_map(analog.out, port);
+                pin.port = aux_out_analog[port].port;
                 pin.mode = aux_out_analog[port].mode;
-                pin.mode.output = pin.mode.analog = On;
-                pin.cap = pin.mode;
+                pin.mode.pwm = !pin.mode.servo_pwm; //?? for easy filtering
+                XBAR_SET_CAP(pin.cap, pin.mode);
                 pin.function = aux_out_analog[port].id;
                 pin.group = aux_out_analog[port].group;
                 pin.pin = aux_out_analog[port].pin;
@@ -445,7 +467,7 @@ static bool claim (io_port_type_t type, io_port_direction_t dir, uint8_t *port, 
 #ifdef MCP3221_ENABLE
                     *port == analog_in.pin ? analog_in.mode.claimed :
 #endif
-                    aux_in_analog[*port].cap.claimed))) {
+                    aux_in_analog[*port].mode.claimed))) {
 
                 uint8_t i;
 
@@ -468,7 +490,7 @@ static bool claim (io_port_type_t type, io_port_direction_t dir, uint8_t *port, 
                 } else
 #endif
                 {
-                    aux_in_analog[*port].cap.claimed = On;
+                    aux_in_analog[*port].mode.claimed = On;
                     aux_in_analog[*port].description = description;
                 }
                 analog.in.map[hal.port.num_analog_in] = *port;
