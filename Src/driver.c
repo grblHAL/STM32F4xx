@@ -177,6 +177,12 @@ static volatile uint32_t rpm_timer_ovf = 0;
 static void stepperPulseStartSynchronized (stepper_t *stepper);
 #endif
 
+#if defined(LED_R_PIN) && defined(LED_G_PIN) && defined(LED_B_PIN)
+#define LED_RGB 1
+#else
+#define LED_RGB 0
+#endif
+
 static periph_signal_t *periph_pins = NULL;
 
 static input_signal_t inputpin[] = {
@@ -407,6 +413,21 @@ static output_signal_t outputpin[] = {
 #endif
 #ifdef SPI_RST_PORT
     { .id = Output_SPIRST,          .port = SPI_RST_PORT,           .pin = SPI_RST_PIN,             .group = PinGroup_SPI },
+#endif
+#ifdef LED_PORT
+    { .id = Output_LED,             .port = LED_PORT,               .pin = LED_PIN,                 .group = PinGroup_LED },
+#endif
+#ifdef LED_R_PORT
+    { .id = Output_LED_R,           .port = LED_R_PORT,             .pin = LED_R_PIN,               .group = PinGroup_LED },
+#endif
+#ifdef LED_G_PORT
+    { .id = Output_LED_G,           .port = LED_G_PORT,             .pin = LED_G_PIN,               .group = PinGroup_LED },
+#endif
+#ifdef LED_B_PORT
+    { .id = Output_LED_B,           .port = LED_B_PORT,             .pin = LED_B_PIN,               .group = PinGroup_LED },
+#endif
+#ifdef LED_W_PORT
+    { .id = Output_LED_W,           .port = LED_W_PORT,             .pin = LED_W_PIN,               .group = PinGroup_LED },
 #endif
 #ifdef AUXOUTPUT0_PORT
     { .id = Output_Aux0,            .port = AUXOUTPUT0_PORT,        .pin = AUXOUTPUT0_PIN,          .group = PinGroup_AuxOutput },
@@ -1693,6 +1714,35 @@ static coolant_state_t coolantGetState (void)
     return state;
 }
 
+#if LED_RGB
+
+static void rgb_out (uint16_t device, rgb_color_t color)
+{
+    DIGITAL_OUT(LED_R_PORT, LED_R_PIN, !!color.R);
+    DIGITAL_OUT(LED_G_PORT, LED_G_PIN, !!color.G);
+    DIGITAL_OUT(LED_B_PORT, LED_B_PIN, !!color.B);
+#ifdef LED_W_PIN
+    DIGITAL_OUT(LED_W_PORT, LED_W_PIN, !!color.W);
+#endif
+}
+
+static void rgb_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
+{
+    if(mask.R)
+        DIGITAL_OUT(LED_R_PORT, LED_R_PIN, !!color.R);
+    if(mask.G)
+        DIGITAL_OUT(LED_G_PORT, LED_G_PIN, !!color.G);
+    if(mask.B)
+        DIGITAL_OUT(LED_B_PORT, LED_B_PIN, !!color.B);
+#ifdef LED_W_PIN
+    if(mask.W)
+        DIGITAL_OUT(LED_W_PORT, LED_W_PIN, !!color.W);
+#endif
+}
+
+
+#endif
+
 // Helper functions for setting/clearing/inverting individual bits atomically (uninterruptable)
 static void bitsSetAtomic (volatile uint_fast16_t *ptr, uint_fast16_t bits)
 {
@@ -2711,7 +2761,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "240119";
+    hal.driver_version = "240124";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2799,6 +2849,17 @@ bool driver_init (void)
     hal.nvs.memcpy_to_flash = memcpy_to_flash;
 #else
     hal.nvs.type = NVS_None;
+#endif
+
+#if LED_RGB
+    hal.rgb.out = rgb_out;
+    hal.rgb.out = rgb_out_masked;
+    hal.rgb.num_devices = 1;
+  #ifdef LED_W_PIN
+    hal.rgb.cap = (rgb_color_t){ .R = 1, .G = 1, .B = 1, .W = 1 };
+  #else
+    hal.rgb.cap = (rgb_color_t){ .R = 1, .G = 1, .B = 1 };
+  #endif
 #endif
 
 #if QEI_ENABLE
@@ -2968,7 +3029,7 @@ bool driver_init (void)
 #if AUX_CONTROLS_ENABLED
     for(i = AuxCtrl_ProbeDisconnect; i < AuxCtrl_NumEntries; i++) {
         if(aux_ctrl[i].enabled) {
-            if((aux_ctrl[i].enabled = ioports_enumerate(Port_Digital, Port_Input, (pin_mode_t){ .irq_mode = aux_ctrl[i].irq_mode, .claimable = On }, aux_claim, (void *)&aux_ctrl[i])))
+            if((aux_ctrl[i].enabled = ioports_enumerate(Port_Digital, Port_Input, (pin_cap_t){ .irq_mode = aux_ctrl[i].irq_mode, .claimable = On }, aux_claim, (void *)&aux_ctrl[i])))
                 hal.signals_cap.mask |= aux_ctrl[i].cap.mask;
         }
     }

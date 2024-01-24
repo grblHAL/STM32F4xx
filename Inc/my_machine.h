@@ -90,9 +90,10 @@
 //#define EMBROIDERY_ENABLE    1 // Embroidery plugin. To be completed.
 //#define PPI_ENABLE           1 // Laser PPI plugin. To be completed.
 //#define LASER_COOLANT_ENABLE 1 // Laser coolant plugin. To be completed.
-//#define TRINAMIC_ENABLE   2130 // Trinamic TMC2130 stepper driver support. NOTE: work in progress.
-//#define TRINAMIC_ENABLE   5160 // Trinamic TMC5160 stepper driver support. NOTE: work in progress.
-//#define TRINAMIC_ENABLE   2209 // Trinamic TMC2209 stepper driver support. NOTE: work in progress.
+//#define TRINAMIC_ENABLE   2130 // Trinamic TMC2130 stepper driver support.
+//#define TRINAMIC_ENABLE   5160 // Trinamic TMC5160 stepper driver support.
+//#define TRINAMIC_ENABLE   2209 // Trinamic TMC2209 stepper driver support.
+//#define TRINAMIC_R_SENSE   110 // R sense resistance in milliohms, 2130 and 2209 default is 110, 5160 is 75.
 //#define TRINAMIC_I2C         1 // Trinamic I2C - SPI bridge interface.
 //#define TRINAMIC_DEV         1 // Development mode, adds a few M-codes to aid debugging. Do not enable in production code.
 //#define FANS_ENABLE          1 // Enable fan control via M106/M107. Enables fans plugin.

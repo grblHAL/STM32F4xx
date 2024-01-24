@@ -272,6 +272,18 @@
 #endif
 #endif
 
+/*
+#define LED_R_PORT              GPIOA
+#define LED_R_PIN               7
+#define LED_G_PORT              GPIOB
+#define LED_G_PIN               7
+#define LED_B_PORT              GPIOC
+#define LED_B_PIN               8
+*/
+/*
+#define NEOPIXEL_SPI            1 // PA7
+*/
+
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT4_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT4_PIN

@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2021 Terje Io
+  Copyright (c) 2020-2024 Terje Io
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,6 +30,10 @@
 #include "spi.h"
 #include "grbl/protocol.h"
 #include "grbl/settings.h"
+
+#ifdef NEOPIXEL_SPI
+extern void neopixel_init (void);
+#endif
 
 #if TRINAMIC_SPI_ENABLE
 
@@ -159,7 +163,6 @@ static void if_init (uint8_t motors, axes_signals_t axisflags)
 
 #endif
 
-
 void board_init (void)
 {
 #if TRINAMIC_SPI_ENABLE
@@ -183,7 +186,11 @@ void board_init (void)
 
     tmc_uart_init();
 
-    #endif
+#endif
+
+#ifdef NEOPIXEL_SPI
+    neopixel_init();
+#endif
 }
 
 #endif
