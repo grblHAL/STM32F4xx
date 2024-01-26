@@ -1773,12 +1773,12 @@ static uint_fast16_t valueSetAtomic (volatile uint_fast16_t *ptr, uint_fast16_t 
 
 #if MPG_MODE == 1
 
-static void mpg_select (sys_state_t state)
+static void mpg_select (void *data)
 {
     stream_mpg_enable(DIGITAL_IN(MPG_MODE_PORT, MPG_MODE_PIN) == 0);
 }
 
-static void mpg_enable (sys_state_t state)
+static void mpg_enable (void *data)
 {
     if(sys.mpg_mode != (DIGITAL_IN(MPG_MODE_PORT, MPG_MODE_PIN) == 0))
         stream_mpg_enable(true);
@@ -2761,7 +2761,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "240124";
+    hal.driver_version = "240125";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2951,7 +2951,7 @@ bool driver_init (void)
                 aux_digital_in.pins.inputs = input;
             input->id = (pin_function_t)(Input_Aux0 + aux_digital_in.n_pins++);
             input->bit = 1 << input->pin;
-            input->cap.pull_mode = PullMode_UpDown;
+            input->mode.pull_mode = input->cap.pull_mode = PullMode_Up;
             input->cap.irq_mode = ((DRIVER_IRQMASK|PROBE_IRQ_BIT) & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
 #if SAFETY_DOOR_ENABLE
             if(input->port == SAFETY_DOOR_PORT && input->pin == SAFETY_DOOR_PIN && input->cap.irq_mode != IRQ_Mode_None)
@@ -3042,10 +3042,10 @@ bool driver_init (void)
 #if MPG_MODE == 1
   #if KEYPAD_ENABLE == 2
     if((hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL), false, keypad_enqueue_keycode)))
-        protocol_enqueue_rt_command(mpg_enable);
+        protocol_enqueue_foreground_task(mpg_enable, NULL);
   #else
     if((hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL), false, NULL)))
-        protocol_enqueue_rt_command(mpg_enable);
+        protocol_enqueue_foreground_task(mpg_enable, NULL);
   #endif
 #elif MPG_MODE == 2
     hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL), false, keypad_enqueue_keycode);
@@ -3229,7 +3229,7 @@ void EXTI0_IRQHandler(void)
 #elif PROBE_IRQ_BIT & (1<<0)
         probe.triggered = On;
 #elif MPG_MODE_BIT && (1<<0)
-        protocol_enqueue_rt_command(mpg_select);
+        protocol_enqueue_foreground_task(mpg_select, NULL);
 #elif I2C_STROBE_BIT & (1<<0)
         if(i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
@@ -3275,7 +3275,7 @@ void EXTI1_IRQHandler(void)
 #elif PROBE_IRQ_BIT & (1<<1)
         probe.triggered = On;
 #elif MPG_MODE_BIT && (1<<1)
-        protocol_enqueue_rt_command(mpg_select);
+        protocol_enqueue_foreground_task(mpg_select, NULL);
 #elif I2C_STROBE_BIT & (1<<1)
         if(i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
@@ -3321,7 +3321,7 @@ void EXTI2_IRQHandler(void)
 #elif PROBE_IRQ_BIT & (1<<2)
         probe.triggered = On;
 #elif MPG_MODE_BIT && (1<<2)
-        protocol_enqueue_rt_command(mpg_select);
+        protocol_enqueue_foreground_task(mpg_select, NULL);
 #elif I2C_STROBE_BIT & (1<<2)
         if(i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
@@ -3367,7 +3367,7 @@ void EXTI3_IRQHandler(void)
 #elif PROBE_IRQ_BIT & (1<<3)
         probe.triggered = On;
 #elif MPG_MODE_BIT && (1<<3)
-        protocol_enqueue_rt_command(mpg_select);
+        protocol_enqueue_foreground_task(mpg_select, NULL);
 #elif I2C_STROBE_BIT & (1<<3)
         if(i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
@@ -3413,7 +3413,7 @@ void EXTI4_IRQHandler(void)
 #elif PROBE_IRQ_BIT & (1<<4)
         probe.triggered = On;
 #elif MPG_MODE_BIT && (1<<4)
-        protocol_enqueue_rt_command(mpg_select);
+        protocol_enqueue_foreground_task(mpg_select, NULL);
 #elif I2C_STROBE_BIT & (1<<4)
         if(i2c_strobe.callback)
             i2c_strobe.callback(0, DIGITAL_IN(I2C_STROBE_PORT, I2C_STROBE_PIN) == 0);
@@ -3495,7 +3495,7 @@ void EXTI9_5_IRQHandler(void)
 #endif
 #if MPG_MODE_BIT & 0x03E0
         if(ifg & MPG_MODE_BIT)
-            protocol_enqueue_rt_command(mpg_select);
+            protocol_enqueue_foreground_task(mpg_select, NULL);
 #endif
 #if AUXINPUT_MASK & 0x03E0
         if(ifg & aux_irq)
@@ -3559,7 +3559,7 @@ void EXTI15_10_IRQHandler(void)
 #endif
 #if MPG_MODE_BIT & 0xFC00
         if(ifg & MPG_MODE_BIT)
-            protocol_enqueue_rt_command(mpg_select);
+            protocol_enqueue_foreground_task(mpg_select, NULL);
 #endif
 #if AUXINPUT_MASK & 0xFC00
         if(ifg & aux_irq)

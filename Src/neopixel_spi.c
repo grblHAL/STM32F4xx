@@ -1,5 +1,5 @@
 /*
-  neopixel_spi.c - SPI support for Neopixels !! EXPERIMENTAL & UNTESTED !!
+  neopixel_spi.c - SPI support for Neopixels
 
   TODO: use I2S interface for more precise timing?
 
@@ -120,6 +120,8 @@ static uint8_t leds[NEOPIXELS_NUM * 9 + 15] = {0};
 
 void neopixels_write (void)
 {
+    while(spi_port.State != HAL_SPI_STATE_READY);
+
     HAL_SPI_Transmit_DMA(&spi_port, leds, (uint16_t)sizeof(leds));
 }
 
@@ -156,8 +158,6 @@ static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_m
         *led++ = (uint8_t)(B >> 8);
         *led   = (uint8_t)B;
     }
-
-    while(spi_port.State != HAL_SPI_STATE_READY);
 
 #if NEOPIXELS_NUM == 1
     neopixels_write();
@@ -217,7 +217,8 @@ void neopixel_init (void)
             .group = PinGroup_SPI,
             .port = GPIOB,
             .pin = 5,
-            .mode = { .mask = PINMODE_NONE }
+            .mode = { .mask = PINMODE_NONE },
+            .description = "Neopixels"
         };
 
 #elif NEOPIXEL_SPI == 12
@@ -239,7 +240,8 @@ void neopixel_init (void)
             .group = PinGroup_SPI,
             .port = GPIOB,
             .pin = 5,
-            .mode = { .mask = PINMODE_NONE }
+            .mode = { .mask = PINMODE_NONE },
+            .description = "Neopixels"
         };
 
 #elif NEOPIXEL_SPI == 2
@@ -261,7 +263,8 @@ void neopixel_init (void)
             .group = PinGroup_SPI,
             .port = GPIOB,
             .pin = 15,
-            .mode = { .mask = PINMODE_NONE }
+            .mode = { .mask = PINMODE_NONE },
+            .description = "Neopixels"
         };
 
 #elif NEOPIXEL_SPI == 3
@@ -283,7 +286,8 @@ void neopixel_init (void)
             .group = PinGroup_SPI,
             .port = GPIOC,
             .pin = 12,
-            .mode = { .mask = PINMODE_NONE }
+            .mode = { .mask = PINMODE_NONE },
+            .description = "Neopixels"
         };
 #endif
 

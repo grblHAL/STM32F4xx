@@ -162,11 +162,11 @@
 #define PROBE_PORT                  GPIOA
 #define PROBE_PIN                   1                           // BLTouch PA1
 
-#define LED_R_PORT                  GPIO_B
+#define LED_R_PORT                  GPIOB
 #define LED_R_PIN                   6
-#define LED_G_PORT                  GPIO_B
+#define LED_G_PORT                  GPIOB
 #define LED_G_PIN                   5
-#define LED_B_PORT                  GPIO_B
+#define LED_B_PORT                  GPIOB
 #define LED_B_PIN                   7
 
 #if SDCARD_ENABLE
