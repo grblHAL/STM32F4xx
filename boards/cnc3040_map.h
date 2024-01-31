@@ -22,12 +22,12 @@
  *                             -----------
  *                         VB |           | +3V
  *                        C13 |           | GND
- *         Coolant Flood  C14 |           | +5V
- *          Coolant Mist  C15 | *     - * | B9   Steppers enable
+ *                        C14 |           | +5V
+ *                        C15 | *     - * | B9   Steppers enable
  *                        RST |      |K|  | B8   Safety door
  *                X Step   A0 |       -   | B7   Feed Hold
  *           X Direction   A1 |           | B6   Cycle Start
- *                Y Step   A2 |           | B5   Reset/EStop Probe
+ *                Y Step   A2 |           | B5   Reset/EStop
  *           Y Direction   A3 |    / \    | B4   Coolant Mist
  *                Z Step   A4 |   <MCU>   | B3   Coolant Flood
  *           Z Direction   A5 |    \ /    | A15
@@ -59,8 +59,6 @@
 #define BOARD_NAME "CNC 3040"
 #endif
 #define BOARD_URL "https://github.com/shaise/GrblCNC/tree/master/Hardware/GrblCnc3040"
-
-#define SERIAL_PORT             11  // GPIOB: TX = 6, RX = 7
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOA

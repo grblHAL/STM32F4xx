@@ -254,15 +254,15 @@
 #define AUXOUTPUT3_PORT         GPIOA
 #define AUXOUTPUT3_PIN          5
 #ifndef AUXOUTPUT4_PORT
-#define AUXOUTPUT4_PORT         GPIOA
-#define AUXOUTPUT4_PIN          7
+//#define AUXOUTPUT4_PORT         GPIOA
+//#define AUXOUTPUT4_PIN          7
 #endif
 #ifndef AUXOUTPUT5_PORT
 #define AUXOUTPUT5_PORT         GPIOB
 #define AUXOUTPUT5_PIN          7
 #endif
 #if MPG_MODE == 0
-#if (SPINDLE_ENABLE & (1<<SPINDLE_PWM2))
+#if 1
 #define AUXOUTPUT0_PWM_PORT_BASE GPIOC_BASE
 #define AUXOUTPUT0_PWM_PIN       8
 #elif !defined(AUXOUTPUT6_PORT)
@@ -282,6 +282,7 @@
 */
 /*
 #define NEOPIXEL_SPI            1 // PA7
+#define NEOPIXELS_NUM           6
 */
 
 #if SAFETY_DOOR_ENABLE

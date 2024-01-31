@@ -30,13 +30,13 @@
  *                       X Step   A0 |       -   | B7   Feed Hold
  *                  X Direction   A1 |           | B6   Reset/EStop
  *                       Y Step   A2 |           | B5
- *                  Y Direction   A3 |    / \    | B4   Coolant Mist
+ *                  Y Direction   A3 |    / \    | B4
  *                       Z Step   A4 |   <MCU>   | B3   Spindle Index
  *                  Z Direction   A5 |    \ /    | A15  Spindle Pulse
  * Aux Out In 0/Out 1 / M3 Step   A6 |           | A12  USB D+
  *     Aux Out 0 / M3 Direction   A7 |   -   -   | A11  USB D-
- *               Steppers enable  B0 |  |R| |B|  | A10
- *               Spindle Enable   B1 |   -   -   | A9
+ *               Steppers enable  B0 |  |R| |B|  | A10  UART RX
+ *               Spindle Enable   B1 |   -   -   | A9   UART TX
  *            Spindle Direction   B2 |           | A8   Spindle PWM
  *                               B10 |           | B15  Probe
  *                               +3V |   -----   | B14  Z Limit

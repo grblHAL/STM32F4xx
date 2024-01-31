@@ -134,43 +134,43 @@
   #if EEPROM_ENABLE
     #error EEPROM plugin not supported!
   #endif
-  #include "cnc3040_map.h"
+  #include "boards/cnc3040_map.h"
 #elif defined(BOARD_BLACKPILL)
-  #include "blackpill_map.h"
+  #include "boards/blackpill_map.h"
 #elif defined(BOARD_BLACKPILL_ALT2)
-  #include "blackpill_alt2_map.h"
+  #include "boards/blackpill_alt2_map.h"
 #elif defined(BOARD_DEVTRONIC_CNC)
-  #include "Devtronic_CNC_Controller_map.h"
+  #include "boards/Devtronic_CNC_Controller_map.h"
 #elif defined(BOARD_BTT_SKR_PRO_1_1)
-  #include "btt_skr_pro_v1_1_map.h"
+  #include "boards/btt_skr_pro_v1_1_map.h"
 #elif defined(BOARD_BTT_SKR_20)
-  #include "btt_skr_2.0_map.h"
+  #include "boards/btt_skr_2.0_map.h"
 #elif defined(BOARD_BTT_SKR_20_DAC)
-  #include "btt_skr_2.0_dac_map.h"
+  #include "boards/btt_skr_2.0_dac_map.h"
 #elif defined(BOARD_FYSETC_S6)
-  #include "fysetc_s6_map.h"
+  #include "boards/fysetc_s6_map.h"
 #elif defined(BOARD_PROTONEER_3XX)
-  #include "protoneer_3.xx_map.h"
+  #include "boards/protoneer_3.xx_map.h"
 #elif defined(BOARD_GENERIC_UNO)
-  #include "uno_map.h"
+  #include "boards/uno_map.h"
 #elif defined(BOARD_MORPHO_CNC)
-  #include "st_morpho_map.h"
+  #include "boards/st_morpho_map.h"
 #elif defined(BOARD_MORPHO_DAC_CNC)
-  #include "st_morpho_dac_map.h"
+  #include "boards/st_morpho_dac_map.h"
 #elif defined(BOARD_MINI_BLACKPILL)
-  #include "mini_blackpill_map.h"
+  #include "boards/mini_blackpill_map.h"
 #elif defined(BOARD_FLEXI_HAL)
-  #include "flexi_hal_map.h"
+  #include "boards/flexi_hal_map.h"
 #elif defined(BOARD_STM32F401_UNI)
-  #include "stm32f401_uni_map.h"
+  #include "boards/stm32f401_uni_map.h"
 #elif defined(BOARD_HALCYON_V1)
-  #include "halcyon_v1_map.h"
+  #include "boards/halcyon_v1_map.h"
 #elif defined(BOARD_MKS_ROBIN_NANO_30)
-  #include "mks_robin_nano_v3.0_map.h"
+  #include "boards/mks_robin_nano_v3.0_map.h"
 #elif defined(BOARD_MY_MACHINE)
-  #include "my_machine_map.h"
+  #include "boards/my_machine_map.h"
 #else // default board
-  #include "generic_map.h"
+  #include "boards/generic_map.h"
 #endif
 
 #if DRIVER_SPINDLE_ENABLE && !defined(SPINDLE_ENABLE_PIN)

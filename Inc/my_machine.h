@@ -25,7 +25,7 @@
 //#define BOARD_PROTONEER_3XX       // For use with Nucleo-F411RE and F446RE boards.
 //#define BOARD_GENERIC_UNO         // For use with Nucleo-F411RE and F446RE boards.
 //#define BOARD_CNC_BOOSTERPACK
-//#define BOARD_MORPHO_CNC          // For use with Nucleo-F411RE and F446RE boards. Work in progress.
+#define BOARD_MORPHO_CNC          // For use with Nucleo-F411RE and F446RE boards. Work in progress.
 //#define BOARD_MORPHO_DAC_CNC      // For use with F446RE boards and a 32-bit I2S stereo DAC for X and Y output. **EXPERIMENTAL**
 //#define BOARD_BLACKPILL           // For use with F411 BlackPill, with optional auto square support for one axis
 //#define BOARD_BLACKPILL_ALT2      // For use with F411 BlackPill, with optional auto square support for one axis, I2C and spindle sync
@@ -68,7 +68,7 @@
 // If none are specified the default PWM spindle is instantiated.
 // Spindle definitions can be found in grbl/spindle_control.h.
 // More here https://github.com/grblHAL/Plugins_spindle
-//#define SPINDLE0_ENABLE      SPINDLE_HUANYANG1
+//#define SPINDLE0_ENABLE      SPINDLE_ALL
 //#define SPINDLE1_ENABLE      SPINDLE_PWM0
 //#define SPINDLE2_ENABLE      SPINDLE_NONE
 //#define SPINDLE3_ENABLE      SPINDLE_NONE
@@ -120,6 +120,8 @@
 //#define Z_GANGED_LIM_MAX    1
 //
 
+//#define STATUS_LIGHT_ENABLE 1
+#define BLTOUCH_ENABLE 1
 #ifdef _WIZCHIP_
 #define ETHERNET_ENABLE 1
 #endif
