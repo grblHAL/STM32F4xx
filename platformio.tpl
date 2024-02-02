@@ -9,6 +9,7 @@ src_dir = Src
 [common]
 build_flags =
   -I .
+  -I boards
   -I FatFs
   -I FatFs/STM
   -I Drivers/FATFS/Target
@@ -21,6 +22,7 @@ build_flags =
   -D _USE_WRITE=1
   -D _VOLUMES=1
 lib_deps =
+  boards
   bluetooth
   grbl
   keypad
@@ -42,6 +44,7 @@ lib_deps =
   USB_DEVICE/Target
 lib_extra_dirs =
   .
+  boards
   FatFs
   Middlewares/ST/STM32_USB_Device_Library
   USB_DEVICE

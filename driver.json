@@ -26,7 +26,7 @@
     "estop": 1,
     "mpg_mode": 1,
     "sdcard": 1,
-    "hc05": 1
+    "hc05": 1,
     "wiznet": 1,
     "pio_board": "genericSTM32F407VGT6",
     "ldscript": "STM32F407VGTX_FLASH.ld",
@@ -56,7 +56,7 @@
       "name": "Devtronic CNC Controller (BlackPill F411)",
       "symbol": "BOARD_DEVTRONIC_CNC",
       "URL": "https://github.com/Devtronic-US/CNC-Controller",
-      "MAP": "Inc/Devtronic_CNC_Controller_map.h",
+      "MAP": "boards/Devtronic_CNC_Controller_map.h",
       "caps": {
         "axes": 5,
         "digital_in": 1,
@@ -77,7 +77,7 @@
     {
       "name": "BlackPill (STM32F401)",
       "symbol": "BOARD_BLACKPILL",
-      "MAP": "Inc/blackpill_map.h",
+      "MAP": "boards/blackpill_map.h",
       "URL": "",
       "caps": {
         "axes": 4,
@@ -96,7 +96,7 @@
       "name": "BlackPill (STM32F411)",
       "symbol": "BOARD_BLACKPILL",
       "URL": "",
-      "MAP": "Inc/blackpill_map.h",
+      "MAP": "boards/blackpill_map.h",
       "caps": {
         "axes": 4,
         "serial_ports": 0,
@@ -114,7 +114,7 @@
       "name": "BlackPill Alt. 2 (STM32F411)",
       "symbol": "BOARD_BLACKPILL_ALT2",
       "URL": "",
-      "MAP": "Inc/blackpill_alt2_map.h",
+      "MAP": "boards/blackpill_alt2_map.h",
       "caps": {
         "axes": 4,
         "digital_in": 1,
@@ -136,7 +136,7 @@
       "name": "BTT SKR-2 STM32F407",
       "symbol": "BOARD_BTT_SKR_20",
       "URL": "https://github.com/bigtreetech/SKR-2",
-      "MAP": "Inc/btt_skr_2.0_map.h",
+      "MAP": "boards/btt_skr_2.0_map.h",
       "caps": {
         "uart": 0,
         "axes": 5,
@@ -157,7 +157,7 @@
       "name": "BTT SKR-2 STM32F407 (Bootloader)",
       "symbol": "BOARD_BTT_SKR_20",
       "URL": "https://github.com/bigtreetech/SKR-2",
-      "MAP": "Inc/btt_skr_2.0_map.h",
+      "MAP": "boards/btt_skr_2.0_map.h",
       "caps": {
         "uart": 0,
         "axes": 5,
@@ -179,7 +179,7 @@
       "name": "BTT SKR PRO v1.2",
       "symbol": "BOARD_BTT_SKR_PRO_1_2",
       "URL": "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/tree/master/SKR-PRO-V1.2",
-      "MAP": "Inc/btt_skr_pro_v1_1_map.h",
+      "MAP": "boards/btt_skr_pro_v1_1_map.h",
       "caps": {
         "axes": 6,
 		"auto_square": 2,
@@ -203,7 +203,7 @@
       "name": "BTT SKR PRO v1.2 (Bootloader)",
       "symbol": "BOARD_BTT_SKR_PRO_1_2",
       "URL": "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/tree/master/SKR-PRO-V1.2",
-      "MAP": "Inc/btt_skr_pro_v1_1_map.h",
+      "MAP": "boards/btt_skr_pro_v1_1_map.h",
       "caps": {
         "axes": 6,
 		"auto_square": 2,
@@ -229,12 +229,12 @@
       "name": "MKS Robin Nano 3.0 (48K Bootloader)",
       "symbol": "BOARD_MKS_ROBIN_NANO_30",
       "URL": "https://github.com/makerbase-mks/MKS-Robin-Nano-V3.X",
-      "MAP": "Inc/mks_robin_nano_v3.0_map.h",
+      "MAP": "boards/mks_robin_nano_v3.0_map.h",
       "caps": {
         "axes": 5,
         "motor_fault": 1,
         "safety_door": 1,
-        "eeprom": -32,
+        "eeprom": 32,
         "sdcard": 1,
         "trinamic_spi_cs": 1,
         "trinamic_uart_n": 1,
@@ -249,7 +249,7 @@
     {
       "name": "CNC 3040 (STM32F401)",
       "symbol": "BOARD_CNC3040",
-      "MAP": "Inc/cnc3040_map.h",
+      "MAP": "boards/cnc3040_map.h",
       "URL": "https://github.com/shaise/GrblCNC",
       "caps": {
         "axes": 5,
@@ -267,7 +267,7 @@
       "name": "CNC 3040 (STM32F411)",
       "symbol": "BOARD_CNC3040",
       "URL": "https://github.com/shaise/GrblCNC",
-      "MAP": "Inc/cnc3040_map.h",
+      "MAP": "boards/cnc3040_map.h",
       "caps": {
         "axes": 5,
         "auto_square": 0,
@@ -284,19 +284,16 @@
       "name": "Fysetc S6 V2.0",
       "symbol": "BOARD_FYSETC_S6",
       "URL": "https://wiki.fysetc.com/FYSETC_S6/",
-      "MAP": "Inc/fysetc_s6_map.h",
+      "MAP": "boards/fysetc_s6_map.h",
       "caps": {
         "axes": 6,
         "auto_square": 0,
         "safety_door": 0,
-        "eeprom": -1,
+        "eeprom": 16,
         "fram": 0,
         "sdcard": 1,
         "rgb_out": 1,
-        "trinamic_spi_cs": 0,
-        "trinamic_spi_chain": 0,
         "trinamic_uart_n": 1,
-        "trinamic_uart_addr": 0,
         "pio_board": "fysetc_s6",
         "ldscript": "STM32F446RETX_NO_BL_FLASH.ld"
       },
@@ -309,7 +306,7 @@
       "name": "Minimal BlackPill (STM32F401)",
       "symbol": "BOARD_MINI_BLACKPILL",
       "URL": "https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL",
-      "MAP": "Inc/mini_blackpill_map.h",
+      "MAP": "boards/mini_blackpill_map.h",
       "caps": {
         "axes": 4,
         "auto_square": 0,
@@ -326,7 +323,7 @@
       "name": "Minimal BlackPill (STM32F411)",
       "symbol": "BOARD_MINI_BLACKPILL",
       "URL": "https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL",
-      "MAP": "Inc/mini_blackpill_map.h",
+      "MAP": "boards/mini_blackpill_map.h",
       "caps": {
         "axes": 4,
         "auto_square": 0,
@@ -343,7 +340,7 @@
       "name": "Protoneer v3/Nucleo-64 (STM32F411)",
       "symbol": "BOARD_PROTONEER_3XX",
       "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
-      "MAP": "Inc/protoneer_3.xx_map.h",
+      "MAP": "boards/protoneer_3.xx_map.h",
       "caps": {
         "axes": 4,
         "auto_square": 0,
@@ -364,7 +361,7 @@
       "name": "Protoneer v3/Nucleo-64 (STM32F446)",
       "symbol": "BOARD_PROTONEER_3XX",
       "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
-      "MAP": "Inc/protoneer_3.xx_map.h",
+      "MAP": "boards/protoneer_3.xx_map.h",
       "caps": {
         "axes": 4,
         "auto_square": 0,
@@ -385,7 +382,7 @@
       "name": "Nucleo-64 CNC Breakout (STM32F401)",
       "symbol": "BOARD_MORPHO_CNC",
       "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
-      "MAP": "Inc/st_morpho_map.h",
+      "MAP": "boards/st_morpho_map.h",
       "caps": {
         "axes": 4,
         "usb_cdc": 0,
@@ -393,7 +390,7 @@
         "safety_door": 1,
         "digital_in": 4,
         "digital_out": 6,
-        "eeprom": 16,
+        "eeprom": 1,
         "fram": 1,
         "i2c_strobe": 1,
         "sdcard": 1,
@@ -414,7 +411,7 @@
       "name": "Nucleo-64 CNC Breakout (STM32F411)",
       "symbol": "BOARD_MORPHO_CNC",
       "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
-      "MAP": "Inc/st_morpho_map.h",
+      "MAP": "boards/st_morpho_map.h",
       "caps": {
         "axes": 4,
         "usb_cdc": 0,
@@ -422,7 +419,7 @@
         "safety_door": 1,
         "digital_in": 4,
         "digital_out": 6,
-        "eeprom": 16,
+        "eeprom": 1,
         "fram": 1,
         "i2c_strobe": 1,
         "sdcard": 1,
@@ -443,7 +440,7 @@
       "name": "Nucleo-64 CNC Breakout (STM32F446)",
       "symbol": "BOARD_MORPHO_CNC",
       "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
-      "MAP": "Inc/st_morpho_map.h",
+      "MAP": "boards/st_morpho_map.h",
       "caps": {
         "axes": 4,
         "usb_cdc": 0,
@@ -451,7 +448,7 @@
         "safety_door": 1,
         "digital_in": 4,
         "digital_out": 6,
-        "eeprom": 16,
+        "eeprom": 1,
         "fram": 1,
         "i2c_strobe": 1,
         "sdcard": 1,
@@ -472,7 +469,7 @@
       "name": "Generic Uno/Nucleo-64 (STM32F411)",
       "symbol": "BOARD_GENERIC_UNO",
       "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
-      "MAP": "Inc/cnc3040_map.h",
+      "MAP": "boards/cnc3040_map.h",
       "caps": {
         "usb_cdc": 0,
         "safety_door": 0,
@@ -489,7 +486,7 @@
       "name": "Generic Uno/Nucleo-64 (STM32F446)",
       "symbol": "BOARD_GENERIC_UNO",
       "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
-      "MAP": "Inc/uno_map.h",
+      "MAP": "boards/uno_map.h",
       "caps": {
         "usb_cdc": 0,
         "safety_door": 0,

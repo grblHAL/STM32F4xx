@@ -453,20 +453,15 @@ static output_signal_t outputpin[] = {
 #ifdef AUXOUTPUT7_PORT
     { .id = Output_Aux7,            .port = AUXOUTPUT7_PORT,        .pin = AUXOUTPUT7_PIN,          .group = PinGroup_AuxOutput },
 #endif
-#ifdef AUXOUTPUT0_PWM_PORT
+#ifdef AUXOUTPUT0_ANALOG_PORT
+    { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_ANALOG_PORT, .pin = AUXOUTPUT0_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog },
+#elif defined(AUXOUTPUT0_PWM_PORT)
     { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_PWM_PORT,    .pin = AUXOUTPUT0_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
-#endif
-#ifdef AUXOUTPUT0_ANALOG_PORT
-    { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_ANALOG_PORT, .pin = AUXOUTPUT0_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog },
-#endif
-#ifdef AUXOUTPUT1_PWM_PORT
-    { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_PWM_PORT,    .pin = AUXOUTPUT1_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
-#endif
-#ifdef AUXOUTPUT0_ANALOG_PORT
-    { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_ANALOG_PORT, .pin = AUXOUTPUT0_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog },
 #endif
 #ifdef AUXOUTPUT1_ANALOG_PORT
     { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_ANALOG_PORT, .pin = AUXOUTPUT1_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog }
+#elif defined(AUXOUTPUT1_PWM_PORT)
+    { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_PWM_PORT,    .pin = AUXOUTPUT1_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
 };
 
@@ -2761,7 +2756,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401CC";
 #endif
-    hal.driver_version = "240125";
+    hal.driver_version = "240202";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2853,7 +2848,7 @@ bool driver_init (void)
 
 #if LED_RGB
     hal.rgb.out = rgb_out;
-    hal.rgb.out = rgb_out_masked;
+    hal.rgb.out_masked = rgb_out_masked;
     hal.rgb.num_devices = 1;
   #ifdef LED_W_PIN
     hal.rgb.cap = (rgb_color_t){ .R = 1, .G = 1, .B = 1, .W = 1 };
