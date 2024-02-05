@@ -20,7 +20,6 @@
     "analog_out": 2,
     "analog_pwm_out": 2,
     "probe": 1,
-    "i2c_strobe": 1,
     "spi_strobe": 1,
     "safety_door": 1,
     "neopixels": 1,

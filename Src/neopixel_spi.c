@@ -7,18 +7,18 @@
 
   Copyright (c) 2024 Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "main.h"
@@ -116,57 +116,84 @@ static DMA_HandleTypeDef spi_dma_tx = {
 
 #endif
 
-static uint8_t leds[NEOPIXELS_NUM * 9 + 15] = {0};
+neopixel_cfg_t neopixel = { .intensity = 255 };
+static settings_changed_ptr settings_changed;
+
+void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
+{
+    if(neopixel.leds == NULL || hal.rgb.num_devices != settings->rgb_strip0_length) {
+
+        if(settings->rgb_strip0_length == 0)
+            settings->rgb_strip0_length = hal.rgb.num_devices;
+        else
+            hal.rgb.num_devices = settings->rgb_strip0_length;
+
+        if(neopixel.leds) {
+            free(neopixel.leds);
+            neopixel.leds = NULL;
+        }
+
+        if(hal.rgb.num_devices) {
+            neopixel.num_bytes = hal.rgb.num_devices * 9 + 24;
+            if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
+                hal.rgb.num_devices = 0;
+        }
+
+        neopixel.num_leds = hal.rgb.num_devices;
+    }
+
+    if(settings_changed)
+        settings_changed(settings, changed);
+}
 
 void neopixels_write (void)
 {
-    while(spi_port.State != HAL_SPI_STATE_READY);
+    if(neopixel.leds) {
 
-    HAL_SPI_Transmit_DMA(&spi_port, leds, (uint16_t)sizeof(leds));
+        while(spi_port.State == HAL_SPI_STATE_BUSY_TX);
+
+        HAL_SPI_Transmit_DMA(&spi_port, neopixel.leds, neopixel.num_bytes);
+    }
 }
 
 static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
 {
-    uint32_t R = 0, G = 0, B = 0;
-    uint8_t *led = &leds[device * 9], bitmask = 0b10000000;
+    if(neopixel.num_leds && device < neopixel.num_leds) {
 
-    do {
-        R <<= 3;
-        R |= color.R & bitmask ? 0b110 : 0b100;
-        G <<= 3;
-        G |= color.G & bitmask ? 0b110 : 0b100;
-        B <<= 3;
-        B |= color.B & bitmask ? 0b110 : 0b100;
-    } while(bitmask >>= 1);
+        rgb_3bpp_pack(&neopixel.leds[device * 9], color, mask, neopixel.intensity);
 
-    if(mask.G) {
-        *led++ = (uint8_t)(G >> 16);
-        *led++ = (uint8_t)(G >> 8);
-        *led++ = (uint8_t)G;
-    } else
-        led += 3;
-
-    if(mask.R) {
-        *led++ = (uint8_t)(R >> 16);
-        *led++ = (uint8_t)(R >> 8);
-        *led++ = (uint8_t)R;
-    } else
-        led += 3;
-
-    if(mask.B) {
-        *led++ = (uint8_t)(B >> 16);
-        *led++ = (uint8_t)(B >> 8);
-        *led   = (uint8_t)B;
+        if(neopixel.num_leds == 1)
+            neopixels_write();
     }
-
-#if NEOPIXELS_NUM == 1
-    neopixels_write();
-#endif
 }
 
 static void neopixel_out (uint16_t device, rgb_color_t color)
 {
     neopixel_out_masked(device, color, (rgb_color_mask_t){ .mask = 0xFF });
+}
+
+uint8_t neopixels_set_intensity (uint8_t intensity)
+{
+    uint8_t prev = neopixel.intensity;
+
+    if(neopixel.intensity != intensity) {
+
+        neopixel.intensity = intensity;
+
+        if(neopixel.num_leds) {
+
+            uint_fast16_t device = neopixel.num_leds;
+            do {
+                device--;
+                rgb_color_t color = rgb_3bpp_unpack(& neopixel.leds[device * 9], prev);
+                neopixel_out(device, color);
+            } while(device);
+
+            neopixels_write();
+        }
+    }
+
+    return prev;
 }
 
 void neopixel_init (void)
@@ -305,11 +332,15 @@ void neopixel_init (void)
 
         hal.rgb.out = neopixel_out;
         hal.rgb.out_masked = neopixel_out_masked;
+        hal.rgb.set_intensity = neopixels_set_intensity;
 #if NEOPIXELS_NUM > 1
         hal.rgb.write = neopixels_write;
 #endif
         hal.rgb.num_devices = NEOPIXELS_NUM;
         hal.rgb.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
+
+        settings_changed = hal.settings_changed;
+        hal.settings_changed = onSettingsChanged;
 
         init = true;
     }
