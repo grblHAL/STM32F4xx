@@ -21,7 +21,7 @@
 
 #include "driver.h"
 
-#if defined(BOARD_DEVTRONIC_CNC)
+#if defined(BOARD_DEVTRONIC_CNC) && defined(HAS_BOARD_INIT)
 
 static xbar_t rx_pin;
 static on_execute_realtime_ptr on_execute_realtime, on_execute_delay;

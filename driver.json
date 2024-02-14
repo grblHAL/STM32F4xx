@@ -63,9 +63,8 @@
         "eeprom": 16,
         "fram": 1,
         "i2c": 1,
-        "i2c_strobe": 1,
         "spindle_sync": 1,
-        "keypad": 1,
+        "mpg_mode": 2,
         "pio_board": "blackpill_f411ce",
         "ldscript": "STM32F411CEUX_FLASH.ld"
       },
