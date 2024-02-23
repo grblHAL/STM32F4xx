@@ -3,20 +3,20 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2023 Terje Io
+  Copyright (c) 2020-2024 Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #if TRINAMIC_ENABLE == 2130
@@ -154,72 +154,13 @@
 #define CYCLE_START_PIN         4
 #define CONTROL_INMODE          GPIO_BITBAND
 
-// Define probe switch input pin.
-#define PROBE_PORT              GPIOC
-#define PROBE_PIN               7
-
-// Spindle encoder pins.
-#if SPINDLE_ENCODER_ENABLE
-
-#define SPINDLE_INDEX_PORT      GPIOB
-#define SPINDLE_INDEX_PIN       14
-#define SPINDLE_PULSE_PORT      GPIOD
-#define SPINDLE_PULSE_PIN       2
-
-#endif
-
-#if MPG_MODE == 1
-#ifndef SPI_PORT
-#define MPG_MODE_PORT           GPIOC
-#define MPG_MODE_PIN            8
-#elif N_ABC_MOTORS == 0
-#define MPG_MODE_PORT           GPIOC
-#define MPG_MODE_PIN            11
-#endif
-#endif
-
 // Auxiliary I/O
-#if QEI_ENABLE
-#define QEI_A_PORT              GPIOA
-#define QEI_A_PIN               15
-#define QEI_B_PORT              GPIOB
-#define QEI_B_PIN               14
- #if QEI_SELECT_ENABLED
-  #if !I2C_STROBE_ENABLE
-    #define QEI_SELECT_PORT     GPIOB
-    #define QEI_SELECT_PIN      0
-    #define I2C_STROBE_ASSIGNED
-  #elif !SAFETY_DOOR_ENABLE
-    #define QEI_SELECT_PORT     GPIOC
-    #define QEI_SELECT_PIN      1
-  #endif
- #endif
-#define AUXINPUT0_PORT          GPIOB
-#define AUXINPUT0_PIN           13
-#else
-#define AUXINPUT0_PORT          GPIOB
-#define AUXINPUT0_PIN           14
-#define AUXINPUT1_PORT          GPIOA
-#define AUXINPUT1_PIN           15
-#define AUXINPUT2_PORT          GPIOB
-#define AUXINPUT2_PIN           13
-#endif
-#define AUXINPUT4_PORT          GPIOC
-#define AUXINPUT4_PIN           1
 
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          15
 #if !ETHERNET_ENABLE
 #define AUXOUTPUT1_PORT         GPIOB
 #define AUXOUTPUT1_PIN          2
-#endif
-
-#if I2C_STROBE_ENABLE
-#define I2C_STROBE_PORT         GPIOB
-#define I2C_STROBE_PIN          0
-#elif !defined(I2C_STROBE_ASSIGNED)
-#define AUXINPUT3_PORT          GPIOB
-#define AUXINPUT3_PIN           0
 #endif
 
 #undef I2C_STROBE_ASSIGNED
@@ -262,7 +203,7 @@
 #define AUXOUTPUT5_PIN          7
 #endif
 #if MPG_MODE == 0
-#if 1
+#if 0
 #define AUXOUTPUT0_PWM_PORT_BASE GPIOC_BASE
 #define AUXOUTPUT0_PWM_PIN       8
 #elif !defined(AUXOUTPUT6_PORT)
@@ -280,10 +221,44 @@
 #define LED_B_PORT              GPIOC
 #define LED_B_PIN               8
 */
-/*
-#define NEOPIXEL_SPI            1 // PA7
-#define NEOPIXELS_NUM           6
-*/
+
+//#define NEOPIXEL_SPI            1 // PA7
+//#define NEOPIXELS_NUM           6
+
+#if !SPINDLE_SYNC_ENABLE && !QEI_ENABLE
+#define AUXINPUT0_PORT          GPIOB
+#define AUXINPUT0_PIN           14
+#endif
+
+#if !SPINDLE_ENCODER_ENABLE && !QEI_ENABLE
+#define AUXINPUT1_PORT          GPIOA
+#define AUXINPUT1_PIN           15
+#endif
+
+#ifndef M3_LIMIT_PIN
+#define AUXINPUT2_PORT          GPIOC
+#define AUXINPUT2_PIN           11
+#endif
+
+#define AUXINPUT3_PORT          GPIOB
+#define AUXINPUT3_PIN           0
+#define AUXINPUT4_PORT          GPIOC
+#define AUXINPUT4_PIN           1
+#define AUXINPUT5_PORT          GPIOC
+#define AUXINPUT5_PIN           7
+
+#ifndef SPI_PORT
+#define AUXINPUT6_PORT          GPIOC
+#define AUXINPUT6_PIN           8
+#elif N_ABC_MOTORS == 0
+#define AUXINPUT6_PORT          GPIOC
+#define AUXINPUT6_PIN           11
+#endif
+
+#if PROBE_ENABLE
+#define PROBE_PORT              AUXINPUT5_PORT
+#define PROBE_PIN               AUXINPUT5_PIN
+#endif
 
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT4_PORT
@@ -295,9 +270,47 @@
 #define MOTOR_FAULT_PIN         AUXINPUT1_PIN
 #endif
 
-#if MOTOR_WARNING_ENABLE && defined(AUXINPUT3_PORT)
+#if MOTOR_WARNING_ENABLE && !I2C_STROBE_ENABLE
 #define MOTOR_WARNING_PORT      AUXINPUT3_PORT
 #define MOTOR_WARNING_PIN       AUXINPUT3_PIN
+#endif
+
+#if I2C_STROBE_ENABLE
+#define I2C_STROBE_PORT         AUXINPUT3_PORT
+#define I2C_STROBE_PIN          AUXINPUT3_PIN
+#endif
+
+#if MPG_MODE == 1
+#define MPG_AUX_ENABLE
+#define MPG_MODE_PORT           AUXINPUT6_PORT
+#define MPG_MODE_PIN            AUXINPUT6_PIN
+#endif
+
+#if SPINDLE_ENCODER_ENABLE
+#define SPINDLE_PULSE_PORT      GPIOD  // NOTE: this pin is connected to PA15
+#define SPINDLE_PULSE_PIN       2
+#if SPINDLE_SYNC_ENABLE
+#define SPINDLE_INDEX_PORT      GPIOB
+#define SPINDLE_INDEX_PIN       14
+#endif
+#endif
+
+#if QEI_ENABLE && !SPINDLE_SYNC_ENABLE
+#define QEI_A_PORT              GPIOA
+#define QEI_A_PIN               15
+#define QEI_B_PORT              GPIOB
+#define QEI_B_PIN               14
+#endif // QEI_ENABLE
+
+#if QEI_SELECT_ENABLE
+#if !I2C_STROBE_ENABLE
+#define QEI_SELECT_PORT         AUXINPUT3_PORT
+#define QEI_SELECT_PIN          AUXINPUT3_PIN
+#define I2C_STROBE_ASSIGNED
+#elif !SAFETY_DOOR_ENABLE
+#define QEI_SELECT_PORT         AUXINPUT4_PORT
+#define QEI_SELECT_PIN          AUXINPUT4_PIN
+#endif
 #endif
 
 // EOF

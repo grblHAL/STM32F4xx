@@ -281,6 +281,7 @@
     },
     {
       "name": "Fysetc S6 V2.0",
+      "notes": "This board comes with different EEPROM sizes, select the matching one in the Plugins tab.",
       "symbol": "BOARD_FYSETC_S6",
       "URL": "https://wiki.fysetc.com/FYSETC_S6/",
       "MAP": "boards/fysetc_s6_map.h",

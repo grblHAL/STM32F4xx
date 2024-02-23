@@ -189,7 +189,8 @@ uint8_t neopixels_set_intensity (uint8_t intensity)
                 neopixel_out(device, color);
             } while(device);
 
-            neopixels_write();
+            if(neopixel.num_leds != 1)
+                neopixels_write();
         }
     }
 

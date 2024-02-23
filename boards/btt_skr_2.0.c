@@ -31,7 +31,7 @@
 
 static DAC_HandleTypeDef hdac;
 static void update_dac(uint32_t dac_value);
-static void my_set_state (spindle_state_t state, float rpm);
+static void my_set_state (spindle_ptrs_t *spindle, spindle_state_t state, float rpm);
 static on_spindle_select_ptr on_spindle_select;
 static spindle_set_state_ptr set_state;
 #endif
@@ -266,7 +266,7 @@ static inline void update_dac(uint32_t dac_value)
   hdac.Instance->DHR12R2 = dac_value;
 }
 
-static void my_set_state (spindle_state_t state, float rpm)
+static void my_set_state (spindle_ptrs_t *spindle, spindle_state_t state, float rpm)
 {
   static float my_rpm;
   uint32_t dac_value;
@@ -290,7 +290,7 @@ static void my_set_state (spindle_state_t state, float rpm)
   }
 
   if(set_state)
-    set_state(state, rpm);
+    set_state(spindle, state, rpm);
 }
 
 static bool my_spindle_select (spindle_ptrs_t *spindle)

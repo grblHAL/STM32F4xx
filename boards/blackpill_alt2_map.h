@@ -5,18 +5,18 @@
 
   Copyright (c) 2023 @nickshl & Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
+  GrblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  GrblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  along with GrblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /* Pin Assignments:
@@ -150,23 +150,6 @@
 #define CYCLE_START_PIN         6
 #define CONTROL_INMODE          GPIO_BITBAND
 
-#if I2C_STROBE_ENABLE && !SAFETY_DOOR_ENABLE
-#define I2C_STROBE_PORT         GPIOA
-#define I2C_STROBE_PIN          1
-#else
-#define AUXINPUT0_PORT          GPIOA
-#define AUXINPUT0_PIN           1
-#endif
-
-#if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT        AUXINPUT0_PORT
-#define SAFETY_DOOR_PIN         AUXINPUT0_PIN
-#endif
-
-// Define probe switch input pin.
-#define PROBE_PORT              GPIOB
-#define PROBE_PIN               5
-
 // Spindle encoder pins.
 #if SPINDLE_ENCODER_ENABLE
 #define RPM_COUNTER_N           2
@@ -184,8 +167,24 @@
 #define AUXOUTPUT2_PIN          15
 #endif
 
-#if KEYPAD_ENABLE == 1 && SAFETY_DOOR_ENABLE
-#error I2C keypad not supported when safety door is enabled
+#define AUXINPUT0_PORT          GPIOA
+#define AUXINPUT0_PIN           1
+#define AUXINPUT1_PORT          GPIOB
+#define AUXINPUT1_PIN           5
+
+#if PROBE_ENABLE
+#define PROBE_PORT              AUXINPUT1_PORT
+#define PROBE_PIN               AUXINPUT1_PIN
+#endif
+
+#if SAFETY_DOOR_ENABLE
+#define SAFETY_DOOR_PORT        AUXINPUT0_PORT
+#define SAFETY_DOOR_PIN         AUXINPUT0_PIN
+#endif
+
+#if I2C_STROBE_ENABLE && !SAFETY_DOOR_ENABLE
+#define I2C_STROBE_PORT         AUXINPUT0_PORT
+#define I2C_STROBE_PIN          AUXINPUT0_PIN
 #endif
 
 #if SDCARD_ENABLE

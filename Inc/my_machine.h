@@ -60,7 +60,6 @@
 #if IS_NUCLEO_DEVKIT != 64 && !defined(USB_SERIAL_CDC) // The Nucleo boards has an off-chip UART to USB interface.
 #define USB_SERIAL_CDC         1 // Serial communication via native USB.
 #endif
-//#define SAFETY_DOOR_ENABLE   1 // Enable safety door input.
 //#define BLUETOOTH_ENABLE     2 // Set to 2 for HC-05 module. Requires and claims one auxillary input pin.
 // Spindle selection:
 // Up to four specific spindle drivers can be instantiated at a time
@@ -106,6 +105,20 @@
                                  // Note: if left commented out the default setting is determined from COMPATIBILITY_LEVEL.
 //#define MCP3221_ENABLE    0x4D // Enable MCP3221 I2C ADC input with address 0x4D (0b01001101).
 
+// Optional control signals:
+// These will be assigned to aux input pins. Use the $pins command to check which pins are assigned.
+// NOTE: If not enough pins are available assignment will silently fail.
+//#define PROBE_ENABLE            0 // Default enabled, remove comment to disable probe input.
+//#define SAFETY_DOOR_ENABLE      1
+//#define MOTOR_FAULT_ENABLE      1
+//#define MOTOR_WARNING_ENABLE    1
+//#define PROBE_DISCONNECT_ENABLE 1
+//#define STOP_DISABLE_ENABLE     1
+//#define BLOCK_DELETE_ENABLE     1
+//#define SINGLE_BLOCK_ENABLE     1
+//#define LIMITS_OVERRIDE_ENABLE  1
+
+/**/
 // If the selected board map supports more than three motors ganging and/or auto-squaring
 // of axes can be enabled here.
 //#define X_GANGED            1

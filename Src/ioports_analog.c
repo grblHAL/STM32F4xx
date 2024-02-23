@@ -5,18 +5,18 @@
 
   Copyright (c) 2023-2024 Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public Licens
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "driver.h"
@@ -112,9 +112,7 @@ static pwm_out_t pwm_out[AUX_ANALOG_OUT] = {0};
 
 static float pwm_get_value (struct xbar *output)
 {
-    int_fast8_t ch = output->function - Output_Analog_Aux0;
-
-    return ch >= 0 && ch < analog.out.n_ports ? pwm_out[ch].value : -1.0f;
+    return output->id < analog.out.n_ports ? pwm_out[output->id].value : -1.0f;
 }
 
 static bool analog_out (uint8_t port, float value)
@@ -162,15 +160,14 @@ static void pwm0_out (uint_fast8_t ch, float value)
     }
 }
 
-static bool init_pwm0 (xbar_t *pin, pwm_config_t *config)
+static bool init_pwm0 (xbar_t *pin, pwm_config_t *config, bool persistent)
 {
     static bool init_ok = false;
 
     bool ok;
     RCC_ClkInitTypeDef clock;
     uint32_t latency, prescaler = 0;
-    uint_fast8_t ch = pin->function - Output_Analog_Aux0;
-    ioports_pwm_t *pwm_data = &pwm_out[ch].data;
+    ioports_pwm_t *pwm_data = &pwm_out[pin->id].data;
 
     if(!init_ok) {
 
@@ -188,7 +185,7 @@ static bool init_pwm0 (xbar_t *pin, pwm_config_t *config)
         };
         HAL_GPIO_Init(AUXOUTPUT0_PWM_PORT, &GPIO_Init);
 
-        pwm_out[ch].set_value = pwm0_out;
+        pwm_out[pin->id].set_value = pwm0_out;
     }
 
     HAL_RCC_GetClockConfig(&clock, &latency);
@@ -233,10 +230,10 @@ static bool init_pwm0 (xbar_t *pin, pwm_config_t *config)
         AUXOUTPUT0_PWM_TIMER->CCER |= AUXOUTPUT0_PWM_CCER_EN;
         AUXOUTPUT0_PWM_TIMER->CR1 |= TIM_CR1_CEN;
 
-        aux_out_analog[ch].mode.pwm = !config->servo_mode;
-        aux_out_analog[ch].mode.servo_pwm = config->servo_mode;
+        aux_out_analog[pin->id].mode.pwm = !config->servo_mode;
+        aux_out_analog[pin->id].mode.servo_pwm = config->servo_mode;
 
-        pwm0_out(ch, config->min);
+        pwm0_out(pin->id, config->min);
     }
 
     return ok;
@@ -273,15 +270,14 @@ static void pwm1_out (uint_fast8_t ch, float value)
     }
 }
 
-static bool init_pwm1 (xbar_t *pin, pwm_config_t *config)
+static bool init_pwm1 (xbar_t *pin, pwm_config_t *config, bool persistent)
 {
     static bool init_ok = false;
 
     bool ok;
     RCC_ClkInitTypeDef clock;
     uint32_t latency, prescaler = 0;
-    uint_fast8_t ch = pin->function - Output_Analog_Aux0;
-    ioports_pwm_t *pwm_data = &pwm_out[ch].data;
+    ioports_pwm_t *pwm_data = &pwm_out[pin->id].data;
 
     if(!init_ok) {
 
@@ -299,7 +295,7 @@ static bool init_pwm1 (xbar_t *pin, pwm_config_t *config)
         };
         HAL_GPIO_Init(AUXOUTPUT1_PWM_PORT, &GPIO_Init);
 
-        pwm_out[ch].set_value = pwm1_out;
+        pwm_out[pin->id].set_value = pwm1_out;
     }
 
     HAL_RCC_GetClockConfig(&clock, &latency);
@@ -344,10 +340,10 @@ static bool init_pwm1 (xbar_t *pin, pwm_config_t *config)
         AUXOUTPUT1_PWM_TIMER->CCER |= AUXOUTPUT1_PWM_CCER_EN;
         AUXOUTPUT1_PWM_TIMER->CR1 |= TIM_CR1_CEN;
 
-        aux_out_analog[ch].mode.pwm = !config->servo_mode;
-        aux_out_analog[ch].mode.servo_pwm = config->servo_mode;
+        aux_out_analog[pin->id].mode.pwm = !config->servo_mode;
+        aux_out_analog[pin->id].mode.servo_pwm = config->servo_mode;
 
-        pwm1_out(ch, config->min);
+        pwm1_out(pin->id, config->min);
     }
 
     return ok;
@@ -395,22 +391,22 @@ static xbar_t *get_pin_info (io_port_type_t type, io_port_direction_t dir, uint8
 
         case Port_Input:
             if(port < analog.in.n_ports) {
-                port = ioports_map(analog.in, port);
+                pin.id = ioports_map(analog.in, port);
 #ifdef MCP3221_ENABLE
-                if(port == analog_in.pin)
+                if(pin.id == analog_in.pin)
                     info = &analog_in;
                 else
 #endif
                 {
-                    pin.mode = aux_in_analog[port].mode;
-                    pin.cap = aux_in_analog[port].cap;
+                    pin.mode = aux_in_analog[pin.id].mode;
+                    pin.cap = aux_in_analog[pin.id].cap;
                     pin.cap.claimable = !pin.mode.claimed;
-                    pin.function = aux_in_analog[port].id;
-                    pin.group = aux_in_analog[port].group;
-                    pin.pin = aux_in_analog[port].pin;
-                    pin.bit = 1 << aux_in_analog[port].pin;
-                    pin.port = (void *)aux_in_analog[port].port;
-                    pin.description = aux_in_analog[port].description;
+                    pin.function = aux_in_analog[pin.id].id;
+                    pin.group = aux_in_analog[pin.id].group;
+                    pin.pin = aux_in_analog[pin.id].pin;
+                    pin.bit = 1 << aux_in_analog[pin.id].pin;
+                    pin.port = (void *)aux_in_analog[pin.id].port;
+                    pin.description = aux_in_analog[pin.id].description;
                     info = &pin;
                 }
             }
@@ -421,16 +417,16 @@ static xbar_t *get_pin_info (io_port_type_t type, io_port_direction_t dir, uint8
             memset(&pin, 0, sizeof(xbar_t));
 
             if(port < analog.out.n_ports) {
-                port = ioports_map(analog.out, port);
-                pin.mode = aux_out_analog[port].mode;
+                pin.id = ioports_map(analog.out, port);
+                pin.mode = aux_out_analog[pin.id].mode;
                 pin.mode.pwm = !pin.mode.servo_pwm; //?? for easy filtering
                 XBAR_SET_CAP(pin.cap, pin.mode);
-                pin.function = aux_out_analog[port].id;
-                pin.group = aux_out_analog[port].group;
-                pin.pin = aux_out_analog[port].pin;
-                pin.bit = 1 << aux_out_analog[port].pin;
-                pin.port = (void *)aux_out_analog[port].port;
-                pin.description = aux_out_analog[port].description;
+                pin.function = aux_out_analog[pin.id].id;
+                pin.group = aux_out_analog[pin.id].group;
+                pin.pin = aux_out_analog[pin.id].pin;
+                pin.bit = 1 << aux_out_analog[pin.id].pin;
+                pin.port = (void *)aux_out_analog[pin.id].port;
+                pin.description = aux_out_analog[pin.id].description;
                 pin.get_value = pwm_get_value;
     #ifdef AUXOUTPUT0_PWM_PORT_BASE
                 if(pin.port == AUXOUTPUT0_PWM_PORT && pin.pin == AUXOUTPUT0_PWM_PIN)
@@ -662,7 +658,7 @@ void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_ou
 
             for(i = 0; i < analog.out.n_ports; i++) {
                 if((pin = get_pin_info(Port_Analog, Port_Output, i)))
-                    pin->config(pin, &config);
+                    pin->config(pin, &config, false);
             }
         }
 

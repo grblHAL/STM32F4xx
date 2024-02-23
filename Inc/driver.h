@@ -6,19 +6,18 @@
 
   Copyright (c) 2019-2024 Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
-
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 //
@@ -126,14 +125,8 @@
 #endif
 
 #ifdef BOARD_CNC_BOOSTERPACK
-  #if N_AXIS > 3
-    #error Max number of axes is 3!
-  #endif
-  #include "cnc_boosterpack_map.h"
+  #include "boards/cnc_boosterpack_map.h"
 #elif defined(BOARD_CNC3040)
-  #if EEPROM_ENABLE
-    #error EEPROM plugin not supported!
-  #endif
   #include "boards/cnc3040_map.h"
 #elif defined(BOARD_BLACKPILL)
   #include "boards/blackpill_map.h"
@@ -714,7 +707,6 @@ typedef struct {
     pin_mode_t mode;
     ADC_HandleTypeDef *adc;
     ioport_interrupt_callback_ptr interrupt_callback;
-    aux_ctrl_t *aux_ctrl;
     const char *description;
 } input_signal_t;
 
