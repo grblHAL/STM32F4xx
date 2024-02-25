@@ -527,18 +527,6 @@
 #define PULSE2_TIMER_IRQHandler     timerHANDLER(PULSE2_TIMER_N)
 #endif
 
-#if SPINDLE_PWM_TIMER_N == 9
-#define DEBOUNCE_TIMER_N            13
-#define DEBOUNCE_TIMER_IRQn         TIM8_UP_TIM13_IRQn       // !
-#define DEBOUNCE_TIMER_IRQHandler   TIM8_UP_TIM13_IRQHandler // !
-#else
-#define DEBOUNCE_TIMER_N            9
-#define DEBOUNCE_TIMER_IRQn         TIM1_BRK_TIM9_IRQn       // !
-#define DEBOUNCE_TIMER_IRQHandler   TIM1_BRK_TIM9_IRQHandler // !
-#endif
-#define DEBOUNCE_TIMER              timer(DEBOUNCE_TIMER_N)
-#define DEBOUNCE_TIMER_CLKEN        timerCLKEN(DEBOUNCE_TIMER_N)
-
 #if SPINDLE_ENCODER_ENABLE
 
 #ifndef RPM_COUNTER_N
@@ -697,16 +685,16 @@
 
 typedef struct {
     pin_function_t id;
-    GPIO_TypeDef *port;
-    uint8_t pin;
-    uint32_t bit;
-    pin_group_t group;
-    volatile bool active;
-    volatile bool debounce;
     pin_cap_t cap;
     pin_mode_t mode;
-    ADC_HandleTypeDef *adc;
+    uint8_t pin;
+    uint32_t bit;
+    GPIO_TypeDef *port;
+    pin_group_t group;
+    uint8_t user_port;
+    volatile bool active;
     ioport_interrupt_callback_ptr interrupt_callback;
+    ADC_HandleTypeDef *adc;
     const char *description;
 } input_signal_t;
 
@@ -738,6 +726,6 @@ void ioports_init(pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
 #if AUX_ANALOG
 void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
 #endif
-void ioports_event (uint32_t bit);
+void ioports_event (input_signal_t *input);
 
 #endif // __DRIVER_H__
