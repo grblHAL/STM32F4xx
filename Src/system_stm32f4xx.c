@@ -151,6 +151,41 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
   */
 void SystemInit(void)
 {
+    extern uint8_t _estack; /* Symbol defined in the linker script */
+
+    uint32_t *addr;
+
+    addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFFE0);
+
+    if(*addr == 0xDEADBEEF) {
+
+        uint32_t i;
+        void (*SysMemBootJump)(void);
+
+        *addr = 0xCAFEFEED; // Reset our trigger
+
+        __disable_irq();
+
+        HAL_RCC_DeInit();
+        HAL_DeInit();
+
+        for(i = 0; i < 5; i++) {
+            NVIC->ICER[i] = 0xFFFFFFFF;
+            NVIC->ICPR[i] = 0xFFFFFFFF;
+        }
+        __enable_irq();
+
+        SysTick->CTRL = SysTick->LOAD = SysTick->VAL = 0;
+        __HAL_SYSCFG_REMAPMEMORY_SYSTEMFLASH();
+
+        __set_MSP(*(uint32_t *)0x1FFF0000);
+
+        SysMemBootJump = (void(*)(void))(*((uint32_t *)0x1FFF0004));
+        SysMemBootJump();
+
+        while(1) {};
+    }
+
   /* FPU settings ------------------------------------------------------------*/
   #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */

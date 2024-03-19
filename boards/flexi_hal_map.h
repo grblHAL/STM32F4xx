@@ -65,7 +65,6 @@
 #define Z_STEP_PORT             GPIOB
 #define Z_STEP_PIN              8
 #define STEP_OUTMODE            GPIO_BITBAND
-//#define STEP_PINMODE            PINMODE_OD // Uncomment for open drain outputs
 
 // Define step direction output pins.
 #define X_DIRECTION_PORT        GPIOC
@@ -75,7 +74,6 @@
 #define Z_DIRECTION_PORT        GPIOC
 #define Z_DIRECTION_PIN         15
 #define DIRECTION_OUTMODE       GPIO_BITBAND
-//#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pin.
 #define X_ENABLE_PORT           GPIOA
@@ -84,8 +82,6 @@
 #define Y_ENABLE_PIN            14
 #define Z_ENABLE_PORT           GPIOA
 #define Z_ENABLE_PIN            13
-//#define STEPPERS_ENABLE_PORT       GPIOA
-//#define STEPPERS_ENABLE_PIN        14
 #define STEPPERS_ENABLE_OUTMODE GPIO_BITBAND
 
 // Define homing/hard limit switch input pins.
@@ -123,39 +119,6 @@
 #define M4_ENABLE_PIN           14
 #endif
 
-// Define driver spindle pins
-
-#if DRIVER_SPINDLE_PWM_ENABLE
-#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
-#define SPINDLE_PWM_PIN         8
-#else
-#define AUXOUTPUT4_PORT         GPIOA
-#define AUXOUTPUT4_PIN          8
-#endif
-
-#if DRIVER_SPINDLE_DIR_ENABLE
-#define SPINDLE_DIRECTION_PORT  GPIOB
-#define SPINDLE_DIRECTION_PIN   1
-#else
-#define AUXOUTPUT5_PORT         GPIOB
-#define AUXOUTPUT5_PIN          1
-#endif
-
-#if DRIVER_SPINDLE_ENABLE
-#define SPINDLE_ENABLE_PORT     GPIOB
-#define SPINDLE_ENABLE_PIN      2
-#else
-#define AUXOUTPUT6_PORT         GPIOB
-#define AUXOUTPUT6_PIN          2
-#endif
-
-// Define flood and mist coolant enable output pins.
-#define COOLANT_FLOOD_PORT      GPIOC
-#define COOLANT_FLOOD_PIN       9
-#define COOLANT_MIST_PORT       GPIOA
-#define COOLANT_MIST_PIN        7
-#define COOLANT_OUTMODE         GPIO_BITBAND
-
 #define AUXOUTPUT0_PORT         GPIOB
 #define AUXOUTPUT0_PIN          13
 #define AUXOUTPUT1_PORT         GPIOB
@@ -164,6 +127,33 @@
 #define AUXOUTPUT2_PIN          4
 #define AUXOUTPUT3_PORT         GPIOA
 #define AUXOUTPUT3_PIN          6
+#define AUXOUTPUT4_PORT         GPIOA // Spindle PWM
+#define AUXOUTPUT4_PIN          8
+#define AUXOUTPUT5_PORT         GPIOB // Spindle direction
+#define AUXOUTPUT5_PIN          1
+#define AUXOUTPUT6_PORT         GPIOB // Spindle enable
+#define AUXOUTPUT6_PIN          2
+
+// Define driver spindle pins
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     AUXOUTPUT6_PORT
+#define SPINDLE_ENABLE_PIN      AUXOUTPUT6_PIN
+#if DRIVER_SPINDLE_PWM_ENABLE
+#define SPINDLE_PWM_PORT        AUXOUTPUT4_PORT
+#define SPINDLE_PWM_PIN         AUXOUTPUT4_PIN
+#endif
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  AUXOUTPUT5_PORT
+#define SPINDLE_DIRECTION_PIN   AUXOUTPUT5_PIN
+#endif
+#endif //DRIVER_SPINDLE_ENABLE
+
+// Define flood and mist coolant enable output pins.
+#define COOLANT_FLOOD_PORT      GPIOC
+#define COOLANT_FLOOD_PIN       9
+#define COOLANT_MIST_PORT       GPIOA
+#define COOLANT_MIST_PIN        7
+#define COOLANT_OUTMODE         GPIO_BITBAND
 
 #define AUXINPUT0_PORT          GPIOA
 #define AUXINPUT0_PIN           0
@@ -171,7 +161,7 @@
 #define AUXINPUT1_PIN           1
 #define AUXINPUT2_PORT          GPIOA
 #define AUXINPUT2_PIN           2
-#define AUXINPUT3_PORT          GPIOC
+#define AUXINPUT3_PORT          GPIOC // Safety door
 #define AUXINPUT3_PIN           4
 #define AUXINPUT4_PORT          GPIOB // Probe input
 #define AUXINPUT4_PIN           7

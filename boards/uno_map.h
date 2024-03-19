@@ -77,36 +77,31 @@
 
 #define Z_LIMIT_POLL
 
-// Define driver spindle pins
-
-#if DRIVER_SPINDLE_PWM_ENABLE // D11
-#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
-#define SPINDLE_PWM_PIN         7
-#else
-#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PORT         GPIOA // Spindle PWM
 #define AUXOUTPUT0_PIN          7
-#endif
-
-#if DRIVER_SPINDLE_DIR_ENABLE // D13
-#define SPINDLE_DIRECTION_PORT  GPIOA
-#define SPINDLE_DIRECTION_PIN   5
-#else
-#define AUXOUTPUT1_PORT         GPIOA
+#define AUXOUTPUT1_PORT         GPIOA // Spindle direction
 #define AUXOUTPUT1_PIN          5
-#endif
-
-#if DRIVER_SPINDLE_ENABLE
 #if DRIVER_SPINDLE_PWM_ENABLE
-#define SPINDLE_ENABLE_PORT     GPIOB // on morpho header
-#define SPINDLE_ENABLE_PIN      7
+#define AUXOUTPUT2_PORT         GPIOB // Spindle enable, on morpho header
+#define AUXOUTPUT2_PIN          7
 #else
-#define SPINDLE_ENABLE_PORT     GPIOA // D12
-#define SPINDLE_ENABLE_PIN      6
-#endif
-#elif !DRIVER_SPINDLE_PWM_ENABLE
-#define AUXOUTPUT2_PORT         GPIOA
+#define AUXOUTPUT2_PORT         GPIOA // Spindle enable
 #define AUXOUTPUT2_PIN          6
 #endif
+
+// Define driver spindle pins
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     AUXOUTPUT2_PORT
+#define SPINDLE_ENABLE_PIN      AUXOUTPUT2_PIN
+#if DRIVER_SPINDLE_PWM_ENABLE
+#define SPINDLE_PWM_PORT        AUXOUTPUT0_PORT
+#define SPINDLE_PWM_PIN         AUXOUTPUT0_PIN
+#endif
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  AUXOUTPUT1_PORT
+#define SPINDLE_DIRECTION_PIN   AUXOUTPUT1_PIN
+#endif
+#endif //DRIVER_SPINDLE_ENABLE
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOB // A3

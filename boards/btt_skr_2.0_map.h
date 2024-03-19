@@ -37,7 +37,7 @@
 #define SERIAL1_PORT   32   // GPIOD: TX = 8, RX = 9
 #define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #if ETHERNET_ENABLE
-#define SPI_PORT        2   // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15
+//#define SPI_PORT        2   // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15
 #endif
 
 #if TRINAMIC_SPI_ENABLE && ETHERNET_ENABLE
@@ -116,34 +116,29 @@
 #define M4_ENABLE_PIN               13
 #endif
 
-// Define driver spindle pins
-
-#if DRIVER_SPINDLE_PWM_ENABLE                                   // EXP1 - PB0, pin 2
-#define SPINDLE_PWM_PORT_BASE       GPIOB_BASE
-#define SPINDLE_PWM_PIN             0
-// Alt. spindle PWM output, comment out definitions above and uncomment these to change:
-//#define SPINDLE_PWM_PORT_BASE       GPIOE_BASE
-//#define SPINDLE_PWM_PIN             5                         // SERVOS - PE5, pin 1
-#else
-#define AUXOUTPUT0_PORT             GPIOB
+#define AUXOUTPUT0_PORT             GPIOB // Spindle PWM, EXP1 pin 2
 #define AUXOUTPUT0_PIN              0
-#endif
-
-#if DRIVER_SPINDLE_DIR_ENABLE                                   // FAN2
-#define SPINDLE_DIRECTION_PORT      GPIOB
-#define SPINDLE_DIRECTION_PIN       5
-#else
-#define AUXOUTPUT1_PORT             GPIOB
+// Alt. spindle PWM output, comment out definitions above and uncomment these to change:
+//#define AUXOUTPUT0_PORT             GPIOE // Spindle PWM, SERVOS pin 1
+//#define AUXOUTPUT0_PIN              5
+#define AUXOUTPUT1_PORT             GPIOB // Spindle direction, FAN2
 #define AUXOUTPUT1_PIN              5
-#endif
-
-#if DRIVER_SPINDLE_ENABLE                                       // FAN1
-#define SPINDLE_ENABLE_PORT         GPIOB
-#define SPINDLE_ENABLE_PIN          6
-#else
-#define AUXOUTPUT2_PORT             GPIOB
+#define AUXOUTPUT2_PORT             GPIOB // Spindle enable, FAN1
 #define AUXOUTPUT2_PIN              6
+
+// Define driver spindle pins
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT         AUXOUTPUT2_PORT
+#define SPINDLE_ENABLE_PIN          AUXOUTPUT2_PIN
+#if DRIVER_SPINDLE_PWM_ENABLE
+#define SPINDLE_PWM_PORT            AUXOUTPUT0_PORT
+#define SPINDLE_PWM_PIN             AUXOUTPUT0_PIN
 #endif
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT      AUXOUTPUT1_PORT
+#define SPINDLE_DIRECTION_PIN       AUXOUTPUT1_PIN
+#endif
+#endif //DRIVER_SPINDLE_ENABLE
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT          GPIOB
@@ -153,7 +148,7 @@
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // These are all available on EXP2 along with electrical RESET* (EXP2-8)
-#define CONTROL_PORT                GPIOA
+#define CONTROL_PORT                GPIOE
 #define RESET_PIN                   4                           // Exp2-4
 #define FEED_HOLD_PIN               5                           // Exp2-2
 #define CYCLE_START_PIN             6                           // Exp2-1
@@ -189,7 +184,7 @@
 
 #if ETHERNET_ENABLE
 #undef SPI_ENABLE
-#define SPI_ENABLE 1
+#define SPI_ENABLE 					1 // GPIOA: SCK = 5, MISO = 6, MOSI = 7
 #define SPI_CS_PORT                 GPIOB
 #define SPI_CS_PIN                  12                              // ESP-CS
 #define SPI_IRQ_PORT                GPIOB

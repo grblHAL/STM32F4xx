@@ -124,31 +124,26 @@
 #define M4_ENABLE_PIN           STEPPERS_ENABLE_PIN
 #endif
 
-// Define driver spindle pins
-
-#if DRIVER_SPINDLE_PWM_ENABLE
-#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
-#define SPINDLE_PWM_PIN         0
-#else
-#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PORT         GPIOA // Spindle PWM
 #define AUXOUTPUT0_PIN          0
-#endif
-
-#if DRIVER_SPINDLE_DIR_ENABLE
-#define SPINDLE_DIRECTION_PORT  GPIOC
-#define SPINDLE_DIRECTION_PIN   15
-#else
-#define AUXOUTPUT1_PORT         GPIOC
+#define AUXOUTPUT1_PORT         GPIOC // Spindle direction
 #define AUXOUTPUT1_PIN          15
-#endif
-
-#if DRIVER_SPINDLE_ENABLE
-#define SPINDLE_ENABLE_PORT     GPIOC
-#define SPINDLE_ENABLE_PIN      14
-#else
-#define AUXOUTPUT2_PORT         GPIOC
+#define AUXOUTPUT2_PORT         GPIOC // Spindle enable
 #define AUXOUTPUT2_PIN          14
+
+// Define driver spindle pins
+#if DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE_PORT     AUXOUTPUT2_PORT
+#define SPINDLE_ENABLE_PIN      AUXOUTPUT2_PIN
+#if DRIVER_SPINDLE_PWM_ENABLE
+#define SPINDLE_PWM_PORT        AUXOUTPUT0_PORT
+#define SPINDLE_PWM_PIN         AUXOUTPUT0_PIN
 #endif
+#if DRIVER_SPINDLE_DIR_ENABLE
+#define SPINDLE_DIRECTION_PORT  AUXOUTPUT1_PORT
+#define SPINDLE_DIRECTION_PIN   AUXOUTPUT1_PIN
+#endif
+#endif //DRIVER_SPINDLE_ENABLE
 
 // Define flood and mist coolant enable output pins.
 #define COOLANT_FLOOD_PORT      GPIOA

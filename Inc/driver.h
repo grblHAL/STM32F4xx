@@ -35,6 +35,7 @@
 #endif
 
 #include "main.h"
+#include "pwm.h"
 
 #if defined(_WIZCHIP_) && _WIZCHIP_ > 0
 #undef ETHERNET_ENABLE
@@ -160,6 +161,8 @@
   #include "boards/halcyon_v1_map.h"
 #elif defined(BOARD_MKS_ROBIN_NANO_30)
   #include "boards/mks_robin_nano_v3.0_map.h"
+#elif defined(BOARD_LONGBOARD32)
+  #include "boards/longboard32_map.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "boards/my_machine_map.h"
 #else // default board
@@ -213,6 +216,8 @@
 #define PULSE_TIMER_IRQn            timerINT(PULSE_TIMER_N)
 #define PULSE_TIMER_IRQHandler      timerHANDLER(PULSE_TIMER_N)
 
+#if STEP_INJECT_ENABLE
+
 #if defined(STM32F407xx) || defined(STM32F429xx) || defined(STM32F446xx)
 #define PULSE2_TIMER_N              7
 #define PULSE2_TIMER                timer(PULSE2_TIMER_N)
@@ -221,311 +226,15 @@
 #define PULSE2_TIMER_IRQHandler     timerHANDLER(PULSE2_TIMER_N)
 #endif
 
-#ifdef SPINDLE_PWM_PORT_BASE
-
-#if SPINDLE_PWM_PORT_BASE == GPIOA_BASE
-  #if SPINDLE_PWM_PIN == 0 // PA0 - TIM2_CH1
-    #define SPINDLE_PWM_TIMER_N     2
-    #define SPINDLE_PWM_TIMER_CH    1
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    1
-  #elif SPINDLE_PWM_PIN == 5 // PA5 - TIM2_CH1
-    #define SPINDLE_PWM_TIMER_N     2
-    #define SPINDLE_PWM_TIMER_CH    1
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    1
-  #elif SPINDLE_PWM_PIN == 7 // PA7 - TIM1_CH1N
-    #define SPINDLE_PWM_TIMER_N     1
-    #define SPINDLE_PWM_TIMER_CH    1
-    #define SPINDLE_PWM_TIMER_INV   1
-    #define SPINDLE_PWM_TIMER_AF    1
-  #elif SPINDLE_PWM_PIN == 8 // PA8 - TIM1_CH1
-    #define SPINDLE_PWM_TIMER_N     1
-    #define SPINDLE_PWM_TIMER_CH    1
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    1
-  #elif SPINDLE_PWM_PIN == 11 // PA11 - TIM1_CH4
-    #define SPINDLE_PWM_TIMER_N     1
-    #define SPINDLE_PWM_TIMER_CH    4
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    1
-  #endif
-#elif SPINDLE_PWM_PORT_BASE == GPIOB_BASE
-  #if SPINDLE_PWM_PIN == 0 // PB0 - TIM1_CH2N
-    #define SPINDLE_PWM_TIMER_N     1
-    #define SPINDLE_PWM_TIMER_CH    2
-    #define SPINDLE_PWM_TIMER_INV   1
-    #define SPINDLE_PWM_TIMER_AF    1
-  #elif SPINDLE_PWM_PIN == 3 // PB3 - TIM2_CH2
-    #define SPINDLE_PWM_TIMER_N     2
-    #define SPINDLE_PWM_TIMER_CH    2
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    1
-  #elif SPINDLE_PWM_PIN == 4 // PB4 - TIM3_CH1
-    #define SPINDLE_PWM_TIMER_N     3
-    #define SPINDLE_PWM_TIMER_CH    1
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    2
-  #elif SPINDLE_PWM_PIN == 9 // PB9 - TIM11_CH1
-    #define SPINDLE_PWM_TIMER_N     11
-    #define SPINDLE_PWM_TIMER_CH    1
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    3
-  #endif
-#elif SPINDLE_PWM_PORT_BASE == GPIOE_BASE
-  #if SPINDLE_PWM_PIN == 5 // PE5 - TIM9_CH1
-    #define SPINDLE_PWM_TIMER_N     9
-    #define SPINDLE_PWM_TIMER_CH    1
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    3
-  #elif SPINDLE_PWM_PIN == 6 // PE6 - TIM9_CH2
-    #define SPINDLE_PWM_TIMER_N     9
-    #define SPINDLE_PWM_TIMER_CH    2
-    #define SPINDLE_PWM_TIMER_INV   0
-    #define SPINDLE_PWM_TIMER_AF    3
-  #endif
-#endif
-
-#if SPINDLE_PWM_TIMER_CH == 1 || SPINDLE_PWM_TIMER_CH == 2
-#define SPINDLE_PWM_CCR 1
-#else
-#define SPINDLE_PWM_CCR 2
-#endif
-#define SPINDLE_PWM_TIMER           timer(SPINDLE_PWM_TIMER_N)
-#define SPINDLE_PWM_TIMER_CLKEN     timerCLKEN(SPINDLE_PWM_TIMER_N)
-#define SPINDLE_PWM_TIMER_CCR       timerCCR(SPINDLE_PWM_TIMER_N, SPINDLE_PWM_TIMER_CH)
-#define SPINDLE_PWM_TIMER_CCMR      timerCCMR(SPINDLE_PWM_TIMER_N, SPINDLE_PWM_CCR)
-#define SPINDLE_PWM_CCMR_OCM_SET    timerOCM(SPINDLE_PWM_CCR, SPINDLE_PWM_TIMER_CH)
-#define SPINDLE_PWM_CCMR_OCM_CLR    timerOCMC(SPINDLE_PWM_CCR, SPINDLE_PWM_TIMER_CH)
-#if SPINDLE_PWM_TIMER_INV
-#define SPINDLE_PWM_CCER_EN         timerCCEN(SPINDLE_PWM_TIMER_CH, N)
-#define SPINDLE_PWM_CCER_POL        timerCCP(SPINDLE_PWM_TIMER_CH, N)
-#define SPINDLE_PWM_CR2_OIS         timerCR2OIS(SPINDLE_PWM_TIMER_CH, N)
-#else
-#define SPINDLE_PWM_CCER_EN         timerCCEN(SPINDLE_PWM_TIMER_CH, )
-#define SPINDLE_PWM_CCER_POL        timerCCP(SPINDLE_PWM_TIMER_CH, )
-#define SPINDLE_PWM_CR2_OIS         timerCR2OIS(SPINDLE_PWM_TIMER_CH, )
-#endif
-
-#define SPINDLE_PWM_PORT            ((GPIO_TypeDef *)SPINDLE_PWM_PORT_BASE)
-#define SPINDLE_PWM_AF              timerAF(SPINDLE_PWM_TIMER_N, SPINDLE_PWM_TIMER_AF)
-#define SPINDLE_PWM_CLKEN           timerCLKEN(SPINDLE_PWM_TIMER_N)
-
-#endif // SPINDLE_PWM_PORT_BASE
-
-#if defined(SPINDLE_PWM_PIN) && !defined(SPINDLE_PWM_TIMER_N)
-#ifdef SPINDLE_PWM_PORT
-#error Map spindle port by defining SPINDLE_PWM_PORT_BASE in the map file!
-#else
-#error Spindle PWM not supported on mapped pin!
-#endif
-#endif
-
-#ifdef AUXOUTPUT0_PWM_PORT_BASE
-
-#if AUXOUTPUT0_PWM_PORT_BASE == GPIOA_BASE
-  #if AUXOUTPUT0_PWM_PIN == 5 // PA5 - TIM2_CH1
-    #define AUXOUTPUT0_PWM_TIMER_N     2
-    #define AUXOUTPUT0_PWM_TIMER_CH    1
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    1
-  #elif AUXOUTPUT0_PWM_PIN == 7 // PA7 - TIM1_CH1N
-    #define AUXOUTPUT0_PWM_TIMER_N     1
-    #define AUXOUTPUT0_PWM_TIMER_CH    1
-    #define AUXOUTPUT0_PWM_TIMER_INV   1
-    #define AUXOUTPUT0_PWM_TIMER_AF    1
-  #elif AUXOUTPUT0_PWM_PIN == 8 // PA8 - TIM1_CH1
-    #define AUXOUTPUT0_PWM_TIMER_N     1
-    #define AUXOUTPUT0_PWM_TIMER_CH    1
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    1
-  #endif
-#elif AUXOUTPUT0_PWM_PORT_BASE == GPIOB_BASE
-  #if AUXOUTPUT0_PWM_PIN == 0 // PB0 - TIM1_CH2N
-    #define AUXOUTPUT0_PWM_TIMER_N     1
-    #define AUXOUTPUT0_PWM_TIMER_CH    2
-    #define AUXOUTPUT0_PWM_TIMER_INV   1
-    #define AUXOUTPUT0_PWM_TIMER_AF    1
-  #elif AUXOUTPUT0_PWM_PIN == 2 // PB2 - TIM2_CH4
-    #define AUXOUTPUT0_PWM_TIMER_N     2
-    #define AUXOUTPUT0_PWM_TIMER_CH    4
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    1
-  #elif AUXOUTPUT0_PWM_PIN == 3 // PB3 - TIM2_CH2
-    #define AUXOUTPUT0_PWM_TIMER_N     2
-    #define AUXOUTPUT0_PWM_TIMER_CH    2
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    1
-  #elif AUXOUTPUT0_PWM_PIN == 4 // PB4 - TIM3_CH1
-    #define AUXOUTPUT0_PWM_TIMER_N     3
-    #define AUXOUTPUT0_PWM_TIMER_CH    1
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    2
-  #elif AUXOUTPUT0_PWM_PIN == 9 // PB9 - TIM11_CH1
-    #define AUXOUTPUT0_PWM_TIMER_N     11
-    #define AUXOUTPUT0_PWM_TIMER_CH    1
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    3
-  #endif
-#elif AUXOUTPUT0_PWM_PORT_BASE == GPIOC_BASE
-  #if AUXOUTPUT0_PWM_PIN == 8 // PC8 - TIM3_CH3
-    #define AUXOUTPUT0_PWM_TIMER_N     3
-    #define AUXOUTPUT0_PWM_TIMER_CH    3
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    2
-  #endif
-#elif AUXOUTPUT0_PWM_PORT_BASE == GPIOE_BASE
-  #if AUXOUTPUT0_PWM_PIN == 5 // PE5 - TIM9_CH1
-    #define AUXOUTPUT0_PWM_TIMER_N     9
-    #define AUXOUTPUT0_PWM_TIMER_CH    1
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    3
-  #elif AUXOUTPUT0_PWM_PIN == 6 // PE6 - TIM9_CH2
-    #define AUXOUTPUT0_PWM_TIMER_N     9
-    #define AUXOUTPUT0_PWM_TIMER_CH    2
-    #define AUXOUTPUT0_PWM_TIMER_INV   0
-    #define AUXOUTPUT0_PWM_TIMER_AF    3
-  #endif
-#endif
-
-#if AUXOUTPUT0_PWM_TIMER_CH == 1 || AUXOUTPUT0_PWM_TIMER_CH == 2
-#define AUXOUTPUT0_PWM_CCR 1
-#else
-#define AUXOUTPUT0_PWM_CCR 2
-#endif
-#define AUXOUTPUT0_PWM_TIMER           timer(AUXOUTPUT0_PWM_TIMER_N)
-#define AUXOUTPUT0_PWM_TIMER_CCR       timerCCR(AUXOUTPUT0_PWM_TIMER_N, AUXOUTPUT0_PWM_TIMER_CH)
-#define AUXOUTPUT0_PWM_TIMER_CCMR      timerCCMR(AUXOUTPUT0_PWM_TIMER_N, AUXOUTPUT0_PWM_CCR)
-#define AUXOUTPUT0_PWM_CCMR_OCM_SET    timerOCM(AUXOUTPUT0_PWM_CCR, AUXOUTPUT0_PWM_TIMER_CH)
-#define AUXOUTPUT0_PWM_CCMR_OCM_CLR    timerOCMC(AUXOUTPUT0_PWM_CCR, AUXOUTPUT0_PWM_TIMER_CH)
-#if AUXOUTPUT0_PWM_TIMER_INV
-#define AUXOUTPUT0_PWM_CCER_EN         timerCCEN(AUXOUTPUT0_PWM_TIMER_CH, N)
-#define AUXOUTPUT0_PWM_CCER_POL        timerCCP(AUXOUTPUT0_PWM_TIMER_CH, N)
-#define AUXOUTPUT0_PWM_CR2_OIS         timerCR2OIS(AUXOUTPUT0_PWM_TIMER_CH, N)
-#else
-#define AUXOUTPUT0_PWM_CCER_EN         timerCCEN(AUXOUTPUT0_PWM_TIMER_CH, )
-#define AUXOUTPUT0_PWM_CCER_POL        timerCCP(AUXOUTPUT0_PWM_TIMER_CH, )
-#define AUXOUTPUT0_PWM_CR2_OIS         timerCR2OIS(AUXOUTPUT0_PWM_TIMER_CH, )
-#endif
-
-#define AUXOUTPUT0_PWM_PORT            ((GPIO_TypeDef *)AUXOUTPUT0_PWM_PORT_BASE)
-#define AUXOUTPUT0_PWM_AF              timerAF(AUXOUTPUT0_PWM_TIMER_N, AUXOUTPUT0_PWM_TIMER_AF)
-#define AUXOUTPUT0_PWM_CLKEN           timerCLKEN(AUXOUTPUT0_PWM_TIMER_N)
-
-#endif // AUXOUTPUT0_PWM_PORT_BASE
-
-#ifdef AUXOUTPUT1_PWM_PORT_BASE
-
-#if AUXOUTPUT1_PWM_PORT_BASE == GPIOA_BASE
-  #if AUXOUTPUT1_PWM_PIN == 5 // PA5 - TIM2_CH1
-    #define AUXOUTPUT1_PWM_TIMER_N     2
-    #define AUXOUTPUT1_PWM_TIMER_CH    1
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    1
-  #elif AUXOUTPUT1_PWM_PIN == 7 // PA7 - TIM1_CH1N
-    #define AUXOUTPUT1_PWM_TIMER_N     1
-    #define AUXOUTPUT1_PWM_TIMER_CH    1
-    #define AUXOUTPUT1_PWM_TIMER_INV   1
-    #define AUXOUTPUT1_PWM_TIMER_AF    1
-  #elif AUXOUTPUT1_PWM_PIN == 8 // PA8 - TIM1_CH1
-    #define AUXOUTPUT1_PWM_TIMER_N     1
-    #define AUXOUTPUT1_PWM_TIMER_CH    1
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    1
-  #endif
-#elif AUXOUTPUT1_PWM_PORT_BASE == GPIOB_BASE
-  #if AUXOUTPUT1_PWM_PIN == 0 // PB0 - TIM1_CH2N
-    #define AUXOUTPUT1_PWM_TIMER_N     1
-    #define AUXOUTPUT1_PWM_TIMER_CH    2
-    #define AUXOUTPUT1_PWM_TIMER_INV   1
-    #define AUXOUTPUT1_PWM_TIMER_AF    1
-  #elif AUXOUTPUT1_PWM_PIN == 2 // PB2 - TIM2_CH4
-    #define AUXOUTPUT1_PWM_TIMER_N     2
-    #define AUXOUTPUT1_PWM_TIMER_CH    4
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    1
-  #elif AUXOUTPUT1_PWM_PIN == 3 // PB3 - TIM2_CH2
-    #define AUXOUTPUT1_PWM_TIMER_N     2
-    #define AUXOUTPUT1_PWM_TIMER_CH    2
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    1
-  #elif AUXOUTPUT1_PWM_PIN == 4 // PB4 - TIM3_CH1
-    #define AUXOUTPUT1_PWM_TIMER_N     3
-    #define AUXOUTPUT1_PWM_TIMER_CH    1
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    2
-  #elif AUXOUTPUT1_PWM_PIN == 9 // PB9 - TIM11_CH1
-    #define AUXOUTPUT1_PWM_TIMER_N     11
-    #define AUXOUTPUT1_PWM_TIMER_CH    1
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    3
-  #endif
-#elif AUXOUTPUT1_PWM_PORT_BASE == GPIOC_BASE
-  #if AUXOUTPUT1_PWM_PIN == 8 // PC8 - TIM3_CH3
-    #define AUXOUTPUT1_PWM_TIMER_N     3
-    #define AUXOUTPUT1_PWM_TIMER_CH    3
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    2
-  #endif
-#elif AUXOUTPUT1_PWM_PORT_BASE == GPIOE_BASE
-  #if AUXOUTPUT1_PWM_PIN == 5 // PE5 - TIM9_CH1
-    #define AUXOUTPUT1_PWM_TIMER_N     9
-    #define AUXOUTPUT1_PWM_TIMER_CH    1
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    3
-  #elif AUXOUTPUT1_PWM_PIN == 6 // PE6 - TIM9_CH2
-    #define AUXOUTPUT1_PWM_TIMER_N     9
-    #define AUXOUTPUT1_PWM_TIMER_CH    2
-    #define AUXOUTPUT1_PWM_TIMER_INV   0
-    #define AUXOUTPUT1_PWM_TIMER_AF    3
-  #endif
-#endif
-
-#if AUXOUTPUT1_PWM_TIMER_CH == 1 || AUXOUTPUT1_PWM_TIMER_CH == 2
-#define AUXOUTPUT1_PWM_CCR 1
-#else
-#define AUXOUTPUT1_PWM_CCR 2
-#endif
-#define AUXOUTPUT1_PWM_TIMER           timer(AUXOUTPUT1_PWM_TIMER_N)
-#define AUXOUTPUT1_PWM_TIMER_CCR       timerCCR(AUXOUTPUT1_PWM_TIMER_N, AUXOUTPUT1_PWM_TIMER_CH)
-#define AUXOUTPUT1_PWM_TIMER_CCMR      timerCCMR(AUXOUTPUT1_PWM_TIMER_N, AUXOUTPUT1_PWM_CCR)
-#define AUXOUTPUT1_PWM_CCMR_OCM_SET    timerOCM(AUXOUTPUT1_PWM_CCR, AUXOUTPUT1_PWM_TIMER_CH)
-#define AUXOUTPUT1_PWM_CCMR_OCM_CLR    timerOCMC(AUXOUTPUT1_PWM_CCR, AUXOUTPUT1_PWM_TIMER_CH)
-#if AUXOUTPUT1_PWM_TIMER_INV
-#define AUXOUTPUT1_PWM_CCER_EN         timerCCEN(AUXOUTPUT1_PWM_TIMER_CH, N)
-#define AUXOUTPUT1_PWM_CCER_POL        timerCCP(AUXOUTPUT1_PWM_TIMER_CH, N)
-#define AUXOUTPUT1_PWM_CR2_OIS         timerCR2OIS(AUXOUTPUT1_PWM_TIMER_CH, N)
-#else
-#define AUXOUTPUT1_PWM_CCER_EN         timerCCEN(AUXOUTPUT1_PWM_TIMER_CH, )
-#define AUXOUTPUT1_PWM_CCER_POL        timerCCP(AUXOUTPUT1_PWM_TIMER_CH, )
-#define AUXOUTPUT1_PWM_CR2_OIS         timerCR2OIS(AUXOUTPUT1_PWM_TIMER_CH, )
-#endif
-
-#define AUXOUTPUT1_PWM_PORT            ((GPIO_TypeDef *)AUXOUTPUT1_PWM_PORT_BASE)
-#define AUXOUTPUT1_PWM_AF              timerAF(AUXOUTPUT1_PWM_TIMER_N, AUXOUTPUT1_PWM_TIMER_AF)
-#define AUXOUTPUT1_PWM_CLKEN           timerCLKEN(AUXOUTPUT1_PWM_TIMER_N)
-
-#endif // AUXOUTPUT1_PWM_PORT_BASE
-
-#if defined(AUXOUTPUT0_PWM_PORT_BASE) || defined(AUXOUTPUT1_PWM_PORT_BASE) ||\
-     defined(AUXOUTPUT0_ANALOG_PORT) || defined( AUXOUTPUT1_ANALOG_PORT) ||\
-      defined(MCP3221_ENABLE)
-#define AUX_ANALOG 1
-#else
-#define AUX_ANALOG 0
-#endif
-
 #if !defined(PULSE2_TIMER_N) && STEP_INJECT_ENABLE
-#if SPINDLE_PWM_TIMER_N == 2 || SPINDLE_PWM_TIMER_N == 9
 #define PULSE2_TIMER_N              3
-#else
-#define PULSE2_TIMER_N              2
 #endif
 #define PULSE2_TIMER                timer(PULSE2_TIMER_N)
 #define PULSE2_TIMER_CLKEN          timerCLKEN(PULSE2_TIMER_N)
 #define PULSE2_TIMER_IRQn           timerINT(PULSE2_TIMER_N)
 #define PULSE2_TIMER_IRQHandler     timerHANDLER(PULSE2_TIMER_N)
-#endif
+
+#endif // STEP_INJECT_ENABLE
 
 #if SPINDLE_ENCODER_ENABLE
 
@@ -536,9 +245,6 @@
 #define RPM_TIMER_N     2
 #endif
 
-#if SPINDLE_PWM_TIMER_N == RPM_COUNTER_N || SPINDLE_PWM_TIMER_N == RPM_TIMER_N
-#error Timer conflict: spindle sync and spindle PWM!
-#endif
 #if PULSE2_TIMER_N == RPM_COUNTER_N || PULSE2_TIMER_N == RPM_TIMER_N
 #error Timer conflict: spindle sync and step inject!
 #endif
@@ -552,19 +258,23 @@
 #define RPM_TIMER_IRQn              timerINT(RPM_TIMER_N)
 #define RPM_TIMER_IRQHandler        timerHANDLER(RPM_TIMER_N)
 
-#elif PPI_ENABLE
+#endif //  SPINDLE_ENCODER_ENABLE
 
-#if SPINDLE_PWM_TIMER_N == 2
-#error Timer conflict: laser PPI and spindle PWM!
+#if PPI_ENABLE
+
+#ifndef PPI_TIMER_N
+#define PPI_TIMER_N     2
 #endif
 
-#define PPI_TIMER_N                 2
+#if PPI_TIMER_N == RPM_COUNTER_N || PPI_TIMER_N == RPM_TIMER_N
+#error Timer conflict: PPI timer!
+#endif
 #define PPI_TIMER                   timer(PPI_TIMER_N)
 #define PPI_TIMER_CLKEN             timerCLKEN(PPI_TIMER_N)
 #define PPI_TIMER_IRQn              timerINT(PPI_TIMER_N)
 #define PPI_TIMER_IRQHandler        timerHANDLER(PPI_TIMER_N)
 
-#endif
+#endif // PPI_ENABLE
 
 // Adjust STEP_PULSE_LATENCY to get accurate step pulse length when required, e.g if using high step rates.
 // The default value is calibrated for 10 microseconds length.
@@ -683,6 +393,15 @@
 #define STEPPERS_ENABLE_PINMODE PINMODE_OUTPUT
 #endif
 
+#if defined(AUXOUTPUT0_PWM_PORT) || defined(AUXOUTPUT1_PWM_PORT) ||\
+     defined(AUXOUTPUT0_ANALOG_PORT) || defined(AUXOUTPUT1_ANALOG_PORT) ||\
+      defined(AUXINTPUT0_ANALOG_PORT) || defined(AUXINTPUT1_ANALOG_PORT) ||\
+       defined(MCP3221_ENABLE)
+#define AUX_ANALOG 1
+#else
+#define AUX_ANALOG 0
+#endif
+
 typedef struct {
     pin_function_t id;
     pin_cap_t cap;
@@ -699,12 +418,19 @@ typedef struct {
 } input_signal_t;
 
 typedef struct {
+    float value;
+    ioports_pwm_t data;
+    const pwm_signal_t *port;
+} pwm_out_t;
+
+typedef struct {
     pin_function_t id;
     GPIO_TypeDef *port;
     uint8_t pin;
     pin_group_t group;
     pin_mode_t mode;
     const char *description;
+    pwm_out_t *pwm;
 } output_signal_t;
 
 typedef struct {

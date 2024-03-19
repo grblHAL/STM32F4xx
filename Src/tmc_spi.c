@@ -3,25 +3,25 @@
 
   Part of grblHAL
 
-  Copyright (c) 2023 Terje Io
+  Copyright (c) 2023-2024 Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "driver.h"
 
-#if TRINAMIC_SPI_ENABLE && (defined(BOARD_FYSETC_S6) || defined(BOARD_BTT_SKR_PRO_1_1) || defined(BOARD_BTT_SKR_PRO_1_2) || defined(BOARD_MKS_ROBIN_NANO_30))
+#if TRINAMIC_SPI_ENABLE && defined(TRINAMIC_SPI_PORT) // && (defined(BOARD_FYSETC_S6) || defined(BOARD_BTT_SKR_PRO_1_1) || defined(BOARD_BTT_SKR_PRO_1_2) || defined(BOARD_MKS_ROBIN_NANO_30) || defined(BOARD_MORPHO_CNC))
 
 #include "trinamic/common.h"
 
@@ -132,6 +132,25 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
     return status;
 }
 
+TMC_spi20_datagram_t tmc_spi20_write (trinamic_motor_t driver, TMC_spi20_datagram_t *datagram)
+{
+    TMC_spi20_datagram_t status = {0};
+
+    while(__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_BSY)) {};
+
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 0);
+
+    status.data[2] = spi_put_byte(datagram->data[2]);
+    status.data[1] = spi_put_byte(datagram->data[1]);
+    status.data[0] = spi_put_byte(datagram->data[0]);
+
+    DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 1);
+
+    status.value >>= 4;
+
+    return status;
+}
+
 static void add_cs_pin (xbar_t *gpio, void *data)
 {
     if (gpio->group == PinGroup_MotorChipSelect)
@@ -178,9 +197,57 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
 
     UNUSED(motors);
 
-    if (!init_ok) {
+    if(!init_ok) {
 
-#if TRINAMIC_SPI_PORT == 3
+        init_ok = true;
+
+#if TRINAMIC_SPI_PORT == 2
+
+        __HAL_RCC_SPI2_CLK_ENABLE();
+
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = GPIO_PIN_2|GPIO_PIN_3,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF5_SPI2
+        };
+        HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+        GPIO_InitTypeDef GPIO_InitStruct2 = {
+            .Pin = GPIO_PIN_13,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF5_SPI2
+        };
+        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct2);
+
+        static const periph_pin_t sck = {
+            .function = Output_SCK,
+            .group = PinGroup_SPI,
+            .port = GPIOB,
+            .pin = 13,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        static const periph_pin_t sdo = {
+            .function = Output_MOSI,
+            .group = PinGroup_SPI,
+            .port = GPIOC,
+            .pin = 3,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+        static const periph_pin_t sdi = {
+            .function = Input_MISO,
+            .group = PinGroup_SPI,
+            .port = GPIOC,
+            .pin = 2,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+#elif TRINAMIC_SPI_PORT == 3
 
         __HAL_RCC_SPI3_CLK_ENABLE();
 
@@ -266,7 +333,7 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
     }
 }
 
-void board_init (void)
+void tmc_spi_init (void)
 {
     static trinamic_driver_if_t driver_if = {.on_drivers_init = if_init};
 

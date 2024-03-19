@@ -31,7 +31,7 @@
 #include "grbl/protocol.h"
 #include "grbl/settings.h"
 
-#ifdef NEOPIXEL_SPI
+#ifdef NEOPIXEL_GPO
 extern void neopixel_init (void);
 #endif
 
@@ -67,12 +67,12 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
         spi_put_byte(0);
     } while(idx);
 
-    while(--dly);
+    while(--dly) {};
 
     DIGITAL_OUT(cs.port, cs.pin, 1);
 
     dly = 50;
-    while(--dly);
+    while(--dly) {};
 
     DIGITAL_OUT(cs.port, cs.pin, 0);
 
@@ -95,12 +95,12 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
     } while(idx);
 
     dly = 100;
-    while(--dly);
+    while(--dly) {};
 
     DIGITAL_OUT(cs.port, cs.pin, 1);
 
     dly = 50;
-    while(--dly);
+    while(--dly) {};
 
     spi_set_speed(f_spi);
 
@@ -135,12 +135,12 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
         }
     } while(idx);
 
-    while(--dly);
+    while(--dly) {};
 
     DIGITAL_OUT(cs.port, cs.pin, 1);
 
     dly = 50;
-    while(--dly);
+    while(--dly) {};
 
     spi_set_speed(f_spi);
 
@@ -188,7 +188,7 @@ void board_init (void)
 
 #endif
 
-#ifdef NEOPIXEL_SPI
+#ifdef NEOPIXEL_GPO
     neopixel_init();
 #endif
 }

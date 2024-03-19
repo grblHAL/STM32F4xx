@@ -4,21 +4,21 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2023 Terje Io
+  Copyright (c) 2019-2024 Terje Io
   Some parts (C) COPYRIGHT STMicroelectronics - code created by IDE
 
-  Grbl is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
@@ -29,7 +29,7 @@
 static void SystemClock_Config (void);
 static void MX_GPIO_Init (void);
 
-int main(void)
+int main (void)
 {
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
     HAL_Init();
@@ -53,11 +53,36 @@ int main(void)
   * @brief System Clock Configuration
   * @retval None
   */
-static void SystemClock_Config(void)
+static void SystemClock_Config (void)
 {
   __HAL_RCC_PWR_CLK_ENABLE();
 
-#ifdef STM32F446xx
+#ifdef STM32F412Vx
+
+  #ifdef BOARD_LONGBOARD32
+
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+        .PLL.PLLM = 16,
+        .PLL.PLLN = 256,
+        .PLL.PLLP = RCC_PLLP_DIV4,
+        .PLL.PLLQ = 8,
+        .PLL.PLLR = 2
+    };
+
+    #define APB1CLKDIV RCC_HCLK_DIV4
+    #define APB2CLKDIV RCC_HCLK_DIV2
+
+    #define FLASH_LATENCY FLASH_LATENCY_3
+
+  #endif
+
+#elif defined(STM32F446xx)
 
   #if defined(NUCLEO_F446)
 
@@ -110,18 +135,43 @@ static void SystemClock_Config(void)
     #define APB2CLKDIV RCC_HCLK_DIV4
     #define FLASH_LATENCY FLASH_LATENCY_5
 
-  #elif defined(BOARD_FYSETC_S6)
+  #elif BOARD_FLEXI_HAL
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
     RCC_OscInitTypeDef RCC_OscInitStruct = {
         .OscillatorType = RCC_OSCILLATORTYPE_HSE,
         .HSEState = RCC_HSE_ON,
         .PLL.PLLState = RCC_PLL_ON,
         .PLL.PLLSource = RCC_PLLSOURCE_HSE,
-        .PLL.PLLM = 12, // Input clock divider (12MHz crystal) = Base clock 1MHz
-        .PLL.PLLN = 336, // Main clock multiplier
-        .PLL.PLLP = 2, // Main clock divider = Main clock 168MHz
-        .PLL.PLLQ = 7, // Special peripheral (USB) clock divider (relative to main clock multiplier) = USB clock 48MHz
+        .PLL.PLLM = 15,
+        .PLL.PLLN = 216,
+        .PLL.PLLP = RCC_PLLP_DIV2,
+        .PLL.PLLQ = 8,
+        .PLL.PLLR = 2
+    };
+
+    #define APB1CLKDIV RCC_HCLK_DIV4
+    #define APB2CLKDIV RCC_HCLK_DIV2
+    #define FLASH_LATENCY FLASH_LATENCY_5
+
+    if (HAL_PWREx_EnableOverDrive() != HAL_OK) {
+        Error_Handler();
+    }
+
+  #elif defined(BOARD_FYSETC_S6)
+
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    RCC_OscInitTypeDef RCC_OscInitStruct = {
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .HSEState = RCC_HSE_ON,
+        .PLL.PLLState = RCC_PLL_ON,
+        .PLL.PLLSource = RCC_PLLSOURCE_HSE,
+        .PLL.PLLM = 12,
+        .PLL.PLLN = 336,
+        .PLL.PLLP = 2,
+        .PLL.PLLQ = 7,
         .PLL.PLLR = 2
     };
 
@@ -180,7 +230,6 @@ static void SystemClock_Config(void)
 
 #elif defined(STM32F411xE)
 
-  /** Configure the main internal regulator output voltage  */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   #ifdef NUCLEO_F411
@@ -223,7 +272,6 @@ static void SystemClock_Config(void)
 
 #elif defined(STM32F407xx)
 
-    /** Configure the main internal regulator output voltage  */
    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
     RCC_OscInitTypeDef RCC_OscInitStruct = {
@@ -243,7 +291,6 @@ static void SystemClock_Config(void)
 
 #else // STM32F401
 
-    /** Configure the main internal regulator output voltage  */
    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
 
   #ifdef NUCLEO_F401
@@ -317,24 +364,39 @@ static void SystemClock_Config(void)
         Error_Handler();
     }
 
-#if USB_SERIAL_CDC && defined(STM32F446xx)
+#if USB_SERIAL_CDC && (defined(STM32F446xx) || defined(STM32F412Vx))
 
-  #ifdef NUCLEO144_F446
     RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {
-        .PeriphClockSelection = RCC_PERIPHCLK_CLK48,
+  #ifdef NUCLEO144_F446
+         .PeriphClockSelection = RCC_PERIPHCLK_CLK48,
         .PLLSAI.PLLSAIM = 8,
         .PLLSAI.PLLSAIN = 192,
         .PLLSAI.PLLSAIQ = 2,
         .PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4,
         .PLLSAIDivQ = 1,
         .Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLSAIP
-    };
+  #elif defined(BOARD_FLEXI_HAL)
+        .PeriphClockSelection = RCC_PERIPHCLK_CLK48,
+        .PLLSAI.PLLSAIM = 25,
+        .PLLSAI.PLLSAIN = 192,
+        .PLLSAI.PLLSAIQ = 2,
+        .PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV4,
+        .PLLSAIDivQ = 1,
+        .Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLSAIP
+  #elif defined(BOARD_LONGBOARD32)
+        .PeriphClockSelection = RCC_PERIPHCLK_PLLI2S|RCC_PERIPHCLK_CLK48|RCC_PERIPHCLK_SDIO,
+        .PLLI2S.PLLI2SN = 192,
+        .PLLI2S.PLLI2SM = 25,
+        .PLLI2S.PLLI2SR = 2,
+        .PLLI2S.PLLI2SQ = 4,
+        .Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLI2SQ,
+        .SdioClockSelection = RCC_SDIOCLKSOURCE_CLK48,
+        .PLLI2SSelection = RCC_PLLI2SCLKSOURCE_PLLSRC
   #else
-    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {
         .PeriphClockSelection = RCC_PERIPHCLK_CLK48,
         .Clk48ClockSelection = RCC_CLK48CLKSOURCE_PLLQ
-    };
   #endif
+    };
 
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
