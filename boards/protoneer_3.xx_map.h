@@ -94,7 +94,7 @@
 #endif
 
 #define AUXOUTPUT0_PORT         GPIOA // Spindle PWM or spindle direction
-#define AUXOUTPUT1_PIN          2
+#define AUXOUTPUT0_PIN          2
 #define AUXOUTPUT1_PORT         GPIOA // Spindle enable
 #define AUXOUTPUT1_PIN          6
 

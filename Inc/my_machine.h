@@ -40,6 +40,7 @@
 //#define BOARD_LONGBOARD32         // F412 Sienci SLB
 //#define BOARD_STM32F401_UNI       // F401 CNC board
 //#define BOARD_MKS_ROBIN_NANO_30   // F407 based 3D Printer board - untested!
+//#define BOARD_MKS_EAGLE           // F407 based 3D Printer board
 //#define BOARD_MY_MACHINE          // Add my_machine_map.h before enabling this!
 
 // WARNING: BOARD_BTT_SKR_20 may fry your Trinamic drivers due to bad hardware design.

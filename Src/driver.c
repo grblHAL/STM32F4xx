@@ -2538,6 +2538,8 @@ static uint32_t get_free_mem (void)
     return stack_limit - (uint32_t)&_end - mallinfo().uordblks;
 }
 
+#if USB_SERIAL_CDC
+
 static status_code_t enter_dfu (sys_state_t state, char *args)
 {
     extern uint8_t _estack; /* Symbol defined in the linker script */
@@ -2569,6 +2571,8 @@ static void onReportOptions (bool newopt)
     if(!newopt)
         hal.stream.write("[PLUGIN:Bootloader Entry v0.02]" ASCII_EOL);
 }
+
+#endif
 
 // Initialize HAL pointers, setup serial comms and enable EEPROM
 // NOTE: grblHAL is not yet configured (from EEPROM data), driver_setup() will be called when done
