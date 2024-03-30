@@ -2296,7 +2296,7 @@ static bool driver_setup (settings_t *settings)
     uint32_t i;
 
     // Switch on stepper driver power before enabling other output pins
-    for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
+    for(i = 0; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
         if(outputpin[i].group == PinGroup_StepperPower) {
             GPIO_Init.Pin = 1 << outputpin[i].pin;
             GPIO_Init.Mode = outputpin[i].mode.open_drain ? GPIO_MODE_OUTPUT_OD : GPIO_MODE_OUTPUT_PP;
@@ -2307,7 +2307,7 @@ static bool driver_setup (settings_t *settings)
 
     hal.delay_ms(100, NULL);
 
-    for(i = 0 ; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
+    for(i = 0; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
         if(!(outputpin[i].group == PinGroup_StepperPower ||
               outputpin[i].group == PinGroup_AuxOutputAnalog ||
                outputpin[i].id == Output_SpindlePWM ||
@@ -2751,8 +2751,11 @@ bool driver_init (void)
 #if SPINDLE_SYNC_ENABLE
     hal.driver_cap.spindle_sync = On;
 #endif
+#ifdef COOLANT_FLOOD_PIN
+    hal.coolant_cap.flood = On;
+#endif
 #ifdef COOLANT_MIST_PIN
-    hal.driver_cap.mist_control = On;
+    hal.coolant_cap.mist = On;
 #endif
     hal.driver_cap.software_debounce = On;
     hal.driver_cap.step_pulse_delay = On;
@@ -2766,7 +2769,7 @@ bool driver_init (void)
     uint32_t i;
     input_signal_t *input;
 
-    for(i = 0 ; i < sizeof(inputpin) / sizeof(input_signal_t); i++) {
+    for(i = 0; i < sizeof(inputpin) / sizeof(input_signal_t); i++) {
         input = &inputpin[i];
         input->mode.input = input->cap.input = On;
         input->bit = 1 << input->pin;
