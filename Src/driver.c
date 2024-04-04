@@ -618,7 +618,7 @@ static void stepperEnable (axes_signals_t enable)
 // Starts stepper driver ISR timer and forces a stepper driver interrupt callback
 static void stepperWakeUp (void)
 {
-    stepperEnable((axes_signals_t){AXES_BITMASK});
+    hal.stepper.enable((axes_signals_t){AXES_BITMASK});
 
     STEPPER_TIMER->ARR = hal.f_step_timer / 500; // ~2ms delay to allow drivers time to wake up.
     STEPPER_TIMER->EGR = TIM_EGR_UG;
@@ -1117,14 +1117,15 @@ static void limitsEnable (bool on, axes_signals_t homing_cycle)
     uint_fast8_t idx = limit_inputs.n_pins;
     limit_signals_t homing_source = xbar_get_homing_source_from_cycle(homing_cycle);
 
-    do {
-        limit = &limit_inputs.pins.inputs[--idx];
+    while(idx--) {
+        limit = &limit_inputs.pins.inputs[idx];
         if(on && homing_cycle.mask) {
             pin = xbar_fn_to_axismask(limit->id);
             disable = limit->group == PinGroup_Limit ? (pin.mask & homing_source.min.mask) : (pin.mask & homing_source.max.mask);
         }
         gpio_irq_enable(limit, disable ? IRQ_Mode_None : limit->mode.irq_mode);
-    } while(idx);
+        report_message(uitoa(idx), Message_Plain);
+    };
 
 #ifdef Z_LIMIT_POLL
     z_limits_irq_enabled = on && !homing_cycle.z;
@@ -2626,7 +2627,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "240314";
+    hal.driver_version = "240404";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
