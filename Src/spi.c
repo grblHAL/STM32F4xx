@@ -5,18 +5,18 @@
 
   Copyright (c) 2020-2023 Terje Io
 
-  Grbl is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Grbl is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "main.h"
@@ -181,7 +181,7 @@ void spi_init (void)
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOA,
             .pin = 5,
@@ -222,7 +222,7 @@ void spi_init (void)
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOA,
             .pin = 5,
@@ -260,7 +260,7 @@ void spi_init (void)
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOB,
             .pin = 3,
@@ -298,7 +298,7 @@ void spi_init (void)
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOB,
             .pin = 13,
@@ -336,7 +336,7 @@ void spi_init (void)
         HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOC,
             .pin = 10,
