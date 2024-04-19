@@ -26,6 +26,8 @@
 #include "diskio.h"
 #include "spi.h"
 
+#include "grbl/task.h"
+
 #ifndef SDCARD_USE_DMA
 #define SDCARD_USE_DMA 1
 #endif
@@ -145,12 +147,35 @@ void send_initial_clock_train(void)
 }
 
 /*-----------------------------------------------------------------------*/
+/* Device Timer Interrupt Procedure  (Platform dependent)                */
+/*-----------------------------------------------------------------------*/
+/* This function must be called in period of 10ms                        */
+
+static
+void disk_timerproc (void *data)
+{
+    static uint32_t fatfs_ticks = 10;
+
+    if(!(--fatfs_ticks)) {
+
+        BYTE n;
+
+        n = Timer1;                        /* 100Hz decrement timer */
+        if (n) Timer1 = --n;
+        n = Timer2;
+        if (n) Timer2 = --n;
+
+        fatfs_ticks = 10;
+    }
+}
+
+/*-----------------------------------------------------------------------*/
 /* Power Control  (Platform dependent)                                   */
 /*-----------------------------------------------------------------------*/
 /* When the target system does not support socket power control, there   */
 /* is nothing to do in these functions and chk_power always returns 1.   */
 
-//static
+static
 void power_on (void)
 {
     /*
@@ -159,8 +184,10 @@ void power_on (void)
      */
 
     spi_init();
-
-    PowerFlag = 1;
+    if(!PowerFlag) {
+        task_add_systick(disk_timerproc, NULL);
+        PowerFlag = 1;
+    }
 }
 
 // set the SSI speed to the max setting
@@ -173,7 +200,10 @@ void set_max_speed(void)
 static
 void power_off (void)
 {
-    PowerFlag = 0;
+    if(PowerFlag) {
+        task_delete_systick(disk_timerproc, NULL);
+        PowerFlag = 0;
+    }
 }
 
 static
@@ -515,7 +545,7 @@ DRESULT disk_write (
 }
 #endif /* _READONLY */
 
-
+#endif // SDCARD_SDIO
 
 /*-----------------------------------------------------------------------*/
 /* Miscellaneous Functions                                               */
@@ -622,26 +652,6 @@ DRESULT disk_ioctl (
 }
 
 
-
-/*-----------------------------------------------------------------------*/
-/* Device Timer Interrupt Procedure  (Platform dependent)                */
-/*-----------------------------------------------------------------------*/
-/* This function must be called in period of 10ms                        */
-
-void disk_timerproc (void)
-{
-//    BYTE n, s;
-    BYTE n;
-
-
-    n = Timer1;                        /* 100Hz decrement timer */
-    if (n) Timer1 = --n;
-    n = Timer2;
-    if (n) Timer2 = --n;
-
-}
-
-#endif // SDCARD_SDIO
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */

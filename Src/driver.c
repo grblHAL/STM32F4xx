@@ -44,13 +44,9 @@
 #endif
 
 #if SDCARD_ENABLE
-
 #include "sdcard/sdcard.h"
 #include "ff.h"
 #include "diskio.h"
-
-extern void disk_timerproc (void);
-
 #endif
 
 #if USB_SERIAL_CDC
@@ -523,9 +519,9 @@ static probe_state_t probe = {
 };
 #endif // PROBE_PIN
 
-#if I2C_STROBE_BIT || defined(I2C_STROBE_AUX_ENABLE) || SPI_IRQ_BIT
+#if defined(I2C_STROBE_PIN) || SPI_IRQ_BIT
 
-#if I2C_STROBE_BIT || defined(I2C_STROBE_AUX_ENABLE)
+#if defined(I2C_STROBE_PIN)
 static driver_irq_handler_t i2c_strobe = { .type = IRQ_I2C_Strobe };
 #endif
 
@@ -539,7 +535,7 @@ static bool irq_claim (irq_type_t irq, uint_fast8_t id, irq_callback_ptr handler
 
     switch(irq) {
 
-#if I2C_STROBE_BIT || defined(I2C_STROBE_AUX_ENABLE)
+#if defined(I2C_STROBE_PIN)
         case IRQ_I2C_Strobe:
             if((ok = i2c_strobe.callback == NULL))
                 i2c_strobe.callback = handler;
@@ -560,7 +556,7 @@ static bool irq_claim (irq_type_t irq, uint_fast8_t id, irq_callback_ptr handler
     return ok;
 }
 
-#endif // I2C_STROBE_BIT || defined(I2C_STROBE_AUX_ENABLE) || SPI_IRQ_BIT
+#endif // defined(I2C_STROBE_PIN) || SPI_IRQ_BIT
 
 #include "grbl/stepdir_map.h"
 
@@ -1124,7 +1120,6 @@ static void limitsEnable (bool on, axes_signals_t homing_cycle)
             disable = limit->group == PinGroup_Limit ? (pin.mask & homing_source.min.mask) : (pin.mask & homing_source.max.mask);
         }
         gpio_irq_enable(limit, disable ? IRQ_Mode_None : limit->mode.irq_mode);
-        report_message(uitoa(idx), Message_Plain);
     };
 
 #ifdef Z_LIMIT_POLL
@@ -1394,7 +1389,7 @@ static probe_state_t probeGetState (void)
 
 #endif // PROBE_PIN
 
-#if MPG_MODE == 1
+#ifdef MPG_MODE_PIN
 
 static void mpg_select (void *data)
 {
@@ -1407,7 +1402,7 @@ static void mpg_enable (void *data)
         stream_mpg_enable(true);
 }
 
-#endif
+#endif // MPG_MODE_PIN
 
 #if AUX_CONTROLS_ENABLED
 
@@ -2592,9 +2587,9 @@ bool driver_init (void)
     __enable_irq();
 #endif
 
-#if MPG_MODE == 1
+#ifdef MPG_MODE_PIN
 
-    // Drive MPG mode input pin low until setup complete
+ // Drive MPG mode input pin low until setup complete
 
     GPIO_InitTypeDef GPIO_Init = {
         .Speed = GPIO_SPEED_FREQ_HIGH,
@@ -2603,9 +2598,9 @@ bool driver_init (void)
         .Mode = GPIO_MODE_OUTPUT_PP
     };
 
-    HAL_GPIO_Init(MPG_MODE_PORT, &GPIO_Init);
+    DIGITAL_OUT(MPG_MODE_PORT, MPG_MODE_PIN, 0);
 
-    DIGITAL_OUT(MPG_MODE_PORT, MPG_MODE_PIN, 1);
+    HAL_GPIO_Init(MPG_MODE_PORT, &GPIO_Init);
 
 #endif
 
@@ -2627,7 +2622,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "240404";
+    hal.driver_version = "240418";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3348,14 +3343,6 @@ void Driver_IncTick (void)
                     hal.limits.interrupt_callback(limitsGetState());
             }
         }
-    }
-#endif
-
-#if SDCARD_ENABLE && !SDCARD_SDIO
-    static uint32_t fatfs_ticks = 10;
-    if(!(--fatfs_ticks)) {
-        disk_timerproc();
-        fatfs_ticks = 10;
     }
 #endif
 
