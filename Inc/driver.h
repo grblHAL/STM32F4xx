@@ -133,6 +133,8 @@
   #include "boards/blackpill_map.h"
 #elif defined(BOARD_BLACKPILL_ALT2)
   #include "boards/blackpill_alt2_map.h"
+#elif defined(BOARD_DEVTRONIC_CNC_V2)
+  #include "boards/Devtronic_CNC_Controller_V2_map.h"
 #elif defined(BOARD_DEVTRONIC_CNC)
   #include "boards/Devtronic_CNC_Controller_map.h"
 #elif defined(BOARD_BTT_SKR_PRO_1_1)
