@@ -30,6 +30,7 @@
 //#define BOARD_BLACKPILL           // For use with F411 BlackPill, with optional auto square support for one axis
 //#define BOARD_BLACKPILL_ALT2      // For use with F411 BlackPill, with optional auto square support for one axis, I2C and spindle sync
 //#define BOARD_DEVTRONIC_CNC       // For use with Devtronic CNC Controller (F411 BlackPill), with I2C and spindle sync
+//#define BOARD_DEVTRONIC_CNC_V2    // For use with Devtronic CNC Controller V2 (F411 BlackPill), with I2C and spindle sync
 //#define BOARD_MINI_BLACKPILL      // For use with F411 BlackPill, https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL
 //#define BOARD_BTT_SKR_PRO_1_1     // F407 based 3D Printer board
 //#define BOARD_BTT_SKR_PRO_1_2     // F407 based 3D Printer board
