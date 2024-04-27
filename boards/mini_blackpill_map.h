@@ -78,6 +78,11 @@
 #define M3_STEP_PIN             6
 #define M3_DIRECTION_PORT       GPIOA
 #define M3_DIRECTION_PIN        7
+#else
+#define AUXOUTPUT1_PORT         GPIOA
+#define AUXOUTPUT1_PIN          6
+#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PIN          7
 #endif
 
 // Define homing/hard limit switch input pins.
@@ -87,24 +92,24 @@
 #define Z_LIMIT_PIN             14
 #define LIMIT_INMODE            GPIO_SHIFT12
 
-#define AUXOUTPUT0_PORT         GPIOA // Spindle PWM
-#define AUXOUTPUT0_PIN          8
-#define AUXOUTPUT1_PORT         GPIOB // Spindle direction
-#define AUXOUTPUT1_PIN          2
-#define AUXOUTPUT2_PORT         GPIOB // Spindle enable
-#define AUXOUTPUT2_PIN          1
+#define AUXOUTPUT2_PORT         GPIOA // Spindle PWM
+#define AUXOUTPUT2_PIN          8
+#define AUXOUTPUT3_PORT         GPIOB // Spindle direction
+#define AUXOUTPUT3_PIN          2
+#define AUXOUTPUT4_PORT         GPIOB // Spindle enable
+#define AUXOUTPUT4_PIN          1
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE
-#define SPINDLE_ENABLE_PORT     AUXOUTPUT2_PORT
-#define SPINDLE_ENABLE_PIN      AUXOUTPUT2_PIN
+#define SPINDLE_ENABLE_PORT     AUXOUTPUT4_PORT
+#define SPINDLE_ENABLE_PIN      AUXOUTPUT4_PIN
 #if DRIVER_SPINDLE_PWM_ENABLE
-#define SPINDLE_PWM_PORT        AUXOUTPUT0_PORT
-#define SPINDLE_PWM_PIN         AUXOUTPUT0_PIN
+#define SPINDLE_PWM_PORT        AUXOUTPUT2_PORT
+#define SPINDLE_PWM_PIN         AUXOUTPUT2_PIN
 #endif
 #if DRIVER_SPINDLE_DIR_ENABLE
-#define SPINDLE_DIRECTION_PORT  AUXOUTPUT1_PORT
-#define SPINDLE_DIRECTION_PIN   AUXOUTPUT1_PIN
+#define SPINDLE_DIRECTION_PORT  AUXOUTPUT3_PORT
+#define SPINDLE_DIRECTION_PIN   AUXOUTPUT3_PIN
 #endif
 #endif //DRIVER_SPINDLE_ENABLE
 
@@ -120,13 +125,6 @@
 #define FEED_HOLD_PIN           7
 #define CYCLE_START_PIN         8
 #define CONTROL_INMODE          GPIO_SHIFT6
-
-#if N_ABC_MOTORS == 0
-#define AUXOUTPUT1_PORT         GPIOA
-#define AUXOUTPUT1_PIN          6
-#define AUXOUTPUT0_PORT         GPIOA
-#define AUXOUTPUT0_PIN          7
-#endif
 
 #define AUXINPUT0_PORT          GPIOB
 #define AUXINPUT0_PIN           9
