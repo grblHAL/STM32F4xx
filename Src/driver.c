@@ -1119,6 +1119,9 @@ static void limitsEnable (bool on, axes_signals_t homing_cycle)
             pin = xbar_fn_to_axismask(limit->id);
             disable = limit->group == PinGroup_Limit ? (pin.mask & homing_source.min.mask) : (pin.mask & homing_source.max.mask);
         }
+#ifdef Z_LIMIT_POLL
+        if(limit->id != Input_LimitZ)
+#endif
         gpio_irq_enable(limit, disable ? IRQ_Mode_None : limit->mode.irq_mode);
     };
 
@@ -1878,6 +1881,9 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                 case Input_LimitZ_2:
                 case Input_LimitZ_Max:
                     input->mode.pull_mode = settings->limits.disable_pullup.z ? PullMode_None : PullMode_Up;
+#ifdef Z_LIMIT_POLL
+                    if(input->id != Input_LimitZ)
+#endif
                     input->mode.irq_mode = limit_fei.z ? IRQ_Mode_Falling : IRQ_Mode_Rising;
                     break;
 
@@ -2622,7 +2628,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "240418";
+    hal.driver_version = "240428";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

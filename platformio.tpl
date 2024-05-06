@@ -21,6 +21,8 @@ build_flags =
   -D _USE_IOCTL=1
   -D _USE_WRITE=1
   -D _VOLUMES=1
+  -Wl,-u,_printf_float
+  -Wl,-u,_scanf_float
 lib_deps =
   boards
   bluetooth
@@ -51,8 +53,6 @@ lib_extra_dirs =
 
 [eth_networking]
 build_flags =
-  # Floating point support for printf, required for WebUI v3
-  -Wl,-u,_printf_float
   -I lwip/src/include
   -I networking/wiznet
 lib_deps =

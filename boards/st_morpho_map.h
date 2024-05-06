@@ -211,8 +211,8 @@
 #define AUXINPUT6_PORT          GPIOC
 #define AUXINPUT6_PIN           8
 #elif N_ABC_MOTORS == 0
-#define AUXINPUT6_PORT          GPIOC
-#define AUXINPUT6_PIN           11
+#define AUXINPUT6_PORT          GPIOB
+#define AUXINPUT6_PIN           6
 #endif
 
 #if PROBE_ENABLE

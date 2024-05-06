@@ -43,7 +43,7 @@ MEMORY
 
 _FLASH_VectorTable = ORIGIN(FLASH);
 _EEPROM_Emul_Start = ORIGIN(EEPROM_EMUL);
-_EEPROM_Emul_Sector = 11;
+_EEPROM_Emul_Sector = 7;
 
 /* Sections */
 SECTIONS
