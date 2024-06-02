@@ -119,7 +119,7 @@ wizchip_init_err_t wizchip_initialize (void)
 
     reg_wizchip_cris_cbfunc(wizchip_critical_section_lock, wizchip_critical_section_unlock);
     reg_wizchip_cs_cbfunc(wizchip_select, wizchip_deselect);
-    reg_wizchip_spi_cbfunc(spi_get_byte, spi_put_byte);
+    reg_wizchip_spi_cbfunc(spi_get_byte, (void (*)(uint8_t))spi_put_byte);
 #ifndef USE_SPI_DMA
     reg_wizchip_spiburst_cbfunc(spi_read, spi_write);
 #endif
