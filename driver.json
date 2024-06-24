@@ -27,6 +27,7 @@
     "mpg_mode": 1,
     "sdcard": 1,
     "wiznet": 1,
+    "mcp3221_adc": 1,
     "pio_board": "genericSTM32F407VGT6",
     "ldscript": "STM32F407VGTX_FLASH.ld",
     "plugins": [

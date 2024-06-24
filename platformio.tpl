@@ -51,7 +51,7 @@ lib_extra_dirs =
   Middlewares/ST/STM32_USB_Device_Library
   USB_DEVICE
 
-[eth_networking]
+[wiznet_networking]
 build_flags =
   -I lwip/src/include
   -I networking/wiznet

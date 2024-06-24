@@ -171,7 +171,7 @@ void ioports_event (input_signal_t *input)
     if(input) {
         event_bits |= input->bit;
         if(input->interrupt_callback)
-            input->interrupt_callback(input->user_port, DIGITAL_IN(input->port, input->bit));
+            input->interrupt_callback(input->user_port, DIGITAL_IN(input->port, input->pin));
     }
 }
 
