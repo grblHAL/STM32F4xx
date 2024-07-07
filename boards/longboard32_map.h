@@ -323,3 +323,7 @@
 #define SD_CS_PORT              GPIOB
 #define SD_CS_PIN               15
 #endif
+
+#define CAN_PORT                GPIOD
+#define CAN_RX_PIN              0
+#define CAN_TX_PIN              1
