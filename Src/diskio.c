@@ -545,8 +545,6 @@ DRESULT disk_write (
 }
 #endif /* _READONLY */
 
-#endif // SDCARD_SDIO
-
 /*-----------------------------------------------------------------------*/
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
@@ -651,7 +649,7 @@ DRESULT disk_ioctl (
     return res;
 }
 
-
+#endif // !SDCARD_SDIO
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */
