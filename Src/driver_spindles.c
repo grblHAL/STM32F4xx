@@ -205,10 +205,6 @@ static bool spindleConfig (spindle_ptrs_t *spindle)
             spindle->pulse_on = NULL;
             spindle->set_state = spindleSetState;
         }
-
-#if SPINDLE_ENCODER_ENABLE
-        spindle->cap.at_speed = spindle->get_data == hal.spindle_data.get; // TODO: remove, set by core code?
-#endif
     } else // PWM output not available
         spindle->set_state = spindleSetState;
 
@@ -360,17 +356,6 @@ static void spindle1SetStateVariable (spindle_ptrs_t *spindle, spindle_state_t s
     spindle1SetSpeed(spindle, state.on || (state.ccw && spindle->context.pwm->flags.cloned)
                               ? spindle->context.pwm->compute_value(spindle->context.pwm, rpm, false)
                               : spindle->context.pwm->off_value);
-
-#if SPINDLE_ENCODER_ENABLE
-    if(spindle->context.pwm->settings->at_speed_tolerance > 0.0f) {
-        float tolerance = rpm * spindle->context.pwm->settings->at_speed_tolerance / 100.0f;
-        spindle_data.rpm_low_limit = rpm - tolerance;
-        spindle_data.rpm_high_limit = rpm + tolerance;
-    }
-    spindle_data.state_programmed.on = state.on;
-    spindle_data.state_programmed.ccw = state.ccw;
-    spindle_data.rpm_programmed = spindle_data.rpm = rpm;
-#endif
 }
 
 static bool spindle1Config (spindle_ptrs_t *spindle)
@@ -409,10 +394,6 @@ static bool spindle1Config (spindle_ptrs_t *spindle)
             spindle->pulse_on = NULL;
             spindle->set_state = spindle1SetState;
         }
-
-#if SPINDLE_ENCODER_ENABLE
-        spindle->cap.at_speed = spindle->get_data == spindleGetData;
-#endif
     } else // PWM output not available
         spindle->set_state = spindle1SetState;
 

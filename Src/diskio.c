@@ -649,7 +649,7 @@ DRESULT disk_ioctl (
     return res;
 }
 
-#endif // !SDCARD_SDIO
+#endif // SDCARD_SDIO
 
 /*---------------------------------------------------------*/
 /* User Provided Timer Function for FatFs module           */

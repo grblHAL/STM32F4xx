@@ -1526,7 +1526,7 @@ static spindle_data_t *spindleGetData (spindle_data_request_t request)
         case SpindleData_AtSpeed:
             if(!stopped)
                 spindle_data.rpm = spindle_encoder.rpm_factor / (float)pulse_length;
-            spindle_data.state_programmed.at_speed = settings.spindle.at_speed_tolerance <= 0.0f || (spindle_data.rpm >= spindle_data.rpm_low_limit && spindle_data.rpm <= spindle_data.rpm_high_limit);
+            spindle_data.state_programmed.at_speed = !spindle_data.at_speed_enabled || (spindle_data.rpm >= spindle_data.rpm_low_limit && spindle_data.rpm <= spindle_data.rpm_high_limit);
             spindle_data.state_programmed.encoder_error = spindle_encoder.error_count > 0;
             break;
 
@@ -1584,14 +1584,9 @@ static void onSpindleProgrammed (spindle_ptrs_t *spindle, spindle_state_t state,
         on_spindle_programmed(spindle, state, rpm, mode);
 
     if(spindle->get_data == spindleGetData) {
-        if(spindle->context.pwm->settings->at_speed_tolerance > 0.0f) {
-            float tolerance = rpm * spindle->context.pwm->settings->at_speed_tolerance / 100.0f;
-            spindle_data.rpm_low_limit = rpm - tolerance;
-            spindle_data.rpm_high_limit = rpm + tolerance;
-        }
+        spindle_set_at_speed_range(spindle, &spindle_data, rpm);
         spindle_data.state_programmed.on = state.on;
         spindle_data.state_programmed.ccw = state.ccw;
-        spindle_data.rpm_programmed = spindle_data.rpm = rpm;
     }
 }
 
@@ -1740,6 +1735,13 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 
 #if SPINDLE_ENCODER_ENABLE
 
+        static const spindle_data_ptrs_t encoder_data = {
+            .get = spindleGetData,
+            .reset = spindleDataReset
+        };
+
+        static bool event_claimed = false;
+
         spindle_tracker.min_cycles_per_tick = hal.f_step_timer / (uint32_t)(settings->axis[Z_AXIS].max_rate * settings->axis[Z_AXIS].steps_per_mm / 60.0f);
 
         if((hal.spindle_data.get = settings->spindle.ppr > 0 ? spindleGetData : NULL) &&
@@ -1747,12 +1749,17 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 
             spindle_ptrs_t *spindle;
 
-            changed.spindle = true;
             hal.spindle_data.reset = spindleDataReset;
             if((spindle = spindle_get(0)))
                 spindle->set_state(spindle, (spindle_state_t){0}, 0.0f);
 
             pidf_init(&spindle_tracker.pid, &settings->position.pid);
+
+            if(!event_claimed) {
+                event_claimed = true;
+                on_spindle_programmed = grbl.on_spindle_programmed;
+                grbl.on_spindle_programmed = onSpindleProgrammed;
+            }
 
             spindle_encoder.ppr = settings->spindle.ppr;
             spindle_encoder.tics_per_irq = max(1, spindle_encoder.ppr / 32);
@@ -1761,11 +1768,12 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
             spindle_encoder.rpm_factor = (60.0f * 1000000.0f / RPM_TIMER_RESOLUTION) / (float)spindle_encoder.ppr;
             spindleDataReset();
 
-            if(on_spindle_programmed == NULL) {
-                on_spindle_programmed = grbl.on_spindle_programmed;
-                grbl.on_spindle_programmed = onSpindleProgrammed;
-            }
+        } else {
+            spindle_encoder.ppr = 0;
+            hal.spindle_data.reset = NULL;
         }
+
+        spindle_bind_encoder(spindle_encoder.ppr ? &encoder_data : NULL);
 
 #endif // SPINDLE_ENCODER_ENABLE
 
@@ -1777,10 +1785,10 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                 pulse_delay = 2;
             else if(pulse_delay == pulse_length)
                 pulse_delay++;
-            hal.stepper.pulse_start = &stepperPulseStartDelayed;
+            hal.stepper.pulse_start = stepperPulseStartDelayed;
         } else {
             pulse_delay = 0;
-            hal.stepper.pulse_start = &stepperPulseStart;
+            hal.stepper.pulse_start = stepperPulseStart;
         }
 
         PULSE_TIMER->ARR = pulse_length;
@@ -2682,7 +2690,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "240624";
+    hal.driver_version = "240812";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

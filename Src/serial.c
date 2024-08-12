@@ -125,9 +125,15 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 #define UART0_PORT GPIOD
 #define UART0_AF GPIO_AF7_USART3
 #elif SERIAL_PORT == 33
-#define UART0_TX_PIN 10
+#define UART0_TX_PIN 8
 #define UART0_RX_PIN 5
 #define UART0_PORT GPIOC
+#define UART0_AF GPIO_AF7_USART3
+#elif SERIAL_PORT == 34
+#define UART0_TX_PIN 8
+#define UART0_RX_PIN 5
+#define UART0_TX_PORT GPIOD
+#define UART0_RX_PORT GPIOC
 #define UART0_AF GPIO_AF7_USART3
 #elif SERIAL_PORT == 6
 #define UART0_TX_PIN 6
@@ -136,6 +142,11 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 #define UART0_AF GPIO_AF8_USART6
 #else
 #error Code has to be added to support serial port
+#endif
+
+#ifdef UART0_PORT
+#define UART0_TX_PORT UART0_PORT
+#define UART0_RX_PORT UART0_PORT
 #endif
 
 #endif // SERIAL_PORT
@@ -213,6 +224,12 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 #define UART1_RX_PIN 5
 #define UART1_PORT GPIOC
 #define UART1_AF GPIO_AF7_USART3
+#elif SERIAL_PORT == 34
+#define UART1_TX_PIN 8
+#define UART1_RX_PIN 5
+#define UART1_TX_PORT GPIOD
+#define UART1_RX_PORT GPIOC
+#define UART1_AF GPIO_AF7_USART3
 #elif SERIAL1_PORT == 6
 #define UART1_TX_PIN 6
 #define UART1_RX_PIN 7
@@ -220,6 +237,11 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 #define UART1_AF GPIO_AF8_USART6
 #else
 #error Code has to be added to support serial port 1
+#endif
+
+#ifdef UART1_PORT
+#define UART1_TX_PORT UART1_PORT
+#define UART1_RX_PORT UART1_PORT
 #endif
 
 #endif // SERIAL1_PORT
@@ -297,6 +319,12 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 #define UART2_RX_PIN 5
 #define UART2_PORT GPIOC
 #define UART2_AF GPIO_AF7_USART3
+#elif SERIAL_PORT == 34
+#define UART2_TX_PIN 8
+#define UART2_RX_PIN 5
+#define UART2_TX_PORT GPIOD
+#define UART2_RX_PORT GPIOC
+#define UART2_AF GPIO_AF7_USART3
 #elif SERIAL2_PORT == 6
 #define UART2_TX_PIN 6
 #define UART2_RX_PIN 7
@@ -304,6 +332,11 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 #define UART2_AF GPIO_AF8_USART6
 #else
 #error Code has to be added to support serial port 2
+#endif
+
+#ifdef UART2_PORT
+#define UART2_TX_PORT UART2_PORT
+#define UART2_RX_PORT UART2_PORT
 #endif
 
 #endif // SERIAL2_PORT
@@ -356,7 +389,7 @@ void serialRegisterStreams (void)
     static const periph_pin_t tx0 = {
         .function = Output_TX,
         .group = PinGroup_UART1,
-        .port  = UART0_PORT,
+        .port  = UART0_TX_PORT,
         .pin   = UART0_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT },
         .description = "UART1"
@@ -365,7 +398,7 @@ void serialRegisterStreams (void)
     static const periph_pin_t rx0 = {
         .function = Input_RX,
         .group = PinGroup_UART1,
-        .port = UART0_PORT,
+        .port = UART0_RX_PORT,
         .pin = UART0_RX_PIN,
         .mode = { .mask = PINMODE_NONE },
         .description = "UART1"
@@ -381,7 +414,7 @@ void serialRegisterStreams (void)
     static const periph_pin_t tx1 = {
         .function = Output_TX,
         .group = PinGroup_UART2,
-        .port  = UART1_PORT,
+        .port  = UART1_TX_PORT,
         .pin   = UART1_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT },
         .description = "UART2"
@@ -390,7 +423,7 @@ void serialRegisterStreams (void)
     static const periph_pin_t rx1 = {
         .function = Input_RX,
         .group = PinGroup_UART2,
-        .port = UART1_PORT,
+        .port = UART1_RX_PORT,
         .pin = UART1_RX_PIN,
         .mode = { .mask = PINMODE_NONE },
         .description = "UART2"
@@ -406,7 +439,7 @@ void serialRegisterStreams (void)
     static const periph_pin_t tx2 = {
         .function = Output_TX,
         .group = PinGroup_UART3,
-        .port  = UART2_PORT,
+        .port  = UART2_TX_PORT,
         .pin   = UART2_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT },
         .description = "UART3"
@@ -415,7 +448,7 @@ void serialRegisterStreams (void)
     static const periph_pin_t rx2 = {
         .function = Input_RX,
         .group = PinGroup_UART3,
-        .port = UART2_PORT,
+        .port = UART2_RX_PORT,
         .pin = UART2_RX_PIN,
         .mode = { .mask = PINMODE_NONE },
         .description = "UART3"
@@ -631,6 +664,8 @@ static const io_stream_t *serialInit (uint32_t baud_rate)
 
     UART0_CLK_En();
 
+#ifdef UART0_PORT
+
     GPIO_InitTypeDef GPIO_InitStructure = {
         .Mode      = GPIO_MODE_AF_PP,
         .Pull      = GPIO_NOPULL,
@@ -639,6 +674,22 @@ static const io_stream_t *serialInit (uint32_t baud_rate)
         .Alternate = UART0_AF
     };
     HAL_GPIO_Init(UART0_PORT, &GPIO_InitStructure);
+
+#else
+
+    GPIO_InitTypeDef GPIO_InitStructure = {
+        .Mode      = GPIO_MODE_AF_PP,
+        .Pull      = GPIO_NOPULL,
+        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Pin       = (1 << UART0_TX_PIN),
+        .Alternate = UART0_AF
+    };
+    HAL_GPIO_Init(UART0_TX_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.Pin = (1 << UART0_RX_PIN),
+    HAL_GPIO_Init(UART0_RX_PORT, &GPIO_InitStructure);
+
+#endif
 
     serialSetBaudRate(baud_rate);
 
@@ -858,6 +909,8 @@ static const io_stream_t *serial1Init (uint32_t baud_rate)
 
     UART1_CLK_En();
 
+#ifdef UART1_PORT
+
     GPIO_InitTypeDef GPIO_InitStructure = {
         .Mode      = GPIO_MODE_AF_PP,
         .Pull      = GPIO_NOPULL,
@@ -866,6 +919,22 @@ static const io_stream_t *serial1Init (uint32_t baud_rate)
         .Alternate = UART1_AF
     };
     HAL_GPIO_Init(UART1_PORT, &GPIO_InitStructure);
+
+#else
+
+    GPIO_InitTypeDef GPIO_InitStructure = {
+        .Mode      = GPIO_MODE_AF_PP,
+        .Pull      = GPIO_NOPULL,
+        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Pin       = (1 << UART1_TX_PIN),
+        .Alternate = UART1_AF
+    };
+    HAL_GPIO_Init(UART1_TX_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.Pin = (1 << UART1_RX_PIN),
+    HAL_GPIO_Init(UART1_RX_PORT, &GPIO_InitStructure);
+
+#endif
 
     serial1SetBaudRate(baud_rate);
 
@@ -1086,6 +1155,8 @@ static const io_stream_t *serial2Init (uint32_t baud_rate)
 
     UART2_CLK_En();
 
+#ifdef UART2_PORT
+
     GPIO_InitTypeDef GPIO_InitStructure = {
         .Mode      = GPIO_MODE_AF_PP,
         .Pull      = GPIO_NOPULL,
@@ -1094,6 +1165,22 @@ static const io_stream_t *serial2Init (uint32_t baud_rate)
         .Alternate = UART2_AF
     };
     HAL_GPIO_Init(UART2_PORT, &GPIO_InitStructure);
+
+#else
+
+    GPIO_InitTypeDef GPIO_InitStructure = {
+        .Mode      = GPIO_MODE_AF_PP,
+        .Pull      = GPIO_NOPULL,
+        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+        .Pin       = (21 << UART2_TX_PIN),
+        .Alternate = UART2_AF
+    };
+    HAL_GPIO_Init(UART2_TX_PORT, &GPIO_InitStructure);
+
+    GPIO_InitStructure.Pin = (1 << UART2_RX_PIN),
+    HAL_GPIO_Init(UART2_RX_PORT, &GPIO_InitStructure);
+
+#endif
 
     serial2SetBaudRate(baud_rate);
 
