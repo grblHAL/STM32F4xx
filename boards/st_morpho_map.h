@@ -211,8 +211,8 @@
 #define AUXINPUT6_PORT          GPIOC
 #define AUXINPUT6_PIN           8
 #elif N_ABC_MOTORS == 0
-#define AUXINPUT6_PORT          GPIOB
-#define AUXINPUT6_PIN           6
+#define AUXINPUT6_PORT          GPIOC
+#define AUXINPUT6_PIN           11
 #endif
 
 #if PROBE_ENABLE
@@ -240,7 +240,7 @@
 #define I2C_STROBE_PIN          AUXINPUT3_PIN
 #endif
 
-#if MPG_MODE == 1
+#if MPG_ENABLE == 1
 #define MPG_AUX_ENABLE
 #define MPG_MODE_PORT           AUXINPUT6_PORT
 #define MPG_MODE_PIN            AUXINPUT6_PIN

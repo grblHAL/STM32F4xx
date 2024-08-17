@@ -50,7 +50,7 @@
 #define MODBUS_RTU_STREAM       1
 #endif
 
-#if MPG_MODE == 1
+#if MPG_ENABLE == 1
 #define MPG_MODE_PORT           GPIOA
 #define MPG_MODE_PIN            15
 #endif

@@ -57,10 +57,6 @@
 #include "eeprom/eeprom.h"
 #endif
 
-#if KEYPAD_ENABLE == 2
-#include "keypad/keypad.h"
-#endif
-
 #if QEI_ENABLE
 #include "encoder/encoder.h"
 #endif
@@ -2690,7 +2686,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "240812";
+    hal.driver_version = "240817";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2930,22 +2926,6 @@ bool driver_init (void)
     board_init();
 #endif
 
-#if MPG_MODE == 1
-  #if KEYPAD_ENABLE == 2
-    if((hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, keypad_enqueue_keycode)))
-        protocol_enqueue_foreground_task(mpg_enable, NULL);
-  #else
-    if((hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, NULL)))
-        protocol_enqueue_foreground_task(mpg_enable, NULL);
-  #endif
-#elif MPG_MODE == 2
-    hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, keypad_enqueue_keycode);
-#elif MPG_MODE == 3
-    hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, stream_mpg_check_enable);
-#elif KEYPAD_ENABLE == 2
-    stream_open_instance(KEYPAD_STREAM, 115200, keypad_enqueue_keycode, "Keypad");
-#endif
-
 #if ETHERNET_ENABLE
     enet_init();
 #endif
@@ -2955,6 +2935,16 @@ bool driver_init (void)
 #endif
 
 #include "grbl/plugins_init.h"
+
+#if MPG_ENABLE == 1
+    if(!hal.driver_cap.mpg_mode)
+        hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, NULL);
+    if(hal.driver_cap.mpg_mode)
+        protocol_enqueue_foreground_task(mpg_enable, NULL);
+#elif MPG_ENABLE == 2
+    if(!hal.driver_cap.mpg_mode)
+        hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, stream_mpg_check_enable);
+#endif
 
     // No need to move version check before init.
     // Compiler will fail any signature mismatch for existing entries.
@@ -2966,7 +2956,7 @@ bool driver_init (void)
 // Main stepper driver
 void STEPPER_TIMER_IRQHandler (void)
 {
-    if((STEPPER_TIMER->SR & TIM_SR_UIF) != 0) {    // check interrupt source
+    if((STEPPER_TIMER->SR & TIM_SR_UIF) != 0) {     // check interrupt source
         STEPPER_TIMER->SR = ~TIM_SR_UIF;            // clear UIF flag
         hal.stepper.interrupt_callback();
     }

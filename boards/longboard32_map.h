@@ -54,7 +54,7 @@
 #define MODBUS_ENABLE           (MODBUS_RTU_ENABLED|MODBUS_RTU_DIR_ENABLED)
 #endif
 
-#if MPG_MODE == 1 && !ETHERNET_ENABLE
+#if MPG_ENABLE == 1 && !ETHERNET_ENABLE
 #define MPG_MODE_PORT           GPIOA
 #define MPG_MODE_PIN            4
 #endif

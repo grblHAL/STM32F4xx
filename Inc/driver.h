@@ -167,6 +167,8 @@
   #include "boards/longboard32_map.h"
 #elif defined(BOARD_MKS_EAGLE)
   #include "boards/mks_eagle_map.h"
+#elif defined(BOARD_BTT_OCTOPUS_PRO)
+  #include "boards/btt_octopus_pro_map.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "boards/my_machine_map.h"
 #else // default board
@@ -349,7 +351,7 @@
 #undef MPG_TEST
 #undef TRINAMIC_TEST
 
-#if MPG_MODE == 1 && !defined(MPG_MODE_PIN)
+#if MPG_ENABLE == 1 && !defined(MPG_MODE_PIN)
 #error "MPG_MODE_PIN must be defined!"
 #endif
 
