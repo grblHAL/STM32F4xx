@@ -185,8 +185,8 @@
 #define AUXOUTPUT11_PIN         1
 
 #if DRIVER_SPINDLE_ENABLE
-#define SPINDLE_ENABLE_PORT     AUXOUTPUT9_PORT
-#define SPINDLE_ENABLE_PIN      AUXOUTPUT9_PIN
+#define SPINDLE_ENABLE_PORT     AUXOUTPUT2_PORT
+#define SPINDLE_ENABLE_PIN      AUXOUTPUT2_PIN
 #endif
 #if DRIVER_SPINDLE_PWM_ENABLE
 #define SPINDLE_PWM_PORT        AUXOUTPUT10_PORT
@@ -218,8 +218,10 @@
 #define NEOPIXEL_GPO
 #define LED_PORT                GPIOC // rail LED strip
 #define LED_PIN                 9
-//#define LED1_PORT               GPIOA // ring LED strip
-//#define LED1_PIN                12
+#ifdef DEBUG
+#define LED1_PORT               GPIOA // ring LED strip, when enabled SWD debugging is blocked (use $DFU to reenable)
+#define LED1_PIN                13
+#endif
 
 #define AUXINTPUT0_ANALOG_PORT  GPIOA
 #define AUXINTPUT0_ANALOG_PIN   0

@@ -45,59 +45,8 @@ static neopixel_cfg_t neopixel = { .intensity = 255 };
 static neopixel_cfg_t neopixel1 = { .intensity = 255 };
 #endif
 
-static void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
-{
-    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip0_length) {
 
-        if(settings->rgb_strip0_length == 0)
-            settings->rgb_strip0_length = hal.rgb0.num_devices;
-        else
-            hal.rgb0.num_devices = settings->rgb_strip0_length;
-
-        if(neopixel.leds) {
-            free(neopixel.leds);
-            neopixel.leds = NULL;
-        }
-
-        if(hal.rgb0.num_devices) {
-            neopixel.num_bytes = hal.rgb0.num_devices * 3;
-            if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
-                hal.rgb0.num_devices = 0;
-        }
-
-        neopixel.num_leds = hal.rgb0.num_devices;
-    }
-
-#ifdef LED1_PIN
-
-    if(neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip1_length) {
-
-        if(settings->rgb_strip1_length == 0)
-            settings->rgb_strip1_length = hal.rgb1.num_devices;
-        else
-            hal.rgb1.num_devices = settings->rgb_strip1_length;
-
-        if(neopixel1.leds) {
-            free(neopixel1.leds);
-            neopixel1.leds = NULL;
-        }
-
-        if(hal.rgb1.num_devices) {
-            neopixel1.num_bytes = hal.rgb1.num_devices * 3;
-            if((neopixel1.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
-                hal.rgb1.num_devices = 0;
-        }
-
-        neopixel1.num_leds = hal.rgb1.num_devices;
-    }
-
-#endif
-
-    if(settings_changed)
-        settings_changed(settings, changed);
-}
-
-static inline void neopixels_write (void)
+static inline void _write (void)
 {
     volatile uint32_t t;
     uint32_t i = neopixel.num_bytes;
@@ -134,6 +83,12 @@ static inline void neopixels_write (void)
     __enable_irq();
 }
 
+void neopixels_write (void)
+{
+    if(neopixel.num_leds > 1)
+        _write();
+}
+
 static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
 {
     if(neopixel.num_leds && device < neopixel.num_leds) {
@@ -141,7 +96,7 @@ static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_m
         rgb_1bpp_pack(&neopixel.leds[device * 3], color, mask, neopixel.intensity);
 
         if(neopixel.num_leds == 1)
-            neopixels_write();
+            _write();
     }
 }
 
@@ -168,7 +123,7 @@ static uint8_t neopixels_set_intensity (uint8_t intensity)
             } while(device);
 
             if(neopixel.num_leds != 1)
-                neopixels_write();
+                _write();
         }
     }
 
@@ -177,7 +132,7 @@ static uint8_t neopixels_set_intensity (uint8_t intensity)
 
 #ifdef LED1_PIN
 
-static void neopixels1_write (void)
+static void _write1 (void)
 {
     volatile uint32_t t;
     uint32_t i = neopixel1.num_bytes;
@@ -214,6 +169,13 @@ static void neopixels1_write (void)
     __enable_irq();
 }
 
+
+void neopixels1_write (void)
+{
+    if(neopixel1.num_leds > 1)
+        _write1();
+}
+
 static void neopixel1_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
 {
     if(neopixel1.num_leds && device < neopixel1.num_leds) {
@@ -221,7 +183,7 @@ static void neopixel1_out_masked (uint16_t device, rgb_color_t color, rgb_color_
         rgb_1bpp_pack(&neopixel1.leds[device * 3], color, mask, neopixel1.intensity);
 
         if(neopixel1.num_leds == 1)
-            neopixels1_write();
+            _write1();
     }
 }
 
@@ -248,7 +210,7 @@ static uint8_t neopixels1_set_intensity (uint8_t intensity)
             } while(device);
 
             if(neopixel1.num_leds != 1)
-                neopixels1_write();
+                _write1();
         }
     }
 
@@ -256,6 +218,60 @@ static uint8_t neopixels1_set_intensity (uint8_t intensity)
 }
 
 #endif  // LED1_PIN
+
+static void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
+{
+    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip0_length) {
+
+        if(settings->rgb_strip0_length == 0)
+            settings->rgb_strip0_length = hal.rgb0.num_devices;
+        else
+            hal.rgb0.num_devices = settings->rgb_strip0_length;
+
+        if(neopixel.leds) {
+            free(neopixel.leds);
+            neopixel.leds = NULL;
+        }
+
+        if(hal.rgb0.num_devices) {
+            neopixel.num_bytes = hal.rgb0.num_devices * 3;
+            if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
+                hal.rgb0.num_devices = 0;
+        }
+
+        neopixel.num_leds = hal.rgb0.num_devices;
+        hal.rgb0.write = neopixel.num_leds > 1 ? neopixels_write : NULL;
+    }
+
+#ifdef LED1_PIN
+
+    if(neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip1_length) {
+
+        if(settings->rgb_strip1_length == 0)
+            settings->rgb_strip1_length = hal.rgb1.num_devices;
+        else
+            hal.rgb1.num_devices = settings->rgb_strip1_length;
+
+        if(neopixel1.leds) {
+            free(neopixel1.leds);
+            neopixel1.leds = NULL;
+        }
+
+        if(hal.rgb1.num_devices) {
+            neopixel1.num_bytes = hal.rgb1.num_devices * 3;
+            if((neopixel1.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
+                hal.rgb1.num_devices = 0;
+        }
+
+        neopixel1.num_leds = hal.rgb1.num_devices;
+        hal.rgb1.write = neopixel1.num_leds > 1 ? neopixels1_write : NULL;
+    }
+
+#endif
+
+    if(settings_changed)
+        settings_changed(settings, changed);
+}
 
 void neopixel_init (void)
 {
@@ -268,8 +284,6 @@ void neopixel_init (void)
         hal.rgb0.out = neopixel_out;
         hal.rgb0.out_masked = neopixel_out_masked;
         hal.rgb0.set_intensity = neopixels_set_intensity;
-        hal.rgb0.write = neopixels_write;
-        hal.rgb0.num_devices = 0;
         hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
 #ifdef LED1_PIN
@@ -277,8 +291,6 @@ void neopixel_init (void)
         hal.rgb1.out = neopixel1_out;
         hal.rgb1.out_masked = neopixel1_out_masked;
         hal.rgb1.set_intensity = neopixels1_set_intensity;
-        hal.rgb1.write = neopixels1_write;
-        hal.rgb1.num_devices = 0;
         hal.rgb1.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
 #endif

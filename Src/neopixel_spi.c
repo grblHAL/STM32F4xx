@@ -3,7 +3,7 @@
 
   TODO: use I2S interface for more precise timing?
 
-  Part of grblHAL driver for STM32F4xx
+  Part of grblHAL driver for STM32F7xx
 
   Copyright (c) 2024 Terje Io
 
@@ -119,41 +119,17 @@ static DMA_HandleTypeDef spi_dma_tx = {
 neopixel_cfg_t neopixel = { .intensity = 255 };
 static settings_changed_ptr settings_changed;
 
-void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
+static inline void _write (void)
 {
-    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip0_length) {
+    while(spi_port.State == HAL_SPI_STATE_BUSY_TX);
 
-        if(settings->rgb_strip0_length == 0)
-            settings->rgb_strip0_length = hal.rgb0.num_devices;
-        else
-            hal.rgb0.num_devices = settings->rgb_strip0_length;
-
-        if(neopixel.leds) {
-            free(neopixel.leds);
-            neopixel.leds = NULL;
-        }
-
-        if(hal.rgb0.num_devices) {
-            neopixel.num_bytes = hal.rgb0.num_devices * 9 + 24;
-            if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
-                hal.rgb0.num_devices = 0;
-        }
-
-        neopixel.num_leds = hal.rgb0.num_devices;
-    }
-
-    if(settings_changed)
-        settings_changed(settings, changed);
+    HAL_SPI_Transmit_DMA(&spi_port, neopixel.leds, neopixel.num_bytes);
 }
 
 void neopixels_write (void)
 {
-    if(neopixel.leds) {
-
-        while(spi_port.State == HAL_SPI_STATE_BUSY_TX);
-
-        HAL_SPI_Transmit_DMA(&spi_port, neopixel.leds, neopixel.num_bytes);
-    }
+    if(neopixel.num_leds > 1)
+        _write();
 }
 
 static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
@@ -163,7 +139,7 @@ static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_m
         rgb_3bpp_pack(&neopixel.leds[device * 9], color, mask, neopixel.intensity);
 
         if(neopixel.num_leds == 1)
-            neopixels_write();
+            _write();
     }
 }
 
@@ -190,11 +166,39 @@ uint8_t neopixels_set_intensity (uint8_t intensity)
             } while(device);
 
             if(neopixel.num_leds != 1)
-                neopixels_write();
+                _write();
         }
     }
 
     return prev;
+}
+
+void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
+{
+    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip0_length) {
+
+        if(settings->rgb_strip0_length == 0)
+            settings->rgb_strip0_length = hal.rgb0.num_devices;
+        else
+            hal.rgb0.num_devices = settings->rgb_strip0_length;
+
+        if(neopixel.leds) {
+            free(neopixel.leds);
+            neopixel.leds = NULL;
+        }
+
+        if(hal.rgb0.num_devices) {
+            neopixel.num_bytes = hal.rgb0.num_devices * 9 + 24;
+            if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
+                hal.rgb0.num_devices = 0;
+        }
+
+        neopixel.num_leds = hal.rgb0.num_devices;
+        hal.rgb0.write = neopixel.num_leds > 1 ? neopixels_write : NULL;
+    }
+
+    if(settings_changed)
+        settings_changed(settings, changed);
 }
 
 void neopixel_init (void)
@@ -334,10 +338,6 @@ void neopixel_init (void)
         hal.rgb0.out = neopixel_out;
         hal.rgb0.out_masked = neopixel_out_masked;
         hal.rgb0.set_intensity = neopixels_set_intensity;
-#if NEOPIXELS_NUM > 1
-        hal.rgb0.write = neopixels_write;
-#endif
-        hal.rgb0.num_devices = NEOPIXELS_NUM;
         hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
         settings_changed = hal.settings_changed;

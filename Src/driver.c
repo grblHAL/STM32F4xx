@@ -2686,7 +2686,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "240817";
+    hal.driver_version = "240903";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2932,6 +2932,11 @@ bool driver_init (void)
 
 #if QEI_ENABLE
     qei_enable = encoder_init(QEI_ENABLE);
+#endif
+
+#if defined(NEOPIXEL_SPI) || defined(NEOPIXEL_GPO)
+    extern void neopixel_init (void);
+    neopixel_init();
 #endif
 
 #include "grbl/plugins_init.h"

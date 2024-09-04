@@ -24,12 +24,10 @@
 #if defined(BOARD_LONGBOARD32)
 
 extern void tmc_spi_init (void);
-extern void neopixel_init (void);
 
 void board_init (void)
 {
     tmc_spi_init();
-    neopixel_init();
 }
 
 #endif //BOARD_LONGBOARD32
