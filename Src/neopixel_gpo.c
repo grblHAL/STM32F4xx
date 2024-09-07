@@ -240,7 +240,6 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
         }
 
         neopixel.num_leds = hal.rgb0.num_devices;
-        hal.rgb0.write = neopixel.num_leds > 1 ? neopixels_write : NULL;
     }
 
 #ifdef LED1_PIN
@@ -264,7 +263,6 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
         }
 
         neopixel1.num_leds = hal.rgb1.num_devices;
-        hal.rgb1.write = neopixel1.num_leds > 1 ? neopixels1_write : NULL;
     }
 
 #endif
@@ -284,6 +282,8 @@ void neopixel_init (void)
         hal.rgb0.out = neopixel_out;
         hal.rgb0.out_masked = neopixel_out_masked;
         hal.rgb0.set_intensity = neopixels_set_intensity;
+        hal.rgb0.write = neopixels_write;
+        hal.rgb0.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
         hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
 #ifdef LED1_PIN
@@ -291,6 +291,8 @@ void neopixel_init (void)
         hal.rgb1.out = neopixel1_out;
         hal.rgb1.out_masked = neopixel1_out_masked;
         hal.rgb1.set_intensity = neopixels1_set_intensity;
+        hal.rgb0.write = neopixels_write;
+        hal.rgb1.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
         hal.rgb1.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
 #endif
