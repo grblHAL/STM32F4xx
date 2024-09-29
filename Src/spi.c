@@ -35,6 +35,8 @@
 
 #if SPI_PORT == 11 || SPI_PORT == 12
 #define SPIPORT SPIport(1)
+#elif SPI_PORT == 21
+#define SPIPORT SPIport(2)
 #else
 #define SPIPORT SPIport(SPI_PORT)
 #endif
@@ -87,7 +89,7 @@ static DMA_HandleTypeDef spi_dma_tx = {
     .Init.FIFOMode = DMA_FIFOMODE_DISABLE
 };
 
-#elif SPI_PORT == 2
+#elif SPI_PORT == 2 || SPI_PORT == 21
 
 #define DMA_RX_IRQ DMAirq(1, 3)
 #define DMA_TX_IRQ DMAirq(1, 4)
@@ -318,6 +320,48 @@ void spi_init (void)
             .group = PinGroup_SPI,
             .port = GPIOB,
             .pin = 15,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+#elif SPI_PORT == 21
+
+        __HAL_RCC_SPI2_CLK_ENABLE();
+        __HAL_RCC_DMA1_CLK_ENABLE();
+
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = GPIO_PIN_2|GPIO_PIN_3,
+            .Mode = GPIO_MODE_AF_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Alternate = GPIO_AF5_SPI2,
+        };
+
+        HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+        GPIO_InitStruct.Pin = GPIO_PIN_10;
+        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+        static const periph_pin_t sck = {
+            .function = Output_SPICLK,
+            .group = PinGroup_SPI,
+            .port = GPIOB,
+            .pin = 10,
+            .mode = { .mask = PINMODE_OUTPUT }
+        };
+
+        static const periph_pin_t sdo = {
+            .function = Input_MISO,
+            .group = PinGroup_SPI,
+            .port = GPIOC,
+            .pin = 2,
+            .mode = { .mask = PINMODE_NONE }
+        };
+
+        static const periph_pin_t sdi = {
+            .function = Output_MOSI,
+            .group = PinGroup_SPI,
+            .port = GPIOC,
+            .pin = 3,
             .mode = { .mask = PINMODE_NONE }
         };
 

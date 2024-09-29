@@ -46,7 +46,7 @@ static const pwm_signal_t pwm_pin[] = {
         .port = GPIOB, .pin = 0, .timer = timer(1), .ccr = &timerCCR(1, 2), .ccmr = &timerCCMR(1, 1), .af = timerAF(1, 1),
         .en = timerCCEN(2, N), .pol = timerCCP(2, N), .ois = timerCR2OIS(2, N), .ocm = timerOCM(1, 2), .ocmc = timerOCM(1, 2)
     },
-#if !((SPINDLE_ENCODER_ENABLE && RPM_TIMER_N == 2) || (PPI_ENABLE && PPI_TIMER_N == 2) || (STEP_INJECT_ENABLE && PULSE2_TIMER_N == 2))
+#if !IS_TIMER_CLAIMED(TIM2_BASE)
     {
         .port = GPIOA, .pin = 3, .timer = timer(2), .ccr = &timerCCR(2, 4), .ccmr = &timerCCMR(2, 2), .af = timerAF(2, 1),
         .en = timerCCEN(4, ), .pol = timerCCP(4, ), .ois = timerCR2OIS(4, ), .ocm = timerOCM(2, 4), .ocmc = timerOCM(2, 4)
@@ -68,7 +68,7 @@ static const pwm_signal_t pwm_pin[] = {
         .en = timerCCEN(3, ), .pol = timerCCP(3, ), .ois = timerCR2OIS(3, ), .ocm = timerOCM(2, 3), .ocmc = timerOCM(2, 3)
     },
 #endif
-#if !((SPINDLE_ENCODER_ENABLE && RPM_COUNTER_N == 3) || (STEP_INJECT_ENABLE && PULSE2_TIMER_N == 3))
+#if !IS_TIMER_CLAIMED(TIM3_BASE)
     {
         .port = GPIOB, .pin = 4, .timer = timer(3), .ccr = &timerCCR(3, 1), .ccmr = &timerCCMR(3, 1), .af = timerAF(3, 2),
         .en = timerCCEN(1, ), .pol = timerCCP(1, ), .ois = timerCR2OIS(1, ), .ocm = timerOCM(1, 1), .ocmc = timerOCM(1, 1)
@@ -114,56 +114,50 @@ bool pwm_is_available (GPIO_TypeDef *port, uint8_t pin)
 
     if(pwm && (i = n_claimed)) do {
         i--;
-        if(pwm->timer == pwm_claimed[i].timer && pwm->ccr == pwm_claimed[i].ccr)
-            return false;
+        if(pwm->timer == pwm_claimed[i].timer)
+            return pwm->ccr != pwm_claimed[i].ccr;
     } while(i);
 
-    return pwm != NULL;
+    return !timer_is_claimed(pwm->timer);
 }
 
 const pwm_signal_t *pwm_claim (GPIO_TypeDef *port, uint8_t pin)
 {
     const pwm_signal_t *pwm = NULL;
-    uint_fast8_t i = sizeof(pwm_pin) / sizeof(pwm_signal_t);
 
-    do {
-        i--;
-        if(port == pwm_pin[i].port && pin == pwm_pin[i].pin)
-            pwm = &pwm_pin[i];
-    } while(i && pwm == NULL);
+    if(pwm_is_available(port, pin)) {
 
-    if(pwm && (i = n_claimed)) do {
-        i--;
-        if(pwm->timer == pwm_claimed[i].timer && pwm->ccr == pwm_claimed[i].ccr)
-            return NULL;
-    } while(i);
+        uint_fast8_t i = sizeof(pwm_pin) / sizeof(pwm_signal_t);
 
-    pwm_claimed[n_claimed].timer = pwm->timer;
-    pwm_claimed[n_claimed++].ccr = pwm->ccr;
+        do {
+            i--;
+            if(port == pwm_pin[i].port && pin == pwm_pin[i].pin)
+                pwm = &pwm_pin[i];
+        } while(i && pwm == NULL);
+
+        if(pwm) {
+
+            TIM_TypeDef *timer = NULL;
+
+            if((i = n_claimed)) do {
+                if(pwm->timer == pwm_claimed[--i].timer)
+                    timer = pwm_claimed[i].timer;
+            } while(i && timer == NULL);
+
+            if(timer || timer_claim(pwm->timer)) {
+                pwm_claimed[n_claimed].timer = pwm->timer;
+                pwm_claimed[n_claimed++].ccr = pwm->ccr;
+            } else
+                pwm = NULL;
+        }
+    }
 
     return pwm;
 }
 
 bool pwm_enable (const pwm_signal_t *pwm)
 {
-    switch((uint32_t)pwm->timer) {
-
-        case TIM1_BASE:
-            __HAL_RCC_TIM1_CLK_ENABLE();
-            break;
-        case TIM2_BASE:
-            __HAL_RCC_TIM2_CLK_ENABLE();
-            break;
-        case TIM3_BASE:
-            __HAL_RCC_TIM3_CLK_ENABLE();
-            break;
-        case TIM9_BASE:
-            __HAL_RCC_TIM9_CLK_ENABLE();
-            break;
-        case TIM11_BASE:
-            __HAL_RCC_TIM11_CLK_ENABLE();
-            break;
-    }
+    timer_clk_enable(pwm->timer);
 
     GPIO_InitTypeDef GPIO_Init = {
         .Speed = GPIO_SPEED_FREQ_HIGH,
@@ -215,12 +209,5 @@ bool pwm_config (const pwm_signal_t *pwm, uint32_t prescaler, uint32_t period, b
 
 uint32_t pwm_get_clock_hz (const pwm_signal_t *pwm)
 {
-    RCC_ClkInitTypeDef clock;
-    uint32_t latency;
-
-    HAL_RCC_GetClockConfig(&clock, &latency);
-
-    return pwm->timer == TIM1 || pwm->timer == TIM9 || pwm->timer == TIM11
-            ? HAL_RCC_GetPCLK2Freq() * TIMER_CLOCK_MUL(clock.APB2CLKDivider)
-            : HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock.APB1CLKDivider);
+    return timer_get_clock_hz(pwm->timer);
 }

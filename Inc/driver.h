@@ -48,6 +48,8 @@
 
 #include "grbl/driver_opts.h"
 
+#include "timers.h"
+
 #define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
 
 #define DIGITAL_IN(port, pin) BITBAND_PERI((port)->IDR, pin)
@@ -55,6 +57,8 @@
 
 #define timer(t) timerN(t)
 #define timerN(t) TIM ## t
+#define timerBase(t) timerbase(t)
+#define timerbase(t) TIM ## t ## _BASE
 #define timerINT(t) timerint(t)
 #define timerint(t) TIM ## t ## _IRQn
 #define timerHANDLER(t) timerhandler(t)
@@ -78,7 +82,8 @@
 #define timerAF(t, f) timeraf(t, f)
 #define timeraf(t, f) GPIO_AF ## f ## _TIM ## t
 #define timerAPB2(t) (t == 1 || t == 8 || t == 9 || t == 10 || t == 11)
-#define TIMER_CLOCK_MUL(d) (d == RCC_HCLK_DIV1 ? 1 : 2)
+
+#define TIMER_CLOCK_MUL(d) (d == RCC_HCLK_DIV1 ? 1 : (d == RCC_HCLK_DIV2 ? 2 : (d == RCC_HCLK_DIV4 ? 4 : 8)))
 
 #define usart(t) usartN(t)
 #define usartN(t) USART ## t
@@ -169,6 +174,8 @@
   #include "boards/mks_eagle_map.h"
 #elif defined(BOARD_BTT_OCTOPUS_PRO)
   #include "boards/btt_octopus_pro_map.h"
+#elif defined(BOARD_STM32F407VET6_DEV)
+  #include "boards/stm32f407vet6_dev_board.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "boards/my_machine_map.h"
 #else // default board
@@ -211,36 +218,18 @@
 // Define timer allocations.
 
 #define STEPPER_TIMER_N             5
+#define STEPPER_TIMER_BASE          timerBase(STEPPER_TIMER_N)
 #define STEPPER_TIMER               timer(STEPPER_TIMER_N)
 #define STEPPER_TIMER_CLKEN         timerCLKEN(STEPPER_TIMER_N)
 #define STEPPER_TIMER_IRQn          timerINT(STEPPER_TIMER_N)
 #define STEPPER_TIMER_IRQHandler    timerHANDLER(STEPPER_TIMER_N)
 
 #define PULSE_TIMER_N               4
+#define PULSE_TIMER_BASE            timerBase(PULSE_TIMER_N)
 #define PULSE_TIMER                 timer(PULSE_TIMER_N)
 #define PULSE_TIMER_CLKEN           timerCLKEN(PULSE_TIMER_N)
 #define PULSE_TIMER_IRQn            timerINT(PULSE_TIMER_N)
 #define PULSE_TIMER_IRQHandler      timerHANDLER(PULSE_TIMER_N)
-
-#if STEP_INJECT_ENABLE
-
-#if defined(STM32F407xx) || defined(STM32F429xx) || defined(STM32F446xx)
-#define PULSE2_TIMER_N              7
-#define PULSE2_TIMER                timer(PULSE2_TIMER_N)
-#define PULSE2_TIMER_CLKEN          timerCLKEN(PULSE2_TIMER_N)
-#define PULSE2_TIMER_IRQn           timerINT(PULSE2_TIMER_N)
-#define PULSE2_TIMER_IRQHandler     timerHANDLER(PULSE2_TIMER_N)
-#endif
-
-#if !defined(PULSE2_TIMER_N) && STEP_INJECT_ENABLE
-#define PULSE2_TIMER_N              3
-#endif
-#define PULSE2_TIMER                timer(PULSE2_TIMER_N)
-#define PULSE2_TIMER_CLKEN          timerCLKEN(PULSE2_TIMER_N)
-#define PULSE2_TIMER_IRQn           timerINT(PULSE2_TIMER_N)
-#define PULSE2_TIMER_IRQHandler     timerHANDLER(PULSE2_TIMER_N)
-
-#endif // STEP_INJECT_ENABLE
 
 #if SPINDLE_ENCODER_ENABLE
 
@@ -255,32 +244,23 @@
 #error Timer conflict: spindle sync and step inject!
 #endif
 #define RPM_COUNTER                 timer(RPM_COUNTER_N)
+#define RPM_COUNTER_BASE            timerBase(RPM_COUNTER_N)
 #define RPM_COUNTER_CLKEN           timerCLKEN(RPM_COUNTER_N)
 #define RPM_COUNTER_IRQn            timerINT(RPM_COUNTER_N)
 #define RPM_COUNTER_IRQHandler      timerHANDLER(RPM_COUNTER_N)
 
 #define RPM_TIMER                   timer(RPM_TIMER_N)
+#define RPM_TIMER_BASE              timerBase(RPM_TIMER_N)
 #define RPM_TIMER_CLKEN             timerCLKEN(RPM_TIMER_N)
 #define RPM_TIMER_IRQn              timerINT(RPM_TIMER_N)
 #define RPM_TIMER_IRQHandler        timerHANDLER(RPM_TIMER_N)
 
 #endif //  SPINDLE_ENCODER_ENABLE
 
-#if PPI_ENABLE
-
-#ifndef PPI_TIMER_N
-#define PPI_TIMER_N     2
-#endif
-
-#if PPI_TIMER_N == RPM_COUNTER_N || PPI_TIMER_N == RPM_TIMER_N
-#error Timer conflict: PPI timer!
-#endif
-#define PPI_TIMER                   timer(PPI_TIMER_N)
-#define PPI_TIMER_CLKEN             timerCLKEN(PPI_TIMER_N)
-#define PPI_TIMER_IRQn              timerINT(PPI_TIMER_N)
-#define PPI_TIMER_IRQHandler        timerHANDLER(PPI_TIMER_N)
-
-#endif // PPI_ENABLE
+#define IS_TIMER_CLAIMED(INSTANCE) (((INSTANCE) == STEPPER_TIMER_BASE) || \
+                                    ((INSTANCE) == PULSE_TIMER_BASE) || \
+                                    ((INSTANCE) == RPM_TIMER_BASE) || \
+                                    ((INSTANCE) == RPM_COUNTER_BASE))
 
 // Adjust STEP_PULSE_LATENCY to get accurate step pulse length when required, e.g if using high step rates.
 // The default value is calibrated for 10 microseconds length.

@@ -1,9 +1,10 @@
 /*
-  longboard32.c - driver code for STM32F4xx ARM processors on Sienci SLB boards
+
+  timers.h - driver code for STM32F7xx ARM processors
 
   Part of grblHAL
 
-  Copyright (c) 2022 Expatria Technologies
+  Copyright (c) 2024 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,17 +20,20 @@
   along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "driver.h"
+#pragma once
 
-#if defined(BOARD_LONGBOARD32)
+/* Internal API */
 
-extern void tmc_spi_init (void);
+bool timer_claim (TIM_TypeDef *timer);
+bool timer_is_claimed (TIM_TypeDef *timer);
+uint32_t timer_clk_enable (TIM_TypeDef *timer);
+uint32_t timer_get_clock_hz (TIM_TypeDef *timer);
 
-void board_init (void)
-{
-#if TRINAMIC_ENABLE
-    tmc_spi_init();
-#endif
-}
+/* HAL API */
 
-#endif //BOARD_LONGBOARD32
+hal_timer_t timerClaim (timer_cap_t cap, uint32_t timebase);
+bool timerCfg (hal_timer_t timer, timer_cfg_t *cfg);
+bool timerStart (hal_timer_t timer, uint32_t period);
+bool timerStop (hal_timer_t timer);
+
+/**/
