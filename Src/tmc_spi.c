@@ -333,7 +333,11 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
     }
 }
 
+#if defined(BOARD_FYSETC_S6) || defined(BOARD_BTT_SKR_PRO_1_1) || defined(BOARD_BTT_SKR_PRO_1_2) || defined(BOARD_MKS_ROBIN_NANO_30) || defined(BOARD_MKS_EAGLE)
+void board_init (void)
+#else
 void tmc_spi_init (void)
+#endif
 {
     static trinamic_driver_if_t driver_if = {.on_drivers_init = if_init};
 
