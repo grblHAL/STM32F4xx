@@ -147,7 +147,7 @@ PD15 SM4
 #define LIMIT_INMODE            GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
-#if N_ABC_MOTORS == 1
+#if N_ABC_MOTORS >= 1
 #define M3_AVAILABLE
 #define M3_STEP_PORT            GPIOD
 #define M3_STEP_PIN             14
@@ -337,13 +337,16 @@ PD15 SM4
 #endif
 #endif
 
-#if MODBUS_RTU_ENABLE
+#if MODBUS_ENABLE & MODBUS_RTU_ENABLED
 #define SERIAL1_PORT           21 // GPIOD: TX = 5, RX = 6
-#if MODBUS_RTU_DIR_ENABLED
-#define MODBUS_RTU_STREAM 1
+#if MODBUS_ENABLE & MODBUS_RTU_DIR_ENABLED
+#define MODBUS_RTU_STREAM       1
 #define MODBUS_DIR_AUX          0 // GPIOD 7
 #endif
 #endif
+
+#define FLASH_CS_PORT           GPIOE
+#define FLASH_CS_PIN            3
 
 #define CAN_PORT                GPIOD
 #define CAN_RX_PIN              0
