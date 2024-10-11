@@ -31,28 +31,37 @@
 #error "This board has STM32F446 processor with a 25MHz crystal, select a corresponding build!"
 #endif
 
+#if MPG_ENABLE && ETHERNET_ENABLE
+#error "Networking and MGP Serial mode cannot be enabled together!"
+#endif
+
+#ifndef BOARD_NAME
 #define BOARD_NAME "Flexi-HAL"
+#endif
 #define BOARD_URL "https://github.com/Expatria-Technologies/Flexi-HAL"
+
+#define WIZCHIP_SPI_PRESCALER SPI_BAUDRATEPRESCALER_4
 
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 
-#define SERIAL_PORT     1   // GPIOA: TX =  9, RX = 10
-#define SERIAL1_PORT   31   // GPIOC: TX = 10, RX = 11
-#define I2C_ENABLE      1
+#define I2C_ENABLE 1
 #define I2C_FASTMODE
-#define EEPROM_ENABLE 128   // 128 Kbit/16K
-#if KEYPAD_ENABLE
+#define EEPROM_ENABLE 2
+#define HAS_IOPORTS
 #define HAS_BOARD_INIT
-#endif
 
 #if MODBUS_ENABLE
-#define MODBUS_RTU_STREAM       1
+#define SERIAL2_PORT 33
+#define MODBUS_RTU_STREAM 2
 #endif
 
 #if MPG_ENABLE == 1
 #define MPG_MODE_PORT           GPIOA
 #define MPG_MODE_PIN            15
+#undef MPG_STREAM
+#define MPG_STREAM 1
+#define SERIAL1_PORT 1
 #endif
 
 //********on first revision of this board Y step/dir was flipped.  Use below config?
@@ -76,21 +85,33 @@
 #define DIRECTION_OUTMODE       GPIO_BITBAND
 
 // Define stepper driver enable/disable output pin.
-#define X_ENABLE_PORT           GPIOA
-#define X_ENABLE_PIN            14
-#define Y_ENABLE_PORT           GPIOA
-#define Y_ENABLE_PIN            14
-#define Z_ENABLE_PORT           GPIOA
-#define Z_ENABLE_PIN            13
-#define STEPPERS_ENABLE_OUTMODE GPIO_BITBAND
+#ifdef ENABLE_SWD
+#define STEPPERS_ENABLE_PORT       GPIOB
+#define STEPPERS_ENABLE_PIN        13
+#define STEPPERS_ENABLE_OUTMODE    GPIO_BITBAND
+#else
+#define X_ENABLE_PORT               GPIOA
+#define X_ENABLE_PIN                14
+#define Y_ENABLE_PORT               GPIOA
+#define Y_ENABLE_PIN                14
+#define Z_ENABLE_PORT               GPIOA
+#define Z_ENABLE_PIN                13
+#define STEPPERS_ENABLE_OUTMODE    GPIO_BITBAND
+#endif
 
 // Define homing/hard limit switch input pins.
 #define X_LIMIT_PORT            GPIOA
 #define X_LIMIT_PIN             5
 #define Y_LIMIT_PORT            GPIOB
 #define Y_LIMIT_PIN             9
-#define Z_LIMIT_PORT            GPIOC
-#define Z_LIMIT_PIN             13
+//bill mill uses one of the encoder inputs for Z limit
+#if (BILLMILL)
+  #define Z_LIMIT_PORT            GPIOA
+  #define Z_LIMIT_PIN             0
+#else
+  #define Z_LIMIT_PORT            GPIOC
+  #define Z_LIMIT_PIN             13
+#endif
 #define LIMIT_INMODE            GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
@@ -102,8 +123,13 @@
 #define M3_DIRECTION_PIN        12
 #define M3_LIMIT_PORT           GPIOB
 #define M3_LIMIT_PIN            6
+#ifdef ENABLE_SWD
+#define M3_ENABLE_PORT          GPIOB
+#define M3_ENABLE_PIN           13
+#else
 #define M3_ENABLE_PORT          GPIOA
 #define M3_ENABLE_PIN           14
+#endif
 #endif
 
 // Define ganged axis or A axis step pulse and step direction output pins.
@@ -115,8 +141,13 @@
 #define M4_DIRECTION_PIN        15
 #define M4_LIMIT_PORT           GPIOC
 #define M4_LIMIT_PIN            14
+#ifdef ENABLE_SWD
+#define M3_ENABLE_PORT          GPIOB
+#define M3_ENABLE_PIN           13
+#else
 #define M4_ENABLE_PORT          GPIOA
 #define M4_ENABLE_PIN           14
+#endif
 #endif
 
 #define AUXOUTPUT0_PORT         GPIOB
@@ -137,6 +168,7 @@
 #define AUXOUTPUT7_PIN          9
 #define AUXOUTPUT8_PORT         GPIOA // Coolant mist
 #define AUXOUTPUT8_PIN          7
+
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
@@ -162,8 +194,14 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT8_PIN
 #endif
 
+//bill mill re-assigns auxinput0 to what was Z limit
+#if (BILLMILL)
+#define AUXINPUT0_PORT          GPIOC
+#define AUXINPUT0_PIN           13
+#else
 #define AUXINPUT0_PORT          GPIOA
 #define AUXINPUT0_PIN           0
+#endif
 #define AUXINPUT1_PORT          GPIOA
 #define AUXINPUT1_PIN           1
 #define AUXINPUT2_PORT          GPIOA
@@ -175,6 +213,12 @@
 #define AUXINPUT5_PORT          GPIOB // I2C strobe input
 #define AUXINPUT5_PIN           10
 
+#if N_ABC_MOTORS != 2
+  #define AUXINPUT6_PORT          GPIOC
+  #define AUXINPUT6_PIN           14
+#endif
+
+
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #define RESET_PORT              GPIOB
 #define RESET_PIN               12
@@ -182,7 +226,6 @@
 #define FEED_HOLD_PIN           8
 #define CYCLE_START_PORT        GPIOC
 #define CYCLE_START_PIN         11
-#define CONTROL_INMODE          GPIO_BITBAND
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT4_PORT
@@ -191,13 +234,10 @@
 
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT3_PORT
-#define SAFETY_DOOR_PIN         AUXINPUT3_PIN
+#define SAFETY_DOOR_PIN         AUXINPUT3_PIN  
 #endif
 
-#if MOTOR_FAULT_ENABLE
-#define MOTOR_FAULT_PORT        AUXINPUT1_PORT
-#define MOTOR_FAULT_PIN         AUXINPUT1_PIN
-#endif
+#define CONTROL_INMODE          GPIO_BITBAND
 
 #if MOTOR_WARNING_ENABLE
 #define MOTOR_WARNING_PORT      AUXINPUT2_PORT
@@ -207,10 +247,27 @@
 #if I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         AUXINPUT5_PORT
 #define I2C_STROBE_PIN          AUXINPUT5_PIN
+#define I2C_STROBE_BIT (1<<I2C_STROBE_PIN)
+#define I2C_STROBE_AUX_ENABLE
+#endif
+
+#if SDCARD_ENABLE || ETHERNET_ENABLE
+#define SPI_PORT                1 // GPIOB, SCK_PIN = 3, MISO_PIN = 4, MOSI_PIN = 5  probably needs fixing
+#endif
+
+#if ETHERNET_ENABLE
+//CS is JOG_SW
+#undef SPI_ENABLE
+#define SPI_ENABLE 1
+#define SPI_CS_PORT             GPIOA //CS_JOG_SW
+#define SPI_CS_PIN              15
+#define SPI_IRQ_PORT            GPIOC //PRU_RESET
+#define SPI_IRQ_PIN             3
+#define SPI_RST_PORT            GPIOA // TXD_INT
+#define SPI_RST_PIN             9
 #endif
 
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOA
-#define SD_CS_PIN               3
-#define SPI_PORT                12 // GPIOB, SCK = 3, MISO = 4, MOSI = 5
+#define SD_CS_PIN               10
 #endif

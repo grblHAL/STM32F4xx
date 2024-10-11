@@ -2931,16 +2931,43 @@ static status_code_t enter_dfu (sys_state_t state, char *args)
 
     __disable_irq();
     *addr = 0xDEADBEEF;
-    __disable_irq();
+    __enable_irq();
     NVIC_SystemReset();
 
     return Status_OK;
 }
 
+status_code_t enter_uf2 (sys_state_t state, char *args)
+{
+    extern uint32_t _board_dfu_dbl_tap; /* Symbol defined in the linker script */
+
+    hal.stream.write("Entering UF2 Bootloader" ASCII_EOL);
+    hal.delay_ms(100, NULL);
+
+    uint32_t *addr = (uint32_t *)(&_board_dfu_dbl_tap);
+
+    __disable_irq();
+    *addr = 0xF01669EF; //UF2 DBL_TAP_MAGIC (defined in TinyUF2)
+    __enable_irq();
+    NVIC_SystemReset();
+
+    return Status_OK;
+}
+
+const sys_command_t boot_command_list[2] = {
+    {"DFU", enter_dfu, { .noargs = On }, { .str = "enter DFU bootloader" } },
+	{"UF2", enter_uf2, { .noargs = On }, { .str = "enter UF2 bootloader" } }
+};
+
+static sys_commands_t boot_commands = {
+    .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
+    .commands = boot_command_list
+};
+
 static void onReportOptions (bool newopt)
 {
     if(!newopt)
-        hal.stream.write("[PLUGIN:Bootloader Entry v0.02]" ASCII_EOL);
+        hal.stream.write("[PLUGIN:Bootloader Entry v0.03]" ASCII_EOL);
 }
 
 #if COPROC_PASSTHRU

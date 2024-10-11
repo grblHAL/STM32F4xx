@@ -21,7 +21,7 @@
 
 #include "driver.h"
 
-#if defined(BOARD_FLEXI_HAL) && KEYPAD_ENABLE
+#if defined(BOARD_FLEXI_HAL)
 
 #include <math.h>
 #include <string.h>
@@ -31,6 +31,13 @@
 #include "grbl/protocol.h"
 #include "grbl/settings.h"
 
+#if SDCARD_ENABLE
+#include "../sdcard/sdcard.h"
+#endif
+
+DMA_HandleTypeDef hdma_spi1_tx;
+
+#if 0
 static uint8_t keycode = 0;
 static keycode_callback_ptr keypad_callback = NULL;
 static bool pendant_tx_active = 0;
@@ -107,10 +114,68 @@ bool flexi_stream_tx_blocking (void)
     return !(sys.rt_exec_state & EXEC_RESET);
 }
 #endif
+#endif
+
+
+/**
+  * @brief This function handles DMA2 stream3 global interrupt.
+  */
+
+static void MX_DMA_Init (void)
+{
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+
+}
 
 void board_init (void)
 {
-    i2c_port = I2C_GetPort();
+    #if defined(BOARD_FLEXI_HAL) && KEYPAD_ENABLE
+    //i2c_port = I2C_GetPort();
+    #endif
+
+    MX_DMA_Init();
+#if SDCARD_ENABLE
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    GPIO_InitStruct.Pin = 1 << SD_CS_PIN;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(SD_CS_PORT, &GPIO_InitStruct);
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    __HAL_RCC_GPIOB_CLK_ENABLE();    
+
+    HAL_GPIO_WritePin(SD_CS_PORT, SD_CS_PIN, 1);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 1);
+    volatile uint32_t dly = 1000;
+    volatile uint32_t count = 100;
+
+    while(--dly)
+        __ASM volatile ("nop");  
+
+    while(--count) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 1);         
+        dly = 25;  // Reset dly before first delay
+        while(--dly)    
+            __ASM volatile ("nop");
+
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 0);         
+        dly = 25;  // Reset dly before second delay
+        while(--dly)
+            __ASM volatile ("nop");
+    }
+
+    sdcard_getfs(); // Mounts SD card if not already mounted
+#endif
 }
 
 #endif
