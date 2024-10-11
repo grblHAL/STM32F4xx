@@ -281,7 +281,7 @@ inline static void spindle1_on (spindle_ptrs_t *spindle)
 inline static void spindle1_dir (bool ccw)
 {
 #ifdef SPINDLE1_DIRECTION_PIN
-    DIGITAL_OUT(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN, ccw ^ spindle_config->cfg.invert.ccw);
+    DIGITAL_OUT(SPINDLE1_DIRECTION_PORT, SPINDLE1_DIRECTION_PIN, ccw ^ spindle_config->cfg.invert.ccw);
 #else
     UNUSED(ccw);
 #endif

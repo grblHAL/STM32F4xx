@@ -592,7 +592,7 @@ static void stepperEnable (axes_signals_t enable, bool hold)
   #ifdef STEPPERS_ENABLE_PIN
     DIGITAL_OUT(STEPPERS_ENABLE_PORT, STEPPERS_ENABLE_PIN, enable.x);
   #endif
-  #ifdef X2_ENABLE_PIN
+  #ifdef X_ENABLE_PIN
     DIGITAL_OUT(X_ENABLE_PORT, X_ENABLE_PIN, enable.x);
   #endif
   #ifdef X2_ENABLE_PIN
@@ -2983,7 +2983,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "240928";
+    hal.driver_version = "241011";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
