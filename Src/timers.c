@@ -314,7 +314,7 @@ uint32_t timer_clk_enable (TIM_TypeDef *timer)
                 __HAL_RCC_TIM13_CLK_ENABLE();
                 break;
 #endif
-#ifdef TIM7
+#ifdef TIM14
             case (uint32_t)TIM14:
                 __HAL_RCC_TIM14_CLK_ENABLE();
                 break;

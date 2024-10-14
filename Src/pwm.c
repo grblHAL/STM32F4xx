@@ -118,7 +118,7 @@ bool pwm_is_available (GPIO_TypeDef *port, uint8_t pin)
             return pwm->ccr != pwm_claimed[i].ccr;
     } while(i);
 
-    return !timer_is_claimed(pwm->timer);
+    return pwm && !timer_is_claimed(pwm->timer);
 }
 
 const pwm_signal_t *pwm_claim (GPIO_TypeDef *port, uint8_t pin)
