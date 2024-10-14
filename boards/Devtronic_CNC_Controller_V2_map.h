@@ -1,22 +1,22 @@
 /*
   Devtronic_CNC_Controller_map.h - driver code for STM32F4xx (Blackpill) breakout board
 
-  Part of GrblHAL
+  Part of grblHAL
 
   Copyright (c) 2023 @nickshl & Terje Io
 
-  GrblHAL is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  GrblHAL is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with GrblHAL. If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /* Pin Assignments(V2 have optional RS-485 support instead PWM spindle):

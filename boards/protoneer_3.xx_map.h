@@ -125,8 +125,6 @@
 // Spindle PWM & encoder pins.
 // NOTE: these pins are not available on the Protoneer board!
 #if SPINDLE_ENCODER_ENABLE
-#define SPINDLE_PWM_PORT_BASE   GPIOA_BASE
-#define SPINDLE_PWM_PIN         11
 #define SPINDLE_INDEX_PORT      GPIOC
 #define SPINDLE_INDEX_PIN       11
 #define SPINDLE_PULSE_PORT      GPIOD

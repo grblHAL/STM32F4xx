@@ -198,9 +198,12 @@
 #warning "Selected spindle is not supported!"
 #undef DRIVER_SPINDLE_PWM_ENABLE
 #define DRIVER_SPINDLE_PWM_ENABLE 0
-#ifdef SPINDLE_PWM_PORT_BASE
-#undef SPINDLE_PWM_PORT_BASE
 #endif
+
+#if DRIVER_SPINDLE_PWM1_ENABLE && (!DRIVER_SPINDLE1_ENABLE || !defined(SPINDLE1_PWM_PIN))
+#warning "Selected spindle 1 is not supported!"
+#undef DRIVER_SPINDLE_PWM1_ENABLE
+#define DRIVER_SPINDLE_PWM1_ENABLE 0
 #endif
 
 #if IS_NUCLEO_DEVKIT == 64 && !defined(IS_NUCLEO_BOB)
@@ -257,10 +260,18 @@
 
 #endif //  SPINDLE_ENCODER_ENABLE
 
+#if TRINAMIC_UART_ENABLE == 2
+#ifndef TMC_UART_TIMER_N
+#define TMC_UART_TIMER_N            7
+#endif
+#define TMC_UART_TIMER_BASE         timerBase(TMC_UART_TIMER_N)
+#endif
+
 #define IS_TIMER_CLAIMED(INSTANCE) (((INSTANCE) == STEPPER_TIMER_BASE) || \
                                     ((INSTANCE) == PULSE_TIMER_BASE) || \
                                     ((INSTANCE) == RPM_TIMER_BASE) || \
-                                    ((INSTANCE) == RPM_COUNTER_BASE))
+                                    ((INSTANCE) == RPM_COUNTER_BASE) || \
+                                    ((INSTANCE) == TMC_UART_TIMER_BASE))
 
 // Adjust STEP_PULSE_LATENCY to get accurate step pulse length when required, e.g if using high step rates.
 // The default value is calibrated for 10 microseconds length.

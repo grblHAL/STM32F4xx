@@ -105,7 +105,7 @@ static dtimer_t timers[] = {
         }
     },
 #endif
-#ifdef TIM7
+#if defined(TIM7) && !IS_TIMER_CLAIMED(TIM7_BASE)
     {
         .timer = TIM7,
         .irq = TIM7_IRQn,
@@ -275,7 +275,7 @@ uint32_t timer_clk_enable (TIM_TypeDef *timer)
                 __HAL_RCC_TIM6_CLK_ENABLE();
                 break;
 #endif
-#ifdef TIM7
+#if defined(TIM7) && !IS_TIMER_CLAIMED(TIM7_BASE)
             case (uint32_t)TIM7:
                 __HAL_RCC_TIM7_CLK_ENABLE();
                 break;
@@ -533,7 +533,7 @@ void TIM6_DAC_IRQHandler (void)
 
 #endif // TIM6
 
-#ifdef TIM7
+#if defined(TIM7) && !IS_TIMER_CLAIMED(TIM7_BASE)
 
 enum {
   TIM7_TIDX = LAST_TIDX,
