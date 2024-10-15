@@ -83,8 +83,6 @@
 #define timeraf(t, f) GPIO_AF ## f ## _TIM ## t
 #define timerAPB2(t) (t == 1 || t == 8 || t == 9 || t == 10 || t == 11)
 
-#define TIMER_CLOCK_MUL(d) (d == RCC_HCLK_DIV1 ? 1 : (d == RCC_HCLK_DIV2 ? 2 : (d == RCC_HCLK_DIV4 ? 4 : 8)))
-
 #define usart(t) usartN(t)
 #define usartN(t) USART ## t
 #define usartINT(t) usartint(t)

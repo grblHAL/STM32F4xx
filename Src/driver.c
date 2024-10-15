@@ -2718,7 +2718,7 @@ static bool driver_setup (settings_t *settings)
 
     PULSE_TIMER_CLKEN();
     PULSE_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
-    PULSE_TIMER->PSC = (HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock_cfg.APB1CLKDivider) / 10000000UL) - 1;
+    PULSE_TIMER->PSC = (HAL_RCC_GetPCLK1Freq() * 2) / 10000000UL - 1;
     PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
     PULSE_TIMER->CNT = 0;
     PULSE_TIMER->DIER |= TIM_DIER_UIE;
@@ -2746,9 +2746,9 @@ static bool driver_setup (settings_t *settings)
 
     RPM_TIMER_CLKEN();
 #if timerAPB2(RPM_TIMER_N)
-    RPM_TIMER->PSC = HAL_RCC_GetPCLK2Freq() * TIMER_CLOCK_MUL(clock_cfg.APB2CLKDivider) / 1000000UL * RPM_TIMER_RESOLUTION - 1;
+    RPM_TIMER->PSC = HAL_RCC_GetPCLK2Freq() * 2 / 1000000UL * RPM_TIMER_RESOLUTION - 1;
 #else
-    RPM_TIMER->PSC = HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock_cfg.APB1CLKDivider) / 1000000UL * RPM_TIMER_RESOLUTION - 1;
+    RPM_TIMER->PSC = HAL_RCC_GetPCLK1Freq() * 2 / 1000000UL * RPM_TIMER_RESOLUTION - 1;
 #endif
 #if RPM_TIMER_N == 2
     RPM_TIMER->CR1 = TIM_CR1_CKD_1;
@@ -2983,7 +2983,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "241011";
+    hal.driver_version = "241015";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -2993,7 +2993,7 @@ bool driver_init (void)
 #endif
     hal.driver_setup = driver_setup;
     hal.f_mcu = HAL_RCC_GetHCLKFreq() / 1000000UL;
-    hal.f_step_timer = HAL_RCC_GetPCLK1Freq() * TIMER_CLOCK_MUL(clock_cfg.APB1CLKDivider) / STEPPER_TIMER_DIV;
+    hal.f_step_timer = HAL_RCC_GetPCLK1Freq() * 2 / STEPPER_TIMER_DIV;
     hal.rx_buffer_size = RX_BUFFER_SIZE;
     hal.get_free_mem = get_free_mem;
     hal.delay_ms = &driver_delay;
