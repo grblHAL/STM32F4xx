@@ -49,3 +49,6 @@
 [submodule "webui"]
 	path = webui
 	url = https://github.com/grblHAL/Plugin_WebUI/
+[submodule "plugins"]
+	path = plugins
+	url = https://github.com/grblHAL/Plugins_misc/
