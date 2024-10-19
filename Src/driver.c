@@ -1176,7 +1176,7 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
 
     if(stepper->step_outbits.value) {
         stepperSetStepOutputs(stepper->step_outbits);
-        PULSE_TIMER->ARR = pulse_length;
+        PULSE_TIMER->ARR = step_pulse.length;
         PULSE_TIMER->DIER &= ~TIM_DIER_CC1IE; // dir delay not supported
         PULSE_TIMER->CR1 |= TIM_CR1_CEN;
     }
@@ -2983,7 +2983,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "241015";
+    hal.driver_version = "241017";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
