@@ -135,7 +135,7 @@ static void SystemClock_Config (void)
     #define APB2CLKDIV RCC_HCLK_DIV4
     #define FLASH_LATENCY FLASH_LATENCY_5
 
-  #elif BOARD_FLEXI_HAL
+  #elif defined(BOARD_FLEXI_HAL)
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 

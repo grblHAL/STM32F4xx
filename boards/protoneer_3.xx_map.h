@@ -93,9 +93,9 @@
 #define M3_DIRECTION_PIN        5
 #endif
 
-#define AUXOUTPUT0_PORT         GPIOA // Spindle PWM or spindle direction
-#define AUXOUTPUT0_PIN          2
-#define AUXOUTPUT1_PORT         GPIOA // Spindle enable
+#define AUXOUTPUT0_PORT         GPIOA // D13 - spindle PWM or spindle direction
+#define AUXOUTPUT0_PIN          5
+#define AUXOUTPUT1_PORT         GPIOA // D12 - spindle enable
 #define AUXOUTPUT1_PIN          6
 
 // Define driver spindle pins
