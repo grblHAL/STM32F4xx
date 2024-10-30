@@ -493,7 +493,7 @@
       "name": "Generic Uno/Nucleo-64 (STM32F411)",
       "symbol": "BOARD_GENERIC_UNO",
       "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
-      "MAP": "boards/cnc3040_map.h",
+      "MAP": "boards/uno_map.h",
       "caps": {
         "usb_cdc": 0,
         "safety_door": 0,
