@@ -184,6 +184,11 @@
 #define AUXOUTPUT11_PORT        GPIOB // Spindle 1 direction
 #define AUXOUTPUT11_PIN         1
 
+#define EVENTOUT_1_ACTION       1
+#define EVENTOUT_2_ACTION       4
+#define EVENTOUT_3_ACTION       1
+#define EVENTOUT_4_ACTION       4
+
 #if DRIVER_SPINDLE_ENABLE
 #define SPINDLE_ENABLE_PORT     AUXOUTPUT2_PORT
 #define SPINDLE_ENABLE_PIN      AUXOUTPUT2_PIN
@@ -218,7 +223,7 @@
 #define NEOPIXEL_GPO
 #define LED_PORT                GPIOC // rail LED strip
 #define LED_PIN                 9
-#ifdef DEBUG
+#ifndef DEBUG
 #define LED1_PORT               GPIOA // ring LED strip, when enabled SWD debugging is blocked (use $DFU to reenable)
 #define LED1_PIN                13
 #endif
@@ -239,14 +244,17 @@
 #define AUXINPUT4_PORT          GPIOE // MACRO1
 #define AUXINPUT4_PIN           1
 #define MACRO_1_AUXIN           4
+#define MACRO_1_BUTTONACTION    1
 
 #define AUXINPUT5_PORT          GPIOE // MACRO2
 #define AUXINPUT5_PIN           0
 #define MACRO_2_AUXIN           5
+#define MACRO_2_BUTTONACTION    2
 
 #define AUXINPUT6_PORT          GPIOC // CYC/ST, MACRO3
 #define AUXINPUT6_PIN           11
 #define MACRO_3_AUXIN           6
+#define MACRO_3_BUTTONACTION    4
 
 #define AUXINPUT7_PORT          GPIOD // AUX_IN_3
 #define AUXINPUT7_PIN           15

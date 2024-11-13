@@ -232,6 +232,8 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
     case CDC_SET_CONTROL_LINE_STATE:
         usb_linestate.pin.value = pbuf[2];
         usb_linestate.timestamp = hal.get_elapsed_ticks();
+        if(hal.stream.state.is_usb && hal.stream.on_linestate_changed)
+            hal.stream.on_linestate_changed(usb_linestate.pin);
     break;
 
     case CDC_SEND_BREAK:
