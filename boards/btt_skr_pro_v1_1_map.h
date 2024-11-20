@@ -3,18 +3,18 @@
 
   Part of grblHAL
 
-  GrblHAL is free software: you can redistribute it and/or modify
+  grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  GrblHAL is distributed in the hope that it will be useful,
+  grblHAL is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with GrblHAL. If not, see <http://www.gnu.org/licenses/>.
+  along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
 // IMPORTANT: Control inputs are mapped differently when build is configured for more than 3 axes!
@@ -23,7 +23,9 @@
 #error "Axis configuration is not supported!"
 #endif
 
-#if !defined(STM32F407xx) || HSE_VALUE != 8000000
+#if IS_NUCLEO_DEVKIT
+// When debugging with Nucleo-144
+#elif !defined(STM32F407xx) || HSE_VALUE != 8000000
 #error "This board has STM32F407 processor with a 8MHz crystal, select a corresponding build!"
 #endif
 
@@ -40,9 +42,6 @@
 #define SERIAL2_PORT    6       // GPIOC: TX = 6, RX = 7
 #define I2C_PORT        1
 #define I2C1_ALT_PINMAP         // GPIOB: SCL = 6, SDA = 7
-#if TRINAMIC_ENABLE
-#define HAS_BOARD_INIT
-#endif
 
 // Define step pulse output pins.
 #define X_STEP_PORT                 GPIOE
@@ -248,3 +247,7 @@
 #endif
 
 #endif
+
+#define CAN_PORT                GPIOD
+#define CAN_RX_PIN              0
+#define CAN_TX_PIN              1

@@ -87,9 +87,16 @@ static void report_options (bool newopt)
     }
 }
 
-static void warning_no_port (uint_fast16_t state)
+static void clear_ringleds (void *data)
 {
-    report_message("SLB toolsetter: configured port number is not available", Message_Warning);
+    if(hal.rgb1.num_devices && hal.rgb1.out) {
+
+        uint_fast8_t idx;
+        for(idx = 0; idx < hal.rgb1.num_devices; idx++)
+            hal.rgb1.out(idx, (rgb_color_t){ .value = 0 });
+
+        hal.rgb1.write();
+    }
 }
 
 void board_init (void)
@@ -119,8 +126,10 @@ void board_init (void)
         grbl.on_report_options = report_options;
 
         hal.driver_cap.toolsetter = On;
+
+        protocol_enqueue_foreground_task(clear_ringleds, NULL);
     } else
-        protocol_enqueue_rt_command(warning_no_port);
+        protocol_enqueue_foreground_task(report_warning, "SLB toolsetter: configured port number is not available!");
 }
 
 #endif //BOARD_LONGBOARD32

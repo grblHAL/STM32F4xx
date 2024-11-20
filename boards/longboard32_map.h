@@ -31,7 +31,7 @@
 #define BOARD_NAME "SuperLongBoard"
 #endif
 
-#if SLB_EEPROM_ENABLE
+#if EEPROM_ENABLE || SLB_EEPROM_ENABLE
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 #define I2C_ENABLE 1

@@ -171,4 +171,4 @@ void board_init (void)
         Error_Handler();
 }
 
-#endif
+#endif // BOARD_MORPHO_DAC_CNC

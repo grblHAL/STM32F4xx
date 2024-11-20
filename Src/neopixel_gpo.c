@@ -258,7 +258,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 
         if(hal.rgb1.num_devices) {
             neopixel1.num_bytes = hal.rgb1.num_devices * 3;
-            if((neopixel1.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
+            if((neopixel1.leds = calloc(neopixel1.num_bytes, sizeof(uint8_t))) == NULL)
                 hal.rgb1.num_devices = 0;
         }
 
@@ -291,7 +291,7 @@ void neopixel_init (void)
         hal.rgb1.out = neopixel1_out;
         hal.rgb1.out_masked = neopixel1_out_masked;
         hal.rgb1.set_intensity = neopixels1_set_intensity;
-        hal.rgb0.write = neopixels_write;
+        hal.rgb1.write = neopixels1_write;
         hal.rgb1.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
         hal.rgb1.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 

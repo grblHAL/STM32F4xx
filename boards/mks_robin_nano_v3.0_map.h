@@ -49,10 +49,6 @@
 #define I2C_PORT        1
 #define I2C1_ALT_PINMAP     // GPIOB, SCL_PIN = 6, SDA_PIN = 7
 
-#if TRINAMIC_ENABLE
-#define HAS_BOARD_INIT
-#endif
-
 // If we want to debug, we need to use USART1
 //#if defined(DEBUG) && defined(USB_SERIAL_CDC)
 //#undef USB_SERIAL_CDC

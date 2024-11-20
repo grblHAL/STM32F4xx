@@ -482,15 +482,6 @@ void TMC_UART_IRQHandler (void)
     }
 }
 
-#if defined(BOARD_FYSETC_S6) || defined(BOARD_BTT_SKR_PRO_1_1) || defined(BOARD_BTT_SKR_PRO_1_2) || defined(BOARD_MKS_ROBIN_NANO_30) || defined(BOARD_MKS_EAGLE)
-
-void board_init (void)
-{
-    tmc_uart_init();
-}
-
-#endif
-
 #endif // TRINAMIC_UART_ENABLE == 2
 
 

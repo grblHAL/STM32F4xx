@@ -95,9 +95,6 @@ PD15 SM4
 #define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #endif
 
-//#define IS_NUCLEO_BOB
-//#define HAS_BOARD_INIT
-
 #if SDCARD_ENABLE
 #define SDCARD_SDIO             1
 #endif

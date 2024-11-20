@@ -2983,7 +2983,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "241017";
+    hal.driver_version = "241119";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3229,6 +3229,14 @@ bool driver_init (void)
 
 #endif
 
+#if TRINAMIC_SPI_ENABLE
+    extern void tmc_spi_init (void);
+    tmc_spi_init();
+#elif TRINAMIC_UART_ENABLE
+    extern void tmc_uart_init (void);
+    tmc_uart_init();
+#endif
+
 #ifdef HAS_BOARD_INIT
     board_init();
 #endif
@@ -3279,19 +3287,8 @@ void STEPPER_TIMER_IRQHandler (void)
    finish, if stepper driver interrupts is disabled after completing a move.
    NOTE: Interrupt collisions between the serial and stepper interrupts can cause delays by
    a few microseconds, if they execute right before one another. Not a big deal, but can
-   cause issues at high step rates if another high frequency asynchronous interrupt is
-   added to Grbl.
+   cause issues at high step rates if another high frequency asynchronous interrupt is added.
 */
-
-// This interrupt is used only when STEP_PULSE_DELAY is enabled. Here, the step pulse is
-// initiated after the STEP_PULSE_DELAY time period has elapsed. The ISR TIMER2_OVF interrupt
-// will then trigger after the appropriate settings.pulse_microseconds, as in normal operation.
-// The new timing between direction, step pulse, and step complete events are setup in the
-// st_wake_up() routine.
-
-// This interrupt is enabled when Grbl sets the motor port bits to execute
-// a step. This ISR resets the motor port after a short period (settings.pulse_microseconds)
-// completing one step cycle.
 void PULSE_TIMER_IRQHandler (void)
 {
     uint32_t irq = PULSE_TIMER->SR & PULSE_TIMER->DIER;
