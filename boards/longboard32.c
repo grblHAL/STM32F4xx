@@ -41,6 +41,7 @@ static probe_state_t state = {
 
 static bool probe_away;
 static xbar_t toolsetter;
+static driver_setup_ptr driver_setup;
 static on_report_options_ptr on_report_options;
 static probe_get_state_ptr SLB_get_state;
 static probe_configure_ptr SLB_probeConfigure;
@@ -78,13 +79,20 @@ static void probeSLBConfigure (bool is_probe_away, bool probing)
         SLB_probeConfigure(is_probe_away, probing);
 }
 
-static void report_options (bool newopt)
+static void onReportOptions (bool newopt)
 {
     on_report_options(newopt);
 
     if(!newopt) {
         report_plugin("SLB Probing", "0.02");
     }
+}
+
+static bool driverSetup (settings_t *settings)
+{
+    hal.homing.get_state == NULL; // for now, StallGuard sensorless homing not yet in use. Later check if sensorless homing is enabled.
+
+    return driver_setup(settings);
 }
 
 static void clear_ringleds (void *data)
@@ -116,6 +124,9 @@ void board_init (void)
 
         ioport_claim(Port_Digital, Port_Input, &tool_probe_port, "Toolsetter");
 
+        driver_setup = hal.driver_setup;
+        hal.driver_setup = driverSetup;
+
         SLB_get_state = hal.probe.get_state;
         hal.probe.get_state = probeSLBGetState;
 
@@ -123,7 +134,7 @@ void board_init (void)
         hal.probe.configure = probeSLBConfigure;
 
         on_report_options = grbl.on_report_options;
-        grbl.on_report_options = report_options;
+        grbl.on_report_options = onReportOptions;
 
         hal.driver_cap.toolsetter = On;
 

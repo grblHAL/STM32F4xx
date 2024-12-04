@@ -1520,8 +1520,6 @@ inline static home_signals_t homeGetState (void)
     signals.a.mask = settings.home_invert.mask;
 #endif
 
-    hal.homing.get_state = NULL;
-
 #if HOME_INMODE == GPIO_BITBAND
     signals.a.x = DIGITAL_IN(X_HOME_PORT, X_HOME_PIN);
     signals.a.y = DIGITAL_IN(Y_HOME_PORT, Y_HOME_PIN);
