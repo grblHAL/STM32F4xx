@@ -72,14 +72,14 @@ static pwm_signal_t spindle_timer = {0};
 inline static void spindle_off (void)
 {
 #ifdef SPINDLE_ENABLE_PIN
-    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, settings.spindle.invert.on);
+    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, settings.pwm_spindle.invert.on);
 #endif
 }
 
 inline static void spindle_on (spindle_ptrs_t *spindle)
 {
 #ifdef SPINDLE_ENABLE_PIN
-    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, !settings.spindle.invert.on);
+    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, !settings.pwm_spindle.invert.on);
 #endif
 #if SPINDLE_ENCODER_ENABLE
     if(spindle->reset_data)
@@ -90,7 +90,7 @@ inline static void spindle_on (spindle_ptrs_t *spindle)
 inline static void spindle_dir (bool ccw)
 {
 #ifdef SPINDLE_DIRECTION_PIN
-    DIGITAL_OUT(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN, ccw ^ settings.spindle.invert.ccw);
+    DIGITAL_OUT(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN, ccw ^ settings.pwm_spindle.invert.ccw);
 #else
     UNUSED(ccw);
 #endif
@@ -180,18 +180,18 @@ static bool spindleConfig (spindle_ptrs_t *spindle)
 
         uint32_t prescaler = 1, clock_hz = pwm_get_clock_hz(&spindle_timer);
 
-        if(spindle_precompute_pwm_values(spindle, &spindle_pwm, &settings.spindle, clock_hz / prescaler)) {
+        if(spindle_precompute_pwm_values(spindle, &spindle_pwm, &settings.pwm_spindle, clock_hz / prescaler)) {
 
             while(spindle_pwm.period > 65534) {
                 prescaler++;
-                spindle_precompute_pwm_values(spindle, &spindle_pwm, &settings.spindle, clock_hz / prescaler);
+                spindle_precompute_pwm_values(spindle, &spindle_pwm, &settings.pwm_spindle, clock_hz / prescaler);
             }
 
             spindle->set_state = spindleSetStateVariable;
 
-            pwm_config(&spindle_timer, prescaler, spindle_pwm.period, settings.spindle.invert.pwm);
+            pwm_config(&spindle_timer, prescaler, spindle_pwm.period, settings.pwm_spindle.invert.pwm);
 
-            if((spindle_pwm.flags.laser_mode_disable = settings.spindle.flags.laser_mode_disable)) {
+            if((spindle_pwm.flags.laser_mode_disable = settings.pwm_spindle.flags.laser_mode_disable)) {
 #if PPI_ENABLE
                 if(ppi_spindle == spindle)
                     ppi_spindle = NULL;
@@ -222,7 +222,7 @@ static bool spindleConfig (spindle_ptrs_t *spindle)
 // Returns spindle state in a spindle_state_t variable
 static spindle_state_t spindleGetState (spindle_ptrs_t *spindle)
 {
-    spindle_state_t state = {settings.spindle.invert.mask};
+    spindle_state_t state = {settings.pwm_spindle.invert.mask};
 
 #ifdef SPINDLE_ENABLE_PIN
     state.on = DIGITAL_IN(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN);
@@ -230,7 +230,7 @@ static spindle_state_t spindleGetState (spindle_ptrs_t *spindle)
 #ifdef SPINDLE_DIRECTION_PIN
     state.ccw = DIGITAL_IN(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN);
 #endif
-    state.value ^= settings.spindle.invert.mask;
+    state.value ^= settings.pwm_spindle.invert.mask;
 
 #if SPINDLE_ENCODER_ENABLE
     if(spindle->get_data) {
@@ -248,7 +248,7 @@ static spindle_state_t spindleGetState (spindle_ptrs_t *spindle)
 #if DRIVER_SPINDLE1_ENABLE
 
 static spindle_id_t spindle1_id = -1;
-static spindle1_settings_t *spindle_config;
+static spindle1_pwm_settings_t *spindle_config;
 
 #if DRIVER_SPINDLE1_PWM_ENABLE
 
@@ -434,7 +434,7 @@ static spindle_state_t spindle1GetState (spindle_ptrs_t *spindle)
 
 #if DRIVER_SPINDLE1_PWM_ENABLE
 
-static void spindle1_settings_changed (spindle1_settings_t *settings)
+static void spindle1_settings_changed (spindle1_pwm_settings_t *settings)
 {
     spindle1Config(spindle_get_hal(spindle1_id, SpindleHAL_Configured));
 }

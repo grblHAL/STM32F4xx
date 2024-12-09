@@ -90,7 +90,7 @@ static void onReportOptions (bool newopt)
 
 static bool driverSetup (settings_t *settings)
 {
-    hal.homing.get_state == NULL; // for now, StallGuard sensorless homing not yet in use. Later check if sensorless homing is enabled.
+    hal.homing.get_state = NULL; // for now, StallGuard sensorless homing not yet in use. Later check if sensorless homing is enabled.
 
     return driver_setup(settings);
 }

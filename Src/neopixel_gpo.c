@@ -221,12 +221,12 @@ static uint8_t neopixels1_set_intensity (uint8_t intensity)
 
 static void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
 {
-    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip0_length) {
+    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0) {
 
-        if(settings->rgb_strip0_length == 0)
-            settings->rgb_strip0_length = hal.rgb0.num_devices;
+        if(settings->rgb_strip.length0 == 0)
+            settings->rgb_strip.length0 = hal.rgb0.num_devices;
         else
-            hal.rgb0.num_devices = settings->rgb_strip0_length;
+            hal.rgb0.num_devices = settings->rgb_strip.length0;
 
         if(neopixel.leds) {
             free(neopixel.leds);
@@ -244,12 +244,12 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 
 #ifdef LED1_PIN
 
-    if(neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip1_length) {
+    if(neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip.length1) {
 
-        if(settings->rgb_strip1_length == 0)
-            settings->rgb_strip1_length = hal.rgb1.num_devices;
+        if(settings->rgb_strip.length1 == 0)
+            settings->rgb_strip.length1 = hal.rgb1.num_devices;
         else
-            hal.rgb1.num_devices = settings->rgb_strip1_length;
+            hal.rgb1.num_devices = settings->rgb_strip.length1;
 
         if(neopixel1.leds) {
             free(neopixel1.leds);

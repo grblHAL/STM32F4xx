@@ -46,6 +46,8 @@
 #define I2C_ENABLE 1
 #endif
 
+#define OPTS_POSTPROCESSING
+
 #include "grbl/driver_opts.h"
 
 #include "timers.h"
@@ -180,30 +182,6 @@
   #include "boards/generic_map.h"
 #endif
 
-#if DRIVER_SPINDLE_ENABLE && !defined(SPINDLE_ENABLE_PIN)
-#warning "Selected spindle is not supported!"
-#undef DRIVER_SPINDLE_ENABLE
-#define DRIVER_SPINDLE_ENABLE 0
-#endif
-
-#if DRIVER_SPINDLE_DIR_ENABLE && !defined(SPINDLE_DIRECTION_PIN)
-#warning "Selected spindle is not fully supported - no direction output!"
-#undef DRIVER_SPINDLE_DIR_ENABLE
-#define DRIVER_SPINDLE_DIR_ENABLE 0
-#endif
-
-#if DRIVER_SPINDLE_PWM_ENABLE && (!DRIVER_SPINDLE_ENABLE || !defined(SPINDLE_PWM_PIN))
-#warning "Selected spindle is not supported!"
-#undef DRIVER_SPINDLE_PWM_ENABLE
-#define DRIVER_SPINDLE_PWM_ENABLE 0
-#endif
-
-#if DRIVER_SPINDLE_PWM1_ENABLE && (!DRIVER_SPINDLE1_ENABLE || !defined(SPINDLE1_PWM_PIN))
-#warning "Selected spindle 1 is not supported!"
-#undef DRIVER_SPINDLE_PWM1_ENABLE
-#define DRIVER_SPINDLE_PWM1_ENABLE 0
-#endif
-
 #if IS_NUCLEO_DEVKIT == 64 && !defined(IS_NUCLEO_BOB)
 #warning "Board map is not for Nucleo based boards and firmware may not work!"
 #endif
@@ -280,84 +258,15 @@
 
 // End configuration
 
+#include "grbl/driver_opts2.h"
+
 #if EEPROM_ENABLE == 0
 #define FLASH_ENABLE 1
 #else
 #define FLASH_ENABLE 0
 #endif
 
-#if USB_SERIAL_CDC && defined(SERIAL_PORT)
-#define SP0 1
-#else
-#define SP0 0
-#endif
-
-#ifdef SERIAL1_PORT
-#define SP1 1
-#else
-#define SP1 0
-#endif
-
-#ifdef SERIAL2_PORT
-#define SP2 1
-#else
-#define SP2 0
-#endif
-
-#if MODBUS_ENABLE
-#define MODBUS_TEST 1
-#else
-#define MODBUS_TEST 0
-#endif
-
-#if TRINAMIC_UART_ENABLE && !defined(MOTOR_UARTX_PORT)
-#define TRINAMIC_TEST 1
-#else
-#define TRINAMIC_TEST 0
-#endif
-
-#if MPG_ENABLE
-#define MPG_TEST 1
-#else
-#define MPG_TEST 0
-#endif
-
-#if KEYPAD_ENABLE == 2 && MPG_ENABLE == 0
-#define KEYPAD_TEST 1
-#else
-#define KEYPAD_TEST 0
-#endif
-
-#if (MODBUS_TEST + KEYPAD_TEST + MPG_TEST + TRINAMIC_TEST + (BLUETOOTH_ENABLE ? 1 : 0)) > (SP0 + SP1 + SP2)
-#error "Too many options that uses a serial port are enabled!"
-#endif
-
-#undef SP0
-#undef SP1
-#undef SP2
-#undef MODBUS_TEST
-#undef KEYPAD_TEST
-#undef MPG_TEST
-#undef TRINAMIC_TEST
-
-#if MPG_ENABLE == 1 && !defined(MPG_MODE_PIN)
-#error "MPG_MODE_PIN must be defined!"
-#endif
-
-#if TRINAMIC_ENABLE
-  #include "motors/trinamic.h"
-  #ifndef TRINAMIC_MIXED_DRIVERS
-    #define TRINAMIC_MIXED_DRIVERS 1
-  #endif
-#endif
-
 // End configuration
-
-#if KEYPAD_ENABLE == 1 && !defined(I2C_STROBE_PORT)
-#error Keypad plugin not supported!
-#elif I2C_STROBE_ENABLE && !defined(I2C_STROBE_PORT)
-#error I2C strobe not supported!
-#endif
 
 #if SDCARD_ENABLE
 #ifndef SDCARD_SDIO

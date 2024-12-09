@@ -175,12 +175,12 @@ uint8_t neopixels_set_intensity (uint8_t intensity)
 
 void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
 {
-    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip0_length) {
+    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0) {
 
-        if(settings->rgb_strip0_length == 0)
-            settings->rgb_strip0_length = hal.rgb0.num_devices;
+        if(settings->rgb_strip.length0 == 0)
+            settings->rgb_strip.length0 = hal.rgb0.num_devices;
         else
-            hal.rgb0.num_devices = settings->rgb_strip0_length;
+            hal.rgb0.num_devices = settings->rgb_strip.length0;
 
         if(neopixel.leds) {
             free(neopixel.leds);

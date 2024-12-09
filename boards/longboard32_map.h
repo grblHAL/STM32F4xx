@@ -223,7 +223,7 @@
 #define NEOPIXEL_GPO
 #define LED_PORT                GPIOC // rail LED strip
 #define LED_PIN                 9
-#ifndef DEBUG
+#if !defined(DEBUG) && RGB_LED_ENABLE
 #define LED1_PORT               GPIOA // ring LED strip, when enabled SWD debugging is blocked (use $DFU to reenable)
 #define LED1_PIN                13
 #endif
