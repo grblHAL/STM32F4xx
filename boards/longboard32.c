@@ -3,6 +3,7 @@
 
   Part of grblHAL
 
+  Copyright (c) 2024 Terje Io
   Copyright (c) 2022 Expatria Technologies
 
   grblHAL is free software: you can redistribute it and/or modify
@@ -28,8 +29,6 @@
 #ifndef SLB_TLS_AUX_INPUT
 #define SLB_TLS_AUX_INPUT 3
 #endif
-
-extern void tmc_spi_init (void);
 
 static probe_state_t tls_input = {
     .connected = On
@@ -79,6 +78,25 @@ static void probeSLBConfigure (bool is_probe_away, bool probing)
         SLB_probeConfigure(is_probe_away, probing);
 }
 
+#if TRINAMIC_ENABLE
+
+static on_state_change_ptr on_state_change;
+
+static void onStateChanged (sys_state_t state)
+{
+    static bool estop = false;
+
+    if(estop && !(state & (STATE_ESTOP|STATE_ALARM)))
+        trinamic_drivers_reinit();
+
+    estop = state == STATE_ESTOP;
+
+    if(on_state_change)
+        on_state_change(state);
+}
+
+#endif // TRINAMIC_ENABLE
+
 static void onReportOptions (bool newopt)
 {
     on_report_options(newopt);
@@ -109,9 +127,6 @@ static void clear_ringleds (void *data)
 
 void board_init (void)
 {
-#if TRINAMIC_ENABLE
-    tmc_spi_init();
-#endif
     uint8_t tool_probe_port = SLB_TLS_AUX_INPUT;
 
     hal.signals_pullup_disable_cap.probe_triggered = Off; // SLB has isolated inputs
@@ -137,10 +152,17 @@ void board_init (void)
         grbl.on_report_options = onReportOptions;
 
         hal.driver_cap.toolsetter = On;
-
-        protocol_enqueue_foreground_task(clear_ringleds, NULL);
     } else
         protocol_enqueue_foreground_task(report_warning, "SLB toolsetter: configured port number is not available!");
+
+    protocol_enqueue_foreground_task(clear_ringleds, NULL);
+
+#if TRINAMIC_ENABLE
+
+    on_state_change = grbl.on_state_change;
+    grbl.on_state_change = onStateChanged;
+
+#endif
 }
 
 #endif //BOARD_LONGBOARD32

@@ -229,7 +229,7 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct2);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOB,
             .pin = 13,
@@ -266,7 +266,7 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
         HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOC,
             .pin = 10,
@@ -303,7 +303,7 @@ static void if_init (uint8_t motors, axes_signals_t enabled)
         HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
         static const periph_pin_t sck = {
-            .function = Output_SCK,
+            .function = Output_SPICLK,
             .group = PinGroup_SPI,
             .port = GPIOE,
             .pin = 12,

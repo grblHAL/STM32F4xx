@@ -39,7 +39,7 @@
 //#define BOARD_STM32F407VET6_DEV   // F407 based industrial control board
 //#define BOARD_FYSETC_S6           // F446 based 3D Printer board
 //#define BOARD_FLEXI_HAL           // F446 CNC board
-#define BOARD_LONGBOARD32         // F412 Sienci SLB
+//#define BOARD_LONGBOARD32         // F412 Sienci SLB
 //#define BOARD_STM32F401_UNI       // F401 CNC board
 //#define BOARD_MKS_ROBIN_NANO_30   // F407 based 3D Printer board - untested!
 //#define BOARD_MKS_EAGLE           // F407 based 3D Printer board
@@ -100,7 +100,7 @@
 //#define TRINAMIC_ENABLE      2130 // Trinamic TMC2130 stepper driver support.
 //#define TRINAMIC_ENABLE      5160 // Trinamic TMC5160 stepper driver support.
 //#define TRINAMIC_ENABLE      2209 // Trinamic TMC2209 stepper driver support.
-#define TRINAMIC_ENABLE      2660 // Trinamic TMC2660 stepper driver support.
+//#define TRINAMIC_ENABLE      2660 // Trinamic TMC2660 stepper driver support.
 //#define TRINAMIC_R_SENSE      110 // R sense resistance in milliohms, 2130 and 2209 default is 110, 5160 is 75.
 //#define TRINAMIC_I2C            1 // Trinamic I2C - SPI bridge interface.
 //#define TRINAMIC_DEV            1 // Development mode, adds a few M-codes to aid debugging. Do not enable in production code.
