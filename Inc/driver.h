@@ -260,14 +260,6 @@
 
 #include "grbl/driver_opts2.h"
 
-#if EEPROM_ENABLE == 0
-#define FLASH_ENABLE 1
-#else
-#define FLASH_ENABLE 0
-#endif
-
-// End configuration
-
 #if SDCARD_ENABLE
 #ifndef SDCARD_SDIO
 #define SDCARD_SDIO 0

@@ -31,7 +31,9 @@
 #include "serial.h"
 
 #define AUX_DEVICES // until all drivers are converted?
-#define AUX_CONTROLS_OUT
+#ifndef AUX_CONTROLS
+#define AUX_CONTROLS (AUX_CONTROL_SPINDLE|AUX_CONTROL_COOLANT)
+#endif
 
 #include "grbl/protocol.h"
 #include "grbl/motor_pins.h"
@@ -401,11 +403,13 @@ static output_signal_t outputpin[] = {
 #ifdef MOTOR_UARTM5_PIN
     { .id = Bidirectional_MotorUARTM5,  .port = MOTOR_UARTM5_PORT,  .pin = MOTOR_UARTM5_PIN,        .group = PinGroup_MotorUART },
 #endif
+#if !(AUX_CONTROLS & AUX_CONTROL_COOLANT)
 #ifdef COOLANT_FLOOD_PIN
     { .id = Output_CoolantFlood,    .port = COOLANT_FLOOD_PORT,     .pin = COOLANT_FLOOD_PIN,       .group = PinGroup_Coolant },
 #endif
-#ifdef COOLANT_MIST_PIN
+#ifdef COOLANT_MIST_PORT
     { .id = Output_CoolantMist,     .port = COOLANT_MIST_PORT,      .pin = COOLANT_MIST_PIN,        .group = PinGroup_Coolant },
+#endif
 #endif
 #ifdef FLASH_CS_PORT
     { .id = Output_FlashCS,         .port = FLASH_CS_PORT,          .pin = FLASH_CS_PIN,            .group = PinGroup_SPI },
@@ -472,6 +476,18 @@ static output_signal_t outputpin[] = {
 #endif
 #ifdef AUXOUTPUT11_PORT
     { .id = Output_Aux11,           .port = AUXOUTPUT11_PORT,       .pin = AUXOUTPUT11_PIN,         .group = PinGroup_AuxOutput },
+#endif
+#ifdef AUXOUTPUT12_PORT
+    { .id = Output_Aux12,           .port = AUXOUTPUT12_PORT,       .pin = AUXOUTPUT12_PIN,         .group = PinGroup_AuxOutput },
+#endif
+#ifdef AUXOUTPUT13_PORT
+    { .id = Output_Aux13,           .port = AUXOUTPUT13_PORT,       .pin = AUXOUTPUT13_PIN,         .group = PinGroup_AuxOutput },
+#endif
+#ifdef AUXOUTPUT14_PORT
+    { .id = Output_Aux14,           .port = AUXOUTPUT14_PORT,       .pin = AUXOUTPUT14_PIN,         .group = PinGroup_AuxOutput },
+#endif
+#ifdef AUXOUTPUT15_PORT
+    { .id = Output_Aux15,           .port = AUXOUTPUT15_PORT,       .pin = AUXOUTPUT15_PIN,         .group = PinGroup_AuxOutput },
 #endif
 #ifdef AUXOUTPUT0_ANALOG_PORT
     { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_ANALOG_PORT, .pin = AUXOUTPUT0_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog },
@@ -1893,7 +1909,9 @@ static void onSpindleProgrammed (spindle_ptrs_t *spindle, spindle_state_t state,
 static void coolantSetState (coolant_state_t mode)
 {
     mode.value ^= settings.coolant.invert.mask;
+#ifdef COOLANT_FLOOD_PIN
     DIGITAL_OUT(COOLANT_FLOOD_PORT, COOLANT_FLOOD_PIN, mode.flood);
+#endif
 #ifdef COOLANT_MIST_PIN
     DIGITAL_OUT(COOLANT_MIST_PORT, COOLANT_MIST_PIN, mode.mist);
 #endif
@@ -1902,11 +1920,13 @@ static void coolantSetState (coolant_state_t mode)
 // Returns coolant state in a coolant_state_t variable
 static coolant_state_t coolantGetState (void)
 {
-    coolant_state_t state = (coolant_state_t){settings.coolant.invert.mask};
+    coolant_state_t state = { .mask = settings.coolant.invert.mask };
 
+#ifdef COOLANT_FLOOD_PIN
     state.flood = DIGITAL_IN(COOLANT_FLOOD_PORT, COOLANT_FLOOD_PIN);
+#endif
 #ifdef COOLANT_MIST_PIN
-    state.mist  = DIGITAL_IN(COOLANT_MIST_PORT, COOLANT_MIST_PIN);
+    state.mist = DIGITAL_IN(COOLANT_MIST_PORT, COOLANT_MIST_PIN);
 #endif
     state.value ^= settings.coolant.invert.mask;
 
@@ -2912,29 +2932,35 @@ static status_code_t enter_dfu (sys_state_t state, char *args)
     return Status_OK;
 }
 
-const sys_command_t boot_command_list[] = {
-    {"DFU", enter_dfu, { .noargs = On }, { .str = "enter DFU bootloader" } }
-};
-
-static sys_commands_t boot_commands = {
-    .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
-    .commands = boot_command_list
-};
-
 static void onReportOptions (bool newopt)
 {
     if(!newopt)
         hal.stream.write("[PLUGIN:Bootloader Entry v0.02]" ASCII_EOL);
 }
 
-#endif
+#if COPROC_PASSTHRU
+
+#include "grbl/stream_passthru.h"
+
+void stream_passthru_enter (void)
+{
+    extern uint8_t _estack; /* Symbol defined in the linker script */
+
+    uint32_t *addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFE00);
+
+    __disable_irq();
+    *addr = 0xDEADBEAD;
+
+//    SCB_CleanDCache();
+    NVIC_SystemReset();
+}
+
+#endif // COPROC_PASSTHRU
+
+#endif // USB_SERIAL_CDC
 
 // Initialize HAL pointers, setup serial comms and enable EEPROM
 // NOTE: grblHAL is not yet configured (from EEPROM data), driver_setup() will be called when done
-
-#if DRIVER_SPINDLE_ENABLE || DRIVER_SPINDLE1_ENABLE
-extern bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl);
-#endif
 
 bool driver_init (void)
 {
@@ -2981,7 +3007,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "241208";
+    hal.driver_version = "241217";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3109,12 +3135,7 @@ bool driver_init (void)
 #if SPINDLE_SYNC_ENABLE
     hal.driver_cap.spindle_sync = On;
 #endif
-#ifdef COOLANT_FLOOD_PIN
-    hal.coolant_cap.flood = On;
-#endif
-#ifdef COOLANT_MIST_PIN
-    hal.coolant_cap.mist = On;
-#endif
+    hal.coolant_cap.bits = COOLANT_ENABLE;
     hal.driver_cap.software_debounce = On;
     hal.driver_cap.step_pulse_delay = On;
     hal.driver_cap.amass_level = 3;
@@ -3201,11 +3222,10 @@ bool driver_init (void)
     aux_ctrl_claim_ports(aux_claim_explicit, NULL);
 #endif
 
-#if DRIVER_SPINDLE_ENABLE || DRIVER_SPINDLE1_ENABLE
+   extern bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl);
    aux_ctrl_claim_out_ports(aux_out_claim_explicit, NULL);
-#endif
 
-#if DRIVER_SPINDLE_ENABLE ||  DRIVER_SPINDLE1_ENABLE
+#if DRIVER_SPINDLE_ENABLE || DRIVER_SPINDLE1_ENABLE
     extern void driver_spindles_init (void);
     driver_spindles_init();
 #endif
@@ -3219,13 +3239,39 @@ bool driver_init (void)
 
 #if USB_SERIAL_CDC
 
-    // register $DFU bootloader command
+    static const sys_command_t boot_command_list[] = {
+        {"DFU", enter_dfu, { .noargs = On }, { .str = "enter DFU bootloader" } }
+    };
+
+    static sys_commands_t boot_commands = {
+        .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
+        .commands = boot_command_list
+    };
 
     grbl.on_report_options = onReportOptions;
 
     system_register_commands(&boot_commands);
 
-#endif
+#if COPROC_PASSTHRU
+
+    extern uint8_t _estack; /* Symbol defined in the linker script */
+
+    bool enterpt;
+    uint32_t *addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFE00);
+
+    if((enterpt = *addr == 0xDEADBEAD)) {
+        *addr = 0x0;
+        // Reduce USB IRQ priority to lower than the UART port!
+        HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
+        HAL_NVIC_SetPriority(OTG_HS_IRQn, 1, 0);
+        HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+    }
+
+    stream_passthru_init(COPROC_STREAM, 115200, enterpt);
+
+#endif // COPROC_PASSTHRU
+
+#endif // USB_SERIAL_CDC
 
 #if TRINAMIC_SPI_ENABLE
     extern void tmc_spi_init (void);

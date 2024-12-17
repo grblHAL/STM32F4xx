@@ -44,9 +44,9 @@
 
 #if SPINDLE_ENABLE & (1 << SPINDLE_PWM0)
 #undef SPINDLE_ENABLE
-#undef DRIVER_SPINDLE_DIR_ENABLE
+#undef DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
 #define SPINDLE_ENABLE SPINDLE_PWM0_NODIR
-#define DRIVER_SPINDLE_DIR_ENABLE 0
+#define DRIVER_SPINDLE_ENABLE & SPINDLE_DIR 0
 #endif
 
 // Define step pulse output pins.
@@ -97,23 +97,35 @@
 #define AUXOUTPUT0_PIN          5
 #define AUXOUTPUT1_PORT         GPIOA // D12 - spindle enable
 #define AUXOUTPUT1_PIN          6
+#define AUXOUTPUT3_PORT         GPIOB // Coolant flood, A3
+#define AUXOUTPUT3_PIN          0
 
 // Define driver spindle pins
-#if DRIVER_SPINDLE_ENABLE
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
 #define SPINDLE_ENABLE_PORT     AUXOUTPUT1_PORT
 #define SPINDLE_ENABLE_PIN      AUXOUTPUT1_PIN
-#if DRIVER_SPINDLE_PWM_ENABLE
+#endif
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
 #define SPINDLE_PWM_PORT        AUXOUTPUT0_PORT
 #define SPINDLE_PWM_PIN         AUXOUTPUT0_PIN
-#elif DRIVER_SPINDLE_DIR_ENABLE
+#elif DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
 #define SPINDLE_DIRECTION_PORT  AUXOUTPUT0_PORT
 #define SPINDLE_DIRECTION_PIN   AUXOUTPUT0_PIN
 #endif
-#endif //DRIVER_SPINDLE_ENABLE
 
 // Define flood and mist coolant enable output pins.
-#define COOLANT_FLOOD_PORT      GPIOB // A3
-#define COOLANT_FLOOD_PIN       0
+#if COOLANT_ENABLE & COOLANT_FLOOD
+#define COOLANT_FLOOD_PORT      AUXOUTPUT3_PORT
+#define COOLANT_FLOOD_PIN       AUXOUTPUT3_PIN
+#endif
+#if COOLANT_ENABLE & COOLANT_MIST
+#undef COOLANT_ENABLE
+#ifdef COOLANT_FLOOD_PIN
+#define COOLANT_ENABLE COOLANT_FLOOD
+#else
+#define COOLANT_ENABLE 0
+#endif
+#endif
 
 // Define user-control CONTROLs (cycle start, reset, feed hold) input pins.
 #define CONTROL_PORT            GPIOA // A0

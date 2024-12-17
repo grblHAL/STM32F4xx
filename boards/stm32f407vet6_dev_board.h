@@ -185,26 +185,34 @@ PD15 SM4
 #define AUXOUTPUT5_PIN          6
 #define AUXOUTPUT6_PORT         GPIOC // Spindle enable
 #define AUXOUTPUT6_PIN          7
+#define AUXOUTPUT7_PORT         GPIOD // Coolant flood
+#define AUXOUTPUT7_PIN          8
+#define AUXOUTPUT8_PORT         GPIOD // Coolant mist
+#define AUXOUTPUT8_PIN          9
 
 // Define driver spindle pins
-#if DRIVER_SPINDLE_ENABLE
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
 #define SPINDLE_ENABLE_PORT     AUXOUTPUT6_PORT
 #define SPINDLE_ENABLE_PIN      AUXOUTPUT6_PIN
-#if DRIVER_SPINDLE_PWM_ENABLE
+#endif
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
 #define SPINDLE_PWM_PORT        AUXOUTPUT4_PORT
 #define SPINDLE_PWM_PIN         AUXOUTPUT4_PIN
 #endif
-#if DRIVER_SPINDLE_DIR_ENABLE
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
 #define SPINDLE_DIRECTION_PORT  AUXOUTPUT5_PORT
 #define SPINDLE_DIRECTION_PIN   AUXOUTPUT5_PIN
 #endif
-#endif //DRIVER_SPINDLE_ENABLE
 
 // Define flood and mist coolant enable output pins.
-#define COOLANT_FLOOD_PORT      GPIOD
-#define COOLANT_FLOOD_PIN       8
-#define COOLANT_MIST_PORT       GPIOD
-#define COOLANT_MIST_PIN        9
+#if COOLANT_ENABLE & COOLANT_FLOOD
+#define COOLANT_FLOOD_PORT      AUXOUTPUT7_PORT
+#define COOLANT_FLOOD_PIN       AUXOUTPUT7_PIN
+#endif
+#if COOLANT_ENABLE & COOLANT_MIST
+#define COOLANT_MIST_PORT       AUXOUTPUT8_PORT
+#define COOLANT_MIST_PIN        AUXOUTPUT8_PIN
+#endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 /*
