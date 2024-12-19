@@ -58,6 +58,7 @@ build_flags =
 lib_deps =
    lwip
    networking
+   webui
 lib_extra_dirs =
 
 [env]
