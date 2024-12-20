@@ -36,6 +36,7 @@ lib_deps =
   FatFs
   sdcard
   spindle
+  plugins
   embroidery
   Drivers/FATFS/App
   Drivers/FATFS/Target
