@@ -2828,8 +2828,6 @@ static bool driver_setup (settings_t *settings)
 
 #if RTC_ENABLE
 
-static bool rtc_started = false;
-
 static RTC_HandleTypeDef hrtc = {
     .Instance = RTC,
     .Init.HourFormat = RTC_HOURFORMAT_24,
@@ -2845,43 +2843,27 @@ static bool set_rtc_time (struct tm *time)
     RTC_TimeTypeDef sTime = {0};
     RTC_DateTypeDef sDate = {0};
 
-    if(!rtc_started) {
-
-        RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {
-            .PeriphClockSelection = RCC_PERIPHCLK_RTC,
-            .RTCClockSelection = RCC_RTCCLKSOURCE_LSE
-        };
-
-        if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) == HAL_OK) {
-            __HAL_RCC_RTC_ENABLE();
-            rtc_started = HAL_RTC_Init(&hrtc) == HAL_OK;
-        }
+    sTime.Hours = time->tm_hour;
+    sTime.Minutes = time->tm_min;
+    sTime.Seconds = time->tm_sec;
+    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) == HAL_OK) {
+        sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+        sDate.Month = time->tm_mon + 1;
+        sDate.Date = time->tm_mday;
+        sDate.Year = time->tm_year - 100;
+        hal.driver_cap.rtc_set = (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) == HAL_OK);
     }
 
-    if(rtc_started) {
-
-        sTime.Hours = time->tm_hour;
-        sTime.Minutes = time->tm_min;
-        sTime.Seconds = time->tm_sec;
-        sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-        sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-        if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) == HAL_OK) {
-            sDate.WeekDay = RTC_WEEKDAY_MONDAY;
-            sDate.Month = time->tm_mon + 1;
-            sDate.Date = time->tm_mday;
-            sDate.Year = time->tm_year - 100;
-            HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-        }
-    }
-
-    return rtc_started;
+    return hal.driver_cap.rtc_set;
 }
 
 static bool get_rtc_time (struct tm *time)
 {
     bool ok = false;
 
-    if(rtc_started) {
+    if(hal.driver_cap.rtc_set) {
 
         RTC_TimeTypeDef sTime = {0};
         RTC_DateTypeDef sDate = {0};
@@ -3007,7 +2989,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "241217";
+    hal.driver_version = "241221";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3070,8 +3052,30 @@ bool driver_init (void)
     hal.periph_port.set_pin_description = setPeriphPinDescription;
 
 #if RTC_ENABLE
-    hal.rtc.get_datetime = get_rtc_time;
-    hal.rtc.set_datetime = set_rtc_time;
+
+    RCC_OscInitTypeDef OscInitStruct;
+
+    HAL_RCC_GetOscConfig(&OscInitStruct);
+
+    if(OscInitStruct.OscillatorType & (RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_LSE)) {
+
+        RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {
+            .PeriphClockSelection = RCC_PERIPHCLK_RTC,
+            .RTCClockSelection = (OscInitStruct.OscillatorType & RCC_OSCILLATORTYPE_LSI) ? RCC_RTCCLKSOURCE_LSI : RCC_RTCCLKSOURCE_LSE
+        };
+
+        if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) == HAL_OK) {
+
+            __HAL_RCC_RTC_ENABLE();
+
+            if((hal.driver_cap.rtc = HAL_RTC_Init(&hrtc) == HAL_OK)) {
+                hal.rtc.get_datetime = get_rtc_time;
+                hal.rtc.set_datetime = set_rtc_time;
+                // TODO: read the time and set hal.driver_cap.rtc_set if >= core build date?
+            }
+        }
+    }
+
 #endif
 
     serialRegisterStreams();

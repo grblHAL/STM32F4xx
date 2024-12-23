@@ -64,8 +64,9 @@ static void SystemClock_Config (void)
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
     RCC_OscInitTypeDef RCC_OscInitStruct = {
-        .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+        .OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE,
         .HSEState = RCC_HSE_ON,
+        .LSIState = RCC_LSI_ON,
         .PLL.PLLState = RCC_PLL_ON,
         .PLL.PLLSource = RCC_PLLSOURCE_HSE,
         .PLL.PLLM = 16,
