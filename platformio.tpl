@@ -33,10 +33,10 @@ lib_deps =
   trinamic
   odometer
   fans
+  plugins
   FatFs
   sdcard
   spindle
-  plugins
   embroidery
   Drivers/FATFS/App
   Drivers/FATFS/Target
@@ -69,6 +69,7 @@ framework = stm32cube
 # Do not produce .a files for lib deps (which would prevent them from overriding weak symbols)
 lib_archive = no
 lib_ldf_mode = off
+extra_scripts = post:extra_script.py
 
 [env:%env_name%]
 board = %board%

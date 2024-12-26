@@ -86,10 +86,13 @@ static void onStateChanged (sys_state_t state)
 {
     static bool estop = false;
 
-    if(estop && !(state & (STATE_ESTOP|STATE_ALARM)))
+    if(estop && !(state & (STATE_ESTOP|STATE_ALARM))) {
+        estop = false;
         trinamic_drivers_reinit();
+    }
 
-    estop = state == STATE_ESTOP;
+    if(state == STATE_ESTOP)
+        estop = true;
 
     if(on_state_change)
         on_state_change(state);
@@ -101,9 +104,8 @@ static void onReportOptions (bool newopt)
 {
     on_report_options(newopt);
 
-    if(!newopt) {
+    if(!newopt)
         report_plugin("SLB Probing", "0.02");
-    }
 }
 
 static bool driverSetup (settings_t *settings)
