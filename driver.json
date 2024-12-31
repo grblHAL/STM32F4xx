@@ -26,6 +26,7 @@
     "estop": 1,
     "mpg_mode": 1,
     "sdcard": 1,
+    "ethernet": 1,
     "wiznet": 1,
     "rgb_out": 2,
     "mcp3221_adc": 1,
@@ -464,6 +465,34 @@
           "TMC_X_ENABLE": 1,
           "TMC_Y_ENABLE": 1,
           "TMC_Z_ENABLE": 1
+      }
+    },
+    {
+      "name": "JZ-F407VET6 control board",
+      "notes": "Preliminary - pin map subject to change.",
+      "symbol": "BOARD_STM32F407VET6_DEV",
+      "URL": "https://github.com/yym36100/stm32f407_industrial_control_board",
+      "MAP": "boards/stm32f407vet6_dev_board.h",
+      "caps": {
+        "axes": 5,
+        "usb_cdc": 1,
+        "serial_ports": 2,
+        "safety_door": 0,
+        "digital_in": 0,
+        "digital_out": 0,
+        "eeprom": 0,
+        "fram": 0,
+        "i2c_strobe": 0,
+        "sdcard": 1,
+        "spindle_sync": 0,
+        "rgb_out": 0,
+        "ethernet": 1,
+        "pio_board": "genericSTM32F407VET6",
+        "ldscript": "STM32F407VGTX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F407xx": "",
+          "HSE_VALUE": 25000000
       }
     },
     {

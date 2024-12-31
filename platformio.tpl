@@ -54,18 +54,18 @@ lib_extra_dirs =
 
 [eth_networking]
 build_flags =
-  -I /${ProjName}/LWIP/App
-  -I /${ProjName}/LWIP/Target
-  -I /${ProjName}/Middlewares/Third_Party/LwIP/src/include
-  -I /${ProjName}/Middlewares/Third_Party/LwIP/system
-  -I /${ProjName}/Middlewares/Third_Party/LwIP/src/include/netif
-  -I /${ProjName}/Middlewares/Third_Party/LwIP/src/include/lwip
-  -I /${ProjName}/Drivers/BSP/Components/dp83848
+  -I LWIP/App
+  -I LWIP/dp83848/Target
+  -I Middlewares/Third_Party/LwIP/src/include
+  -I Middlewares/Third_Party/LwIP/system
+  -I Middlewares/Third_Party/LwIP/src/include/netif
+  -I Middlewares/Third_Party/LwIP/src/include/lwip
+  -I Drivers/BSP/Components/dp83848
 lib_deps =
    networking
    webui
    LWIP/App
-   LWIP/Target
+   LWIP/dp83848/Target
    Middlewares/Third_Party/LwIP
    Drivers/BSP/Components/dp83848
 lib_extra_dirs =
@@ -85,7 +85,7 @@ lib_extra_dirs =
 
 [env]
 platform = ststm32
-platform_packages = framework-stm32cubef4 @ ~1.26.2
+platform_packages = framework-stm32cubef4
 framework = stm32cube
 # Do not produce .a files for lib deps (which would prevent them from overriding weak symbols)
 lib_archive = no
