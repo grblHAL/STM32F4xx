@@ -190,7 +190,7 @@
 #error "Nucleo64 based boards does not support USB CDC communication!"
 #endif
 
-#if ETHERNET_ENABLE && !defined(SPI_IRQ_PIN)
+#if ETHERNET_ENABLE && defined(_WIZCHIP_) && !defined(SPI_IRQ_PIN)
 #error "Board does not support ethernet!"
 #endif
 

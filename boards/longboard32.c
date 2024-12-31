@@ -129,15 +129,23 @@ static void clear_ringleds (void *data)
 
 void board_init (void)
 {
+    xbar_t *port;
     uint8_t tool_probe_port = SLB_TLS_AUX_INPUT;
+
+#if defined(MODBUS_DIR_AUX) && !(MODBUS_ENABLE & MODBUS_RTU_DIR_ENABLED)
+
+    if((port = hal.port.get_pin_info(Port_Digital, Port_Output, MODBUS_DIR_AUX)) && !port->mode.claimed) {
+        uint8_t modbus_dir = MODBUS_DIR_AUX;
+        ioport_claim(Port_Digital, Port_Output, &modbus_dir, "N/A");
+    }
+
+#endif
 
     hal.signals_pullup_disable_cap.probe_triggered = Off; // SLB has isolated inputs
 
-    xbar_t *tls = hal.port.get_pin_info(Port_Digital, Port_Input, tool_probe_port);
+    if((port = hal.port.get_pin_info(Port_Digital, Port_Input, tool_probe_port)) && !port->mode.claimed) {
 
-    if(tls && !tls->mode.claimed) {
-
-        memcpy(&toolsetter, tls, sizeof(xbar_t));
+        memcpy(&toolsetter, port, sizeof(xbar_t));
 
         ioport_claim(Port_Digital, Port_Input, &tool_probe_port, "Toolsetter");
 

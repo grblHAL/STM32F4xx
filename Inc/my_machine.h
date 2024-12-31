@@ -78,6 +78,7 @@
 //#define SPINDLE_OFFSET          1 // Uncomment to enable settings for laser spindle XY-offset.
 // **********************
 //#define MODBUS_ENABLE           1 // Set to 1 for auto direction, 2 for direction signal on auxiliary output pin.
+//#define ETHERNET_ENABLE         1 // Ethernet streaming. Uses networking plugin.
 //#define _WIZCHIP_            5500 // Enables ethernet via WIZnet breakout connected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
 //#define WEBUI_ENABLE            3 // Enable ESP3D-WEBUI plugin along with networking and SD card plugins.
                                     // NOTE: Only fully compatible with F412 and F429 MCUs.
@@ -159,7 +160,7 @@
 //#define MDNS_ENABLE         1 // mDNS daemon.
 //#define SSDP_ENABLE         1 // SSDP daemon - requires HTTP enabled.
 //#define MQTT_ENABLE         1 // MQTT client API, only enable if needed by plugin code.
-#if SDCARD_ENABLE  || WEBUI_ENABLE
+#if SDCARD_ENABLE || WEBUI_ENABLE
 //#define FTP_ENABLE         1 // Ftp daemon - requires SD card enabled.
 //#define HTTP_ENABLE         1 // http daemon - requires SD card enabled.
 //#define WEBDAV_ENABLE       1 // webdav protocol - requires http daemon and SD card enabled.

@@ -52,14 +52,35 @@ lib_extra_dirs =
   Middlewares/ST/STM32_USB_Device_Library
   USB_DEVICE
 
-[wiznet_networking]
+[eth_networking]
 build_flags =
-  -I lwip/src/include
-  -I networking/wiznet
+  -I /${ProjName}/LWIP/App
+  -I /${ProjName}/LWIP/Target
+  -I /${ProjName}/Middlewares/Third_Party/LwIP/src/include
+  -I /${ProjName}/Middlewares/Third_Party/LwIP/system
+  -I /${ProjName}/Middlewares/Third_Party/LwIP/src/include/netif
+  -I /${ProjName}/Middlewares/Third_Party/LwIP/src/include/lwip
+  -I /${ProjName}/Drivers/BSP/Components/dp83848
 lib_deps =
-   lwip
    networking
    webui
+   LWIP/App
+   LWIP/Target
+   Middlewares/Third_Party/LwIP
+   Drivers/BSP/Components/dp83848
+lib_extra_dirs =
+
+[wiznet_networking]
+build_flags =
+  -I networking/wiznet
+  -I Middlewares/Third_Party/LwIP/src/include
+  -I Middlewares/Third_Party/LwIP/system
+  -I Middlewares/Third_Party/LwIP/src/include/netif
+  -I Middlewares/Third_Party/LwIP/src/include/lwip
+lib_deps =
+   networking
+   webui
+   Middlewares/Third_Party/LwIP
 lib_extra_dirs =
 
 [env]

@@ -276,7 +276,12 @@ static void SystemClock_Config (void)
    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
     RCC_OscInitTypeDef RCC_OscInitStruct = {
+#if RTC_ENABLE
+        .OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE,
+        .LSEState       = RCC_LSE_ON,
+#else
         .OscillatorType = RCC_OSCILLATORTYPE_HSE,
+#endif
         .HSEState = RCC_HSE_ON,
         .PLL.PLLState = RCC_PLL_ON,
         .PLL.PLLSource = RCC_PLLSOURCE_HSE,

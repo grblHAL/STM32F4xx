@@ -29,6 +29,10 @@
 #error "This board has STM32F412 processor with a 25MHz crystal, select a corresponding build!"
 #endif
 
+#if ETHERNET_ENABLE && _WIZCHIP_ != 5500
+#error "Board has a WZ5500 ethernet chip, please uncomment _WIZCHIP_ in my_machine.h!"
+#endif
+
 #ifndef BOARD_NAME
 #define BOARD_NAME "SuperLongBoard"
 #endif

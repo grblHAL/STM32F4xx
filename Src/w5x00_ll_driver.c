@@ -6,7 +6,7 @@
 
 #include "w5x00_ll_driver.h"
 
-#if ETHERNET_ENABLE && (_WIZCHIP_ == W5100S || _WIZCHIP_ == W5500)
+#if ETHERNET_ENABLE && defined(_WIZCHIP_) && (_WIZCHIP_ == W5100S || _WIZCHIP_ == W5500)
 
 #include <stdio.h>
 

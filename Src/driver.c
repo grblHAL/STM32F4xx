@@ -238,6 +238,9 @@ static input_signal_t inputpin[] = {
 #ifdef SPI_IRQ_PORT
     { .id = Input_SPIIRQ,         .port = SPI_IRQ_PORT,       .pin = SPI_IRQ_PIN,         .group = PinGroup_SPI },
 #endif
+#if SDCARD_ENABLE && defined(SD_DETECT_PIN)
+    { .id = Input_SdCardDetect,   .port = SD_DETECT_PORT,     .pin = SD_DETECT_PIN,       .group = PinGroup_SdCard },
+#endif
 // Aux input pins must be consecutive in this array
 #ifdef AUXINPUT0_PIN
     { .id = Input_Aux0,           .port = AUXINPUT0_PORT,     .pin = AUXINPUT0_PIN,       .group = PinGroup_AuxInput },
@@ -2265,7 +2268,7 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                 case Input_HomeC:
                     input->mode.pull_mode = PullMode_Up; // settings->limits.disable_pullup.c ? PullMode_None : PullMode_Up;
                     break;
-#endif
+#endif // HOME_MASK
                 case Input_SPIIRQ:
                     input->mode.pull_mode = true;
                     input->mode.irq_mode = IRQ_Mode_Falling;
@@ -2293,7 +2296,16 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                     break;
   #endif
 
+#endif // QEI_ENABLE
+
+#if SDCARD_ENABLE && defined(SD_DETECT_PIN)
+                case Input_SdCardDetect:
+                    input->mode.pull_mode = PullMode_Up;
+                    input->mode.irq_mode = IRQ_Mode_Change;
+                    input->mode.debounce = On;
+                    break;
 #endif
+
                 default:
                     break;
             }
@@ -2543,14 +2555,12 @@ static bool bus_ok = false;
 
 static bool sdcard_unmount (FATFS **fs)
 {
-   /*
-    if(card && esp_vfs_fat_sdcard_unmount("/sdcard", card) == ESP_OK) {
-        card = NULL;
-        bus_ok = false;
-        spi_bus_free(SDSPI_DEFAULT_HOST);
-    }
-*/
-    return false; // card == NULL;
+    bool ok;
+
+    if((ok = f_unmount(SDPath) == FR_OK))
+        FATFS_UnLinkDriver(SDPath);
+
+    return ok;
 }
 
 static char *sdcard_mount (FATFS **fs)
@@ -2567,47 +2577,13 @@ static char *sdcard_mount (FATFS **fs)
         if(*fs == NULL)
             *fs = malloc(sizeof(FATFS));
 
-        if(*fs && f_mount(*fs, "0:/", 1) != FR_OK) {
+        if(*fs && f_mount(*fs, SDPath, 1) != FR_OK) {
            free(*fs );
            *fs = NULL;
         }
     }
 
-/*
- *
-    if(card == NULL) {
-
-        esp_err_t ret = ESP_FAIL;
-        esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-            .format_if_mount_failed = false,
-            .max_files = 5,
-            .allocation_unit_size = 16 * 1024
-        };
-
-        sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-//        host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
-
-        sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
-        slot_config.gpio_cs = PIN_NUM_CS;
-        slot_config.host_id = host.slot;
-
-        gpio_set_drive_capability(PIN_NUM_CS, GPIO_DRIVE_CAP_3);
-
-        if ((ret = esp_vfs_fat_sdspi_mount("/sdcard", &host, &slot_config, &mount_config, &card)) != ESP_OK)
-            report_message(ret == ESP_FAIL ? "Failed to mount filesystem" : "Failed to initialize SD card", Message_Warning);
-    }
-
-    if(card && fs) {
-        if(*fs == NULL)
-            *fs = malloc(sizeof(FATFS));
-
-        if(*fs && f_mount(*fs, "", 1) != FR_OK) {
-           free(*fs );
-           *fs  = NULL;
-        }
-    }
-*/
-    return "";
+    return SDPath;
 }
 
 #endif // SDCARD_SDIO
@@ -2823,6 +2799,11 @@ static bool driver_setup (settings_t *settings)
         encoder_start(&qei.encoder);
 #endif
 
+#if SDCARD_ENABLE && defined(SD_DETECT_PIN)
+    if(!DIGITAL_IN(SD_DETECT_PORT, SD_DETECT_PIN))
+        sdcard_detect(true);
+#endif
+
     return IOInitDone;
 }
 
@@ -2989,7 +2970,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "241221";
+    hal.driver_version = "241230";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3057,11 +3038,11 @@ bool driver_init (void)
 
     HAL_RCC_GetOscConfig(&OscInitStruct);
 
-    if(OscInitStruct.OscillatorType & (RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_LSE)) {
+    if(OscInitStruct.LSIState || OscInitStruct.LSEState) {
 
         RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {
             .PeriphClockSelection = RCC_PERIPHCLK_RTC,
-            .RTCClockSelection = (OscInitStruct.OscillatorType & RCC_OSCILLATORTYPE_LSI) ? RCC_RTCCLKSOURCE_LSI : RCC_RTCCLKSOURCE_LSE
+            .RTCClockSelection = OscInitStruct.LSEState ? RCC_RTCCLKSOURCE_LSE : RCC_RTCCLKSOURCE_LSI
         };
 
         if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) == HAL_OK) {
@@ -3069,9 +3050,15 @@ bool driver_init (void)
             __HAL_RCC_RTC_ENABLE();
 
             if((hal.driver_cap.rtc = HAL_RTC_Init(&hrtc) == HAL_OK)) {
+
+                struct tm time;
+
+                hal.driver_cap.rtc_set = On;
                 hal.rtc.get_datetime = get_rtc_time;
                 hal.rtc.set_datetime = set_rtc_time;
-                // TODO: read the time and set hal.driver_cap.rtc_set if >= core build date?
+
+                if((hal.driver_cap.rtc_set = get_rtc_time(&time)))
+                    hal.driver_cap.rtc_set = ((time.tm_year + 1900) * 10000 + (time.tm_mon + 1) * 100 + time.tm_mday) >= GRBL_BUILD;
             }
         }
     }
@@ -3190,6 +3177,9 @@ bool driver_init (void)
                 z_limit_pin = input;
 #endif
             limit_inputs.n_pins++;
+        } else if(input->group & PinGroup_SdCard) {
+            if(input->bit & DEVICES_IRQ_MASK)
+                pin_irq[__builtin_ffs(input->bit) - 1] = input;
         }
     }
 
@@ -3391,14 +3381,18 @@ void core_pin_debounce (void *pin)
     if(input->mode.irq_mode == IRQ_Mode_Change ||
          DIGITAL_IN(input->port, input->pin) == (input->mode.irq_mode == IRQ_Mode_Falling ? 0 : 1)) {
 
-        if(input->group & (PinGroup_Control)) {
+        if(input->group & PinGroup_Control) {
             hal.control.interrupt_callback(systemGetState());
         }
         if(input->group & (PinGroup_Limit|PinGroup_LimitMax)) {
             limit_signals_t state = limitsGetState();
-            if(limit_signals_merge(state).value) //TODO: add check for limit switches having same state as when limit_isr were invoked?
+            if(limit_signals_merge(state).value) // TODO: add check for limit switches having same state as when limit_isr were invoked?
                 hal.limits.interrupt_callback(state);
         }
+#if SDCARD_ENABLE && defined(SD_DETECT_PIN)
+        if(input->group & PinGroup_SdCard)
+            sdcard_detect(!DIGITAL_IN(SD_DETECT_PORT, SD_DETECT_PIN)); // TODO: add check for having same state as when isr were invoked?
+#endif
     }
 
 #ifdef Z_LIMIT_POLL
@@ -3461,7 +3455,7 @@ void EXTI0_IRQHandler(void)
         __HAL_GPIO_EXTI_CLEAR_IT(ifg);
 #if CONTROL_MASK & (1<<0)
         hal.control.interrupt_callback(systemGetState());
-#elif LIMIT_MASK & (1<<0)
+#elif (LIMIT_MASK|SD_DETECT_BIT) & (1<<0)
         core_pin_irq(ifg);
 #elif SPI_IRQ_BIT & (1<<0)
         if(spi_irq.callback)
@@ -3493,7 +3487,7 @@ void EXTI1_IRQHandler(void)
         __HAL_GPIO_EXTI_CLEAR_IT(ifg);
 #if CONTROL_MASK & (1<<1)
         hal.control.interrupt_callback(systemGetState());
-#elif LIMIT_MASK & (1<<1)
+#elif (LIMIT_MASK|SD_DETECT_BIT) & (1<<1)
         core_pin_irq(ifg);
 #elif SPI_IRQ_BIT & (1<<1)
         if(spi_irq.callback)
@@ -3525,7 +3519,7 @@ void EXTI2_IRQHandler(void)
         __HAL_GPIO_EXTI_CLEAR_IT(ifg);
 #if CONTROL_MASK & (1<<2)
         hal.control.interrupt_callback(systemGetState());
-#elif LIMIT_MASK & (1<<2)
+#elif (LIMIT_MASK|SD_DETECT_BIT) & (1<<2)
         core_pin_irq(ifg);
 #elif SPI_IRQ_BIT & (1<<2)
         if(spi_irq.callback)
@@ -3557,7 +3551,7 @@ void EXTI3_IRQHandler(void)
         __HAL_GPIO_EXTI_CLEAR_IT(ifg);
 #if CONTROL_MASK & (1<<3)
         hal.control.interrupt_callback(systemGetState());
-#elif LIMIT_MASK & (1<<3)
+#elif (LIMIT_MASK|SD_DETECT_BIT) & (1<<3)
         core_pin_irq(ifg);
 #elif SPI_IRQ_BIT & (1<<3)
         if(spi_irq.callback)
@@ -3589,7 +3583,7 @@ void EXTI4_IRQHandler(void)
         __HAL_GPIO_EXTI_CLEAR_IT(ifg);
 #if CONTROL_MASK & (1<<4)
         hal.control.interrupt_callback(systemGetState());
-#elif LIMIT_MASK & (1<<4)
+#elif (LIMIT_MASK|SD_DETECT_BIT) & (1<<4)
         core_pin_irq(ifg);
 #elif SPI_IRQ_BIT & (1<<4)
         if(spi_irq.callback)
@@ -3646,8 +3640,8 @@ void EXTI9_5_IRQHandler(void)
         if(ifg & CONTROL_MASK)
             hal.control.interrupt_callback(systemGetState());
 #endif
-#if LIMIT_MASK & 0x03E0
-        if(ifg & LIMIT_MASK)
+#if (LIMIT_MASK|SD_DETECT_BIT) & 0x03E0
+        if(ifg & (LIMIT_MASK|SD_DETECT_BIT))
             core_pin_irq(ifg);
 #endif
 #if AUXINPUT_MASK & 0x03E0
@@ -3692,8 +3686,8 @@ void EXTI15_10_IRQHandler(void)
         if(ifg & CONTROL_MASK)
             hal.control.interrupt_callback(systemGetState());
 #endif
-#if LIMIT_MASK & 0xFC00
-        if(ifg & LIMIT_MASK)
+#if (LIMIT_MASK|SD_DETECT_BIT) & 0xFC00
+        if(ifg & (LIMIT_MASK|SD_DETECT_BIT))
             core_pin_irq(ifg);
 #endif
 #if AUXINPUT_MASK & 0xFC00

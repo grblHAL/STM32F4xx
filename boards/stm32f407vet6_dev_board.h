@@ -19,14 +19,33 @@
   along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
+// https://github.com/art103/JZ-F407VET6
+
 #if N_ABC_MOTORS > 2
 #error "Axis configuration is not supported!"
 #endif
 
-#define BOARD_NAME "STM32F407VET6 Dev Board"
-#define BOARD_URL "https://github.com/terjeio/CNC_Breakout_Nucleo64"
+#if !defined(STM32F407xx) || HSE_VALUE != 25000000
+#error "This board has STM32F407 processor with a 25MHz crystal, select a corresponding build!"
+#endif
+
+#if ETHERNET_ENABLE && defined(_WIZCHIP_)
+#error "Board has RMII ethernet chip, please comment out _WIZCHIP_ in my_machine.h!"
+#endif
+
+#define BOARD_NAME "JZ-F407VET6 Dev Board"
+#define BOARD_URL "https://github.com/yym36100/stm32f407_industrial_control_board"
+
+/* !! PRELIMINARY !! */
 
 /*
+
+P3:
+-------------------
+GND  -  1  2 - 3V3
+PE7  -  3  4 - PE8
+PB10 -  5  6 - PC3
+PC2  -  7  8 - PE9
 
 P4:
 -------------------
@@ -50,12 +69,20 @@ PD9  - 11 12 - PD10
 PB1  - 13 14 - PD8
 PB0  - 15 16 - NC
 
+P7:
+--------
+GND  - 1
+PE2  - 2
+3V3  - 3
+
+--
+
 PA0 - SS
-PA3 - LX
-PA4 - LY
-PA5 LZ
-PA6 LM3
-PA8 LM4
+PA3 -
+PA4 - LX
+PA5 - LY
+PA6 - LZ
+PA8 - LM3
 PB0 - SPWM
 PB1 - Start
 PB7 - Hold
@@ -65,13 +92,15 @@ PC7 - SPDIR
 PC13 - DOOR
 PE0 DM4
 PE1 DM3
+PE2 -> P7 hdr
 PE4 DX
 PE5 DY
 PE6 DZ
+PD3 SD detect
 PD4 SEna
 PD8 FLOOD
 PD9 MIST
-PD10
+PD10 - LM4
 PD11 SX
 PD12 SY
 PD13 SZ
@@ -90,16 +119,21 @@ PD15 SM4
 //#define EEPROM_IS_FRAM  1
 #endif
 */
-#define SERIAL_PORT     1   // GPIOA: TX = 9, RX = 10
+#define SERIAL_PORT             1   // GPIOA: TX = 9, RX = 10
+
 #if I2C_ENABLE
-#define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
+#define I2C_PORT                1   // GPIOB: SCL = 8, SDA = 9
 #endif
 
 #if SDCARD_ENABLE
 #define SDCARD_SDIO             1
+#define SD_DETECT_PORT GPIOD
+#define SD_DETECT_PIN 3
 #endif
 
-#define SPI_PORT               21   // GOPIB: SCK = 10, GPIOC: MISO - 2, MOSI - 3
+#define RTC_ENABLE              1
+
+//#define SPI_PORT               21   // GOPIB: SCK = 10, GPIOC: MISO - 2, MOSI - 3
 
 // Define step pulse output pins.
 
@@ -138,9 +172,9 @@ PD15 SM4
 
 // Define homing/hard limit switch input pins.
 #define LIMIT_PORT              GPIOA
-#define X_LIMIT_PIN             3
-#define Y_LIMIT_PIN             4
-#define Z_LIMIT_PIN             5
+#define X_LIMIT_PIN             4
+#define Y_LIMIT_PIN             5
+#define Z_LIMIT_PIN             6
 #define LIMIT_INMODE            GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
@@ -151,7 +185,7 @@ PD15 SM4
 #define M3_DIRECTION_PORT       GPIOE
 #define M3_DIRECTION_PIN        0
 #define M3_LIMIT_PORT           GPIOA
-#define M3_LIMIT_PIN            6
+#define M3_LIMIT_PIN            8
 #endif
 
 // Define ganged axis or B axis step pulse and step direction output pins.
@@ -161,57 +195,47 @@ PD15 SM4
 #define M4_STEP_PIN             15
 #define M4_DIRECTION_PORT       GPIOE
 #define M4_DIRECTION_PIN        1
-#define M4_LIMIT_PORT           GPIOA
-#define M4_LIMIT_PIN            8
+#define M4_LIMIT_PORT           GPIOD
+#define M4_LIMIT_PIN            10
 #endif
 
-/*
-#define AUXOUTPUT0_PORT         GPIOB // Aux 0
-#define AUXOUTPUT0_PIN          15
-#if !ETHERNET_ENABLE
-#define AUXOUTPUT1_PORT         GPIOB // Aux 1
-#define AUXOUTPUT1_PIN          2
+#define AUXOUTPUT0_PORT         GPIOB // Spindle PWM
+#define AUXOUTPUT0_PIN          0
+#define AUXOUTPUT1_PORT         GPIOC // Spindle direction
+#define AUXOUTPUT1_PIN          6
+#define AUXOUTPUT2_PORT         GPIOC // Spindle enable
+#define AUXOUTPUT2_PIN          7
+#define AUXOUTPUT3_PORT         GPIOD // Coolant flood
+#define AUXOUTPUT3_PIN          8
+#define AUXOUTPUT4_PORT         GPIOD // Coolant mist
+#define AUXOUTPUT4_PIN          9
+#if MODBUS_ENABLE & MODBUS_RTU_ENABLED
+#define AUXOUTPUT5_PORT         GPIOD // Modbus direction
+#define AUXOUTPUT5_PIN          7
 #endif
-#ifndef SPI_PORT
-#define AUXOUTPUT2_PORT         GPIOA // SDO
-#define AUXOUTPUT2_PIN          6
-#define AUXOUTPUT3_PORT         GPIOA // SCK
-#define AUXOUTPUT3_PIN          5
-#endif
-*/
-#define AUXOUTPUT4_PORT         GPIOB // Spindle PWM
-#define AUXOUTPUT4_PIN          0
-#define AUXOUTPUT5_PORT         GPIOC // Spindle direction
-#define AUXOUTPUT5_PIN          6
-#define AUXOUTPUT6_PORT         GPIOC // Spindle enable
-#define AUXOUTPUT6_PIN          7
-#define AUXOUTPUT7_PORT         GPIOD // Coolant flood
-#define AUXOUTPUT7_PIN          8
-#define AUXOUTPUT8_PORT         GPIOD // Coolant mist
-#define AUXOUTPUT8_PIN          9
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
-#define SPINDLE_ENABLE_PORT     AUXOUTPUT6_PORT
-#define SPINDLE_ENABLE_PIN      AUXOUTPUT6_PIN
+#define SPINDLE_ENABLE_PORT     AUXOUTPUT2_PORT
+#define SPINDLE_ENABLE_PIN      AUXOUTPUT2_PIN
 #endif
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
-#define SPINDLE_PWM_PORT        AUXOUTPUT4_PORT
-#define SPINDLE_PWM_PIN         AUXOUTPUT4_PIN
+#define SPINDLE_PWM_PORT        AUXOUTPUT0_PORT
+#define SPINDLE_PWM_PIN         AUXOUTPUT0_PIN
 #endif
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
-#define SPINDLE_DIRECTION_PORT  AUXOUTPUT5_PORT
-#define SPINDLE_DIRECTION_PIN   AUXOUTPUT5_PIN
+#define SPINDLE_DIRECTION_PORT  AUXOUTPUT1_PORT
+#define SPINDLE_DIRECTION_PIN   AUXOUTPUT1_PIN
 #endif
 
 // Define flood and mist coolant enable output pins.
 #if COOLANT_ENABLE & COOLANT_FLOOD
-#define COOLANT_FLOOD_PORT      AUXOUTPUT7_PORT
-#define COOLANT_FLOOD_PIN       AUXOUTPUT7_PIN
+#define COOLANT_FLOOD_PORT      AUXOUTPUT3_PORT
+#define COOLANT_FLOOD_PIN       AUXOUTPUT3_PIN
 #endif
 #if COOLANT_ENABLE & COOLANT_MIST
-#define COOLANT_MIST_PORT       AUXOUTPUT8_PORT
-#define COOLANT_MIST_PIN        AUXOUTPUT8_PIN
+#define COOLANT_MIST_PORT       AUXOUTPUT4_PORT
+#define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
 #endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
@@ -343,11 +367,11 @@ PD15 SM4
 #endif
 
 #if MODBUS_ENABLE & MODBUS_RTU_ENABLED
-#define SERIAL1_PORT           21 // GPIOD: TX = 5, RX = 6
-#if MODBUS_ENABLE & MODBUS_RTU_DIR_ENABLED
+#undef MODBUS_ENABLE
+#define MODBUS_ENABLE (MODBUS_RTU_ENABLED|MODBUS_RTU_DIR_ENABLED)
+#define SERIAL1_PORT           21   // GPIOD: TX = 5, RX = 6
 #define MODBUS_RTU_STREAM       1
-#define MODBUS_DIR_AUX          0 // GPIOD 7
-#endif
+#define MODBUS_DIR_AUX          5   // GPIOD 7
 #endif
 
 #define FLASH_CS_PORT           GPIOE
