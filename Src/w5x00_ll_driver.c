@@ -99,7 +99,7 @@ void wizchip_reset (void)
         DIGITAL_OUT(hw.rst.port, hw.rst.pin, 0);
         hal.delay_ms(2, NULL);
         DIGITAL_OUT(hw.rst.port, hw.rst.pin, 1);
-        hal.delay_ms(10, NULL);
+        hal.delay_ms(75, NULL);
     }
 }
 

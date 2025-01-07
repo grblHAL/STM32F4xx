@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2024 Terje Io
+  Copyright (c) 2019-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -831,13 +831,12 @@ inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_si
     if(axes.bits) {
 
         uint_fast8_t idx, mask = 1;
-        axes_signals_t step = { .bits = step_out.bits };
 
         step_out.bits ^= settings.steppers.step_invert.bits;
 
         for(idx = 0; idx < N_AXIS; idx++) {
 
-            if((step.bits & mask) && !(axes.bits & mask)) switch(idx) {
+            if(!(axes.bits & mask)) switch(idx) {
 
                 case X_AXIS:
                     DIGITAL_OUT(X_STEP_PORT, X_STEP_PIN, step_out.x);
@@ -2970,7 +2969,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "241230";
+    hal.driver_version = "250107";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
