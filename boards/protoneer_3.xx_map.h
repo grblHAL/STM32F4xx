@@ -42,13 +42,6 @@
 #define SPI_PORT                2 // GPIOB, SCK_PIN = 13, MISO_PIN = 14, MOSI_PIN = 15
 #endif
 
-#if SPINDLE_ENABLE & (1 << SPINDLE_PWM0)
-#undef SPINDLE_ENABLE
-#undef DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
-#define SPINDLE_ENABLE SPINDLE_PWM0_NODIR
-#define DRIVER_SPINDLE_ENABLE & SPINDLE_DIR 0
-#endif
-
 // Define step pulse output pins.
 #define X_STEP_PORT             GPIOA // D2
 #define X_STEP_PIN              10
@@ -100,6 +93,14 @@
 #define AUXOUTPUT3_PORT         GPIOB // Coolant flood, A3
 #define AUXOUTPUT3_PIN          0
 
+// Spindle PWM and dir signals cannot be assigned to the same pin
+#if SPINDLE_ENABLE & (1 << SPINDLE_PWM0)
+#undef SPINDLE_ENABLE
+#undef DRIVER_SPINDLE_ENABLE
+#define SPINDLE_ENABLE SPINDLE_PWM0_NODIR
+#define DRIVER_SPINDLE_ENABLE (SPINDLE_ENA|SPINDLE_PWM)
+#endif
+
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
 #define SPINDLE_ENABLE_PORT     AUXOUTPUT1_PORT
@@ -108,7 +109,8 @@
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
 #define SPINDLE_PWM_PORT        AUXOUTPUT0_PORT
 #define SPINDLE_PWM_PIN         AUXOUTPUT0_PIN
-#elif DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
+#endif
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
 #define SPINDLE_DIRECTION_PORT  AUXOUTPUT0_PORT
 #define SPINDLE_DIRECTION_PIN   AUXOUTPUT0_PIN
 #endif

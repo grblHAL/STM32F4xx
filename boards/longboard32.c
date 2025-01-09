@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2024 Terje Io
+  Copyright (c) 2024-2025 Terje Io
   Copyright (c) 2022 Expatria Technologies
 
   grblHAL is free software: you can redistribute it and/or modify
@@ -134,7 +134,7 @@ void board_init (void)
 
 #if defined(MODBUS_DIR_AUX) && !(MODBUS_ENABLE & MODBUS_RTU_DIR_ENABLED)
 
-    if((port = hal.port.get_pin_info(Port_Digital, Port_Output, MODBUS_DIR_AUX)) && !port->mode.claimed) {
+    if((port = ioport_get_info(Port_Digital, Port_Output, MODBUS_DIR_AUX)) && !port->mode.claimed) {
         uint8_t modbus_dir = MODBUS_DIR_AUX;
         ioport_claim(Port_Digital, Port_Output, &modbus_dir, "N/A");
     }
@@ -143,7 +143,7 @@ void board_init (void)
 
     hal.signals_pullup_disable_cap.probe_triggered = Off; // SLB has isolated inputs
 
-    if((port = hal.port.get_pin_info(Port_Digital, Port_Input, tool_probe_port)) && !port->mode.claimed) {
+    if((port = ioport_get_info(Port_Digital, Port_Input, tool_probe_port)) && !port->mode.claimed) {
 
         memcpy(&toolsetter, port, sizeof(xbar_t));
 

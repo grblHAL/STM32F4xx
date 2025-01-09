@@ -52,7 +52,9 @@
 #define HAS_BOARD_INIT
 #define WIZCHIP_SPI_PRESCALER SPI_BAUDRATEPRESCALER_2
 
-#define TRINAMIC_SPI_PORT 2
+#undef TRINAMIC_ENABLE
+#define TRINAMIC_ENABLE      2660
+#define TRINAMIC_SPI_PORT       2
 
 #if MODBUS_ENABLE
 #define MODBUS_RTU_STREAM       1
@@ -256,18 +258,12 @@
 
 #define AUXINPUT4_PORT          GPIOE // MACRO1
 #define AUXINPUT4_PIN           1
-#define MACRO_1_AUXIN           4
-#define MACRO_1_BUTTONACTION    1
 
 #define AUXINPUT5_PORT          GPIOE // MACRO2
 #define AUXINPUT5_PIN           0
-#define MACRO_2_AUXIN           5
-#define MACRO_2_BUTTONACTION    2
 
 #define AUXINPUT6_PORT          GPIOC // CYC/ST, MACRO3
 #define AUXINPUT6_PIN           11
-#define MACRO_3_AUXIN           6
-#define MACRO_3_BUTTONACTION    4
 
 #define AUXINPUT7_PORT          GPIOD // AUX_IN_3
 #define AUXINPUT7_PIN           15
@@ -355,6 +351,22 @@
 #define SD_CS_PORT              GPIOB
 #define SD_CS_PIN               15
 #endif
+
+#if MACROS_ENABLE
+
+#define MACRO_1_AUXIN_PORT      AUXINPUT4_PORT
+#define MACRO_1_AUXIN_PIN       AUXINPUT4_PIN
+#define MACRO_1_BUTTONACTION    1
+
+#define MACRO_2_AUXIN_PORT      AUXINPUT5_PORT
+#define MACRO_2_AUXIN_PIN       AUXINPUT5_PIN
+#define MACRO_2_BUTTONACTION    2
+
+#define MACRO_3_AUXIN_PORT      AUXINPUT6_PORT
+#define MACRO_3_AUXIN_PIN       AUXINPUT6_PIN
+#define MACRO_3_BUTTONACTION    4
+
+#endif // MACROS_ENABLE
 
 #define CAN_PORT                GPIOD
 #define CAN_RX_PIN              0
