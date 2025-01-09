@@ -519,8 +519,7 @@
       },
       "symbols": {
           "STM32F401xE": "",
-          "NUCLEO_F401": "",
-          "RTC_ENABLE": 1
+          "NUCLEO_F401": ""
       }
     },
     {
