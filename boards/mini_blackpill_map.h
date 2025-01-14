@@ -98,10 +98,10 @@
 #define AUXOUTPUT3_PIN          2
 #define AUXOUTPUT4_PORT         GPIOB // Spindle enable
 #define AUXOUTPUT4_PIN          1
-#define AUXOUTPUT3_PORT         GPIOC // Coolant flood
-#define AUXOUTPUT3_PIN          15
-#define AUXOUTPUT4_PORT         GPIOC // Coolant mist
-#define AUXOUTPUT4_PIN          14
+#define AUXOUTPUT5_PORT         GPIOC // Coolant flood
+#define AUXOUTPUT5_PIN          15
+#define AUXOUTPUT6_PORT         GPIOC // Coolant mist
+#define AUXOUTPUT6_PIN          14
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
@@ -119,12 +119,12 @@
 
 // Define flood and mist coolant enable output pins.
 #if COOLANT_ENABLE & COOLANT_FLOOD
-#define COOLANT_FLOOD_PORT      AUXOUTPUT3_PORT
-#define COOLANT_FLOOD_PIN       AUXOUTPUT3_PIN
+#define COOLANT_FLOOD_PORT      AUXOUTPUT5_PORT
+#define COOLANT_FLOOD_PIN       AUXOUTPUT5_PIN
 #endif
 #if COOLANT_ENABLE & COOLANT_MIST
-#define COOLANT_MIST_PORT       AUXOUTPUT4_PORT
-#define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
+#define COOLANT_MIST_PORT       AUXOUTPUT6_PORT
+#define COOLANT_MIST_PIN        AUXOUTPUT6_PIN
 #endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
