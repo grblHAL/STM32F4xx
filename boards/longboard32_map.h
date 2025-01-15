@@ -62,6 +62,11 @@
 #define MODBUS_ENABLE           (MODBUS_RTU_ENABLED|MODBUS_RTU_DIR_ENABLED)
 #endif
 
+#ifdef MODBUS_DIR_AUX
+#undef MODBUS_DIR_AUX
+#endif
+#define MODBUS_DIR_AUX          4
+
 #if MPG_ENABLE == 1 && !ETHERNET_ENABLE
 #define MPG_MODE_PORT           GPIOA
 #define MPG_MODE_PIN            4
@@ -232,8 +237,6 @@
 #define COOLANT_MIST_PORT       AUXOUTPUT13_PORT
 #define COOLANT_MIST_PIN        AUXOUTPUT13_PIN
 #endif
-
-#define MODBUS_DIR_AUX          4
 
 #define NEOPIXEL_GPO
 #define LED_PORT                GPIOC // rail LED strip

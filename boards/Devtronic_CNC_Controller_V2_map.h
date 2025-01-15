@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2023 @nickshl & Terje Io
+  Copyright (c) 2023-2025 @nickshl & Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -152,6 +152,9 @@
 #if MODBUS_ENABLE
 #define MODBUS_SERIAL_PORT      1
 #define MODBUS_RTU_STREAM       1
+#ifdef MODBUS_DIR_AUX
+#undef MODBUS_DIR_AUX
+#endif
 #define MODBUS_DIR_AUX          4
 #endif
 

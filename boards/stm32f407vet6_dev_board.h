@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2024 Terje Io
+  Copyright (c) 2024-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -371,8 +371,12 @@ PD15 SM4
 #define MODBUS_ENABLE (MODBUS_RTU_ENABLED|MODBUS_RTU_DIR_ENABLED)
 #define SERIAL1_PORT           21   // GPIOD: TX = 5, RX = 6
 #define MODBUS_RTU_STREAM       1
-#define MODBUS_DIR_AUX          5   // GPIOD 7
 #endif
+
+#ifdef MODBUS_DIR_AUX
+#undef MODBUS_DIR_AUX
+#endif
+#define MODBUS_DIR_AUX          5   // GPIOD 7
 
 #define FLASH_CS_PORT           GPIOE
 #define FLASH_CS_PIN            3
