@@ -468,7 +468,7 @@
     {
       "name": "SuperLongBoard External (SLB EXT)",
       "notes": "Preliminary - not tested in a machine.",
-      "symbol": "BOARD_LONGBOARD32 EXT",
+      "symbol": "BOARD_LONGBOARD32_EXT",
       "URL": "https://resources.sienci.com/view/slb-welcome/",
       "MAP": "boards/longboard32_map.h",
       "caps": {
