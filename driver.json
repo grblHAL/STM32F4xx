@@ -466,6 +466,34 @@
       }
     },
     {
+      "name": "SuperLongBoard External (SLB EXT)",
+      "notes": "Preliminary - not tested in a machine.",
+      "symbol": "BOARD_LONGBOARD32 EXT",
+      "URL": "https://resources.sienci.com/view/slb-welcome/",
+      "MAP": "boards/longboard32_map.h",
+      "caps": {
+        "axes": 4,
+        "usb_cdc": 1,
+        "serial_ports": 2,
+        "safety_door": 1,
+        "digital_in": 5,
+        "digital_out": 5,
+        "eeprom": 128,
+        "fram": 0,
+        "i2c_strobe": 1,
+        "sdcard": 1,
+        "spindle_sync": 0,
+        "rgb_out": 2,
+        "wiznet": 5500,
+        "pio_board": "genericSTM32F412VG",
+        "ldscript": "STM32F412VGTX_FLASH.ld"
+      },
+      "symbols": {
+          "STM32F412Vx": "",
+          "RTC_ENABLE": 1
+      }
+    },
+    {
       "name": "JZ-F407VET6 Industrial Control Board",
       "notes": "Preliminary - pin map subject to change.",
       "symbol": "BOARD_STM32F407VET6_DEV",

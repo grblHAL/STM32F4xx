@@ -39,7 +39,8 @@
 //#define BOARD_STM32F407VET6_DEV   // F407 based industrial control board
 //#define BOARD_FYSETC_S6           // F446 based 3D Printer board
 //#define BOARD_FLEXI_HAL           // F446 CNC board
-//#define BOARD_LONGBOARD32         // F412 Sienci SLB
+//#define BOARD_LONGBOARD32         // F412 Sienci SLB, onboard Trinamic drivers version
+//#define BOARD_LONGBOARD32_EXT     // F412 Sienci SLB, external drivers version
 //#define BOARD_STM32F401_UNI       // F401 CNC board
 //#define BOARD_MKS_ROBIN_NANO_30   // F407 based 3D Printer board - untested!
 //#define BOARD_MKS_EAGLE           // F407 based 3D Printer board
@@ -98,6 +99,7 @@
 //#define EMBROIDERY_ENABLE       1 // Embroidery plugin. To be completed.
 //#define PPI_ENABLE              1 // Laser PPI plugin. To be completed.
 //#define LASER_COOLANT_ENABLE    1 // Laser coolant plugin. To be completed.
+//#define LB_CLUSTERS_ENABLE      1 // LaserBurn cluster support.
 //#define TRINAMIC_ENABLE      2130 // Trinamic TMC2130 stepper driver support.
 //#define TRINAMIC_ENABLE      5160 // Trinamic TMC5160 stepper driver support.
 //#define TRINAMIC_ENABLE      2209 // Trinamic TMC2209 stepper driver support.

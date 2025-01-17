@@ -53,10 +53,14 @@
 #define TRUE true
 #define FALSE false
 
+static uint32_t prescaler = SPI_BAUDRATEPRESCALER_256;
+
 /* asserts the CS pin to the card */
 static inline
 void SELECT (void)
 {
+    spi_set_speed(prescaler);
+
     DIGITAL_OUT(SD_CS_PORT, SD_CS_PIN, 0);
 }
 
@@ -65,6 +69,8 @@ static inline
 void DESELECT (void)
 {
     DIGITAL_OUT(SD_CS_PORT, SD_CS_PIN, 1);
+
+//    spi_set_speed(SPI_BAUDRATEPRESCALER_4);
 }
 
 /*--------------------------------------------------------------------------
@@ -135,7 +141,7 @@ void send_initial_clock_train(void)
 {
     unsigned int i = 10;
 
-    spi_set_speed(SPI_BAUDRATEPRESCALER_256);
+    spi_set_speed((prescaler = SPI_BAUDRATEPRESCALER_256));
 
     /* Ensure CS is held high. */
     DESELECT();
@@ -194,7 +200,7 @@ void power_on (void)
 static
 void set_max_speed(void)
 {
-    spi_set_speed(SPI_BAUDRATEPRESCALER_16);
+    prescaler = SPI_BAUDRATEPRESCALER_4;
 }
 
 static

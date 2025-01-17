@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2024 Terje Io
+  Copyright (c) 2019-2025 Terje Io
   Some parts (C) COPYRIGHT STMicroelectronics - code created by IDE
 
   grblHAL is free software: you can redistribute it and/or modify
@@ -59,7 +59,7 @@ static void SystemClock_Config (void)
 
 #ifdef STM32F412Vx
 
-  #ifdef BOARD_LONGBOARD32
+  #if defined(BOARD_LONGBOARD32) || defined(BOARD_LONGBOARD32_EXT)
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 

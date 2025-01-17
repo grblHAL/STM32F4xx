@@ -34,7 +34,11 @@
 #endif
 
 #ifndef BOARD_NAME
+#ifdef BOARD_LONGBOARD32_EXT
+#define BOARD_NAME "SuperLongBoard Ext"
+#else
 #define BOARD_NAME "SuperLongBoard"
+#endif
 #endif
 
 #if EEPROM_ENABLE || SLB_EEPROM_ENABLE
@@ -52,9 +56,13 @@
 #define HAS_BOARD_INIT
 #define WIZCHIP_SPI_PRESCALER SPI_BAUDRATEPRESCALER_2
 
+#ifdef BOARD_LONGBOARD32
 #undef TRINAMIC_ENABLE
 #define TRINAMIC_ENABLE      2660
 #define TRINAMIC_SPI_PORT       2
+#elif TRINAMIC_ENABLE
+#error "SLB EXT does not have Trinamic drivers!"
+#endif
 
 #if MODBUS_ENABLE
 #define MODBUS_RTU_STREAM       1
@@ -118,6 +126,7 @@
 
 // Define ganged axis or A axis step pulse and step direction output pins.
 // Note that because of how grblHAL iterates the axes, the M3 and M4 need to swap
+// TODO: use standard notation for SLB EXT?
 #if (N_ABC_MOTORS == 2) && (N_AXIS == 4)
 
 #define M3_AVAILABLE
@@ -318,6 +327,8 @@
 
 #define CONTROL_INMODE GPIO_BITBAND
 
+#ifdef BOARD_LONGBOARD32
+
 #define TMC_STEALTHCHOP 0
 
 // SPI2 is used: GPIOB pin 12 (SCK) GPIOC pin 2 (MISO) and 3 (MOSI)
@@ -333,6 +344,8 @@
 #else // since the board has soldered drivers the CS pin has to be set high at startup even when the motor is not used
 #define MOTOR_CSM3_PORT         GPIOE
 #define MOTOR_CSM3_PIN          12
+#endif
+
 #endif
 
 #if SDCARD_ENABLE || ETHERNET_ENABLE

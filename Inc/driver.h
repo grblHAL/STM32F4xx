@@ -168,7 +168,7 @@
   #include "boards/halcyon_v1_map.h"
 #elif defined(BOARD_MKS_ROBIN_NANO_30)
   #include "boards/mks_robin_nano_v3.0_map.h"
-#elif defined(BOARD_LONGBOARD32)
+#elif defined(BOARD_LONGBOARD32) || defined(BOARD_LONGBOARD32_EXT)
   #include "boards/longboard32_map.h"
 #elif defined(BOARD_MKS_EAGLE)
   #include "boards/mks_eagle_map.h"

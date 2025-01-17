@@ -30,15 +30,14 @@ static struct {
     st_gpio_t cs;
     st_gpio_t rst;
 } hw;
-static uint32_t prescaler = 0;
+static uint32_t prescaler = WIZCHIP_SPI_PRESCALER;
 
 static void (*irq_callback)(void);
 static volatile bool spin_lock = false;
 
 static void wizchip_select (void)
 {
-    if(prescaler != WIZCHIP_SPI_PRESCALER)
-        prescaler = spi_set_speed(WIZCHIP_SPI_PRESCALER);
+    prescaler = spi_set_speed(WIZCHIP_SPI_PRESCALER);
 
     DIGITAL_OUT(hw.cs.port, hw.cs.pin, 0);
 }
@@ -110,7 +109,9 @@ wizchip_init_err_t wizchip_initialize (void)
     // if(hw.cs.port == NULL)
     //    return error.
 
+    prescaler = WIZCHIP_SPI_PRESCALER;
     wizchip_deselect();
+    prescaler = (uint32_t)-1;
 
     spi_init();
     spi_set_speed(WIZCHIP_SPI_PRESCALER);

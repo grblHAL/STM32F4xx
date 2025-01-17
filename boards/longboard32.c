@@ -24,7 +24,7 @@
 
 #include "grbl/protocol.h"
 
-#if defined(BOARD_LONGBOARD32)
+#if defined(BOARD_LONGBOARD32) || defined(BOARD_LONGBOARD32_EXT)
 
 #ifndef SLB_TLS_AUX_INPUT
 #define SLB_TLS_AUX_INPUT 3
@@ -58,6 +58,8 @@ static probe_state_t probeSLBGetState (void)
         state.triggered &= tls_input.triggered;
     else
         state.triggered |= tls_input.triggered;
+
+    state.tls_triggered = tls_input.triggered;
 
     return state;
 }
