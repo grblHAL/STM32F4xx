@@ -116,18 +116,12 @@
 #define Z_LIMIT_PIN             13
 #define LIMIT_INMODE            GPIO_BITBAND
 
-#define X_HOME_PORT             GPIOA
-#define X_HOME_PIN              15
-#define Y_HOME_PORT             GPIOA
-#define Y_HOME_PIN              1
-#define Z_HOME_PORT             GPIOA
-#define Z_HOME_PIN              2
-#define HOME_INMODE             GPIO_BITBAND
+#ifdef BOARD_LONGBOARD32
 
 // Define ganged axis or A axis step pulse and step direction output pins.
 // Note that because of how grblHAL iterates the axes, the M3 and M4 need to swap
-// TODO: use standard notation for SLB EXT?
-#if (N_ABC_MOTORS == 2) && (N_AXIS == 4)
+// TODO: use standard assignment for SLB EXT?
+#if (N_ABC_MOTORS == 1) && (N_AXIS == 4)
 
 #define M3_AVAILABLE
 #define M3_STEP_PORT            GPIOB
@@ -179,6 +173,37 @@
 #define M4_ENABLE_PIN           10
 #define M4_LIMIT_PORT           GPIOE
 #define M4_LIMIT_PIN            14
+#endif
+#endif
+
+#else // SLB EXT
+
+#if N_ABC_MOTORS > 0
+#define M3_AVAILABLE
+#define M3_STEP_PORT            GPIOE
+#define M3_STEP_PIN             5
+#define M3_DIRECTION_PORT       GPIOE
+#define M3_DIRECTION_PIN        10
+#define M3_LIMIT_PORT           GPIOE
+#define M3_LIMIT_PIN            6
+#define M3_ENABLE_PORT          GPIOC
+#define M3_ENABLE_PIN           7
+#define M3_MOTOR_FAULT_PORT     GPIOA
+#define M3_MOTOR_FAULT_PIN      3
+#endif
+
+#if N_ABC_MOTORS == 2
+#define M4_AVAILABLE
+#define M4_STEP_PORT            GPIOB
+#define M4_STEP_PIN             10
+#define M4_DIRECTION_PORT       GPIOE
+#define M4_DIRECTION_PIN        11
+#define M4_ENABLE_PORT          GPIOC
+#define M4_ENABLE_PIN           10
+#define M4_LIMIT_PORT           GPIOE
+#define M4_LIMIT_PIN            14
+#define M4_MOTOR_FAULT_PORT     GPIOD
+#define M4_MOTOR_FAULT_PIN      2
 #endif
 
 #endif
@@ -292,9 +317,6 @@
 #define AUXINPUT11_PORT         GPIOC // Probe
 #define AUXINPUT11_PIN          4
 
-//#define AUXINPUT12_PORT         GPIOD // External stepper driver alarm (A) or spindle encoder pulse
-//#define AUXINPUT12_PIN          2
-
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #define RESET_PORT              GPIOB
 #define RESET_PIN               12
@@ -329,7 +351,25 @@
 
 #ifdef BOARD_LONGBOARD32
 
+#define AUXINPUT12_PORT         GPIOD // External stepper driver alarm (A) or spindle encoder pulse
+#define AUXINPUT12_PIN          2
+
+#if N_AXIS > 2
+#undef MOTOR_FAULT_ENABLE
+#define MOTOR_FAULT_ENABLE      1
+#define MOTOR_FAULT_PORT        AUXINPUT12_PORT
+#define MOTOR_FAULT_PIN         AUXINPUT12_PIN
+#endif
+
 #define TMC_STEALTHCHOP 0
+
+#define X_HOME_PORT             GPIOA
+#define X_HOME_PIN              15
+#define Y_HOME_PORT             GPIOA
+#define Y_HOME_PIN              1
+#define Z_HOME_PORT             GPIOA
+#define Z_HOME_PIN              2
+#define HOME_INMODE             GPIO_BITBAND
 
 // SPI2 is used: GPIOB pin 12 (SCK) GPIOC pin 2 (MISO) and 3 (MOSI)
 #define MOTOR_CSX_PORT          GPIOD
@@ -345,6 +385,16 @@
 #define MOTOR_CSM3_PORT         GPIOE
 #define MOTOR_CSM3_PIN          12
 #endif
+
+#else
+
+#define X_MOTOR_FAULT_PORT      GPIOA
+#define X_MOTOR_FAULT_PIN       15
+#define Y_MOTOR_FAULT_PORT      GPIOA
+#define Y_MOTOR_FAULT_PIN       1
+#define Z_MOTOR_FAULT_PORT      GPIOA
+#define Z_MOTOR_FAULT_PIN       2
+#define MOTOR_FAULT_INMODE      GPIO_BITBAND
 
 #endif
 

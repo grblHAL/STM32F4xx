@@ -23,6 +23,7 @@
 #include "driver.h"
 
 #include "grbl/protocol.h"
+#include "grbl/state_machine.h"
 
 #if defined(BOARD_LONGBOARD32) || defined(BOARD_LONGBOARD32_EXT)
 
@@ -38,18 +39,60 @@ static probe_state_t state = {
     .connected = On
 };
 
-static bool probe_away;
+static bool probe_away, motor_fault = false;
 static xbar_t toolsetter;
 static driver_setup_ptr driver_setup;
 static on_report_options_ptr on_report_options;
-static probe_get_state_ptr SLB_get_state;
-static probe_configure_ptr SLB_probeConfigure;
+static probe_get_state_ptr hal_probe_get_state;
+static probe_configure_ptr hal_probe_configure;
+static control_signals_get_state_ptr hal_control_get_state;
+static pin_group_pins_t *fault_inputs;
+
+extern pin_group_pins_t *get_motor_fault_inputs (void);
+
+static void clear_ringleds (void *data)
+{
+    if(hal.rgb1.num_devices && hal.rgb1.out) {
+
+        uint_fast8_t idx;
+        for(idx = 0; idx < hal.rgb1.num_devices; idx++)
+            hal.rgb1.out(idx, (rgb_color_t){ .value = 0 });
+
+        hal.rgb1.write();
+    }
+}
+
+static void poll_motor_fault (void *data)
+{
+    motor_fault = false;
+
+    if(settings.motor_fault_enable.mask) {
+
+        uint_fast8_t idx;
+
+        task_add_delayed(poll_motor_fault, NULL, 25);
+
+        for(idx = 0; idx < fault_inputs->n_pins; idx++) {
+            if(bit_istrue(settings.motor_fault_enable.mask, bit(xbar_fault_pin_to_axis(fault_inputs->pins.inputs[idx].id)))) {
+                input_signal_t *input = &fault_inputs->pins.inputs[idx];
+                if((motor_fault = DIGITAL_IN(input->port, input->pin) ^ input->mode.inverted))
+                    break;
+            }
+        }
+
+        if(motor_fault && !(state_get() & (STATE_ALARM|STATE_ESTOP))) {
+            control_signals_t signals = hal_control_get_state();
+            signals.motor_fault = On;
+            hal.control.interrupt_callback(signals);
+        }
+    }
+}
 
 // redirected probing function for SLB OR.
-static probe_state_t probeSLBGetState (void)
+static probe_state_t getProbeState (void)
 {
     //get the probe state from the HAL
-    state = SLB_get_state();
+    state = hal_probe_get_state();
     //get the probe state from the plugin
     tls_input.triggered = (bool)toolsetter.get_value(&toolsetter) ^ tls_input.inverted;
 
@@ -65,19 +108,16 @@ static probe_state_t probeSLBGetState (void)
 }
 
 // redirected probing function for SLB OR.
-static void probeSLBConfigure (bool is_probe_away, bool probing)
+static void probeConfigure (bool is_probe_away, bool probing)
 {
-    tls_input.inverted = is_probe_away ? !settings.probe.invert_toolsetter_input : settings.probe.invert_toolsetter_input;
-
     tls_input.triggered = Off;
-
     tls_input.is_probing = probing;
+    tls_input.inverted = is_probe_away ? !settings.probe.invert_toolsetter_input : settings.probe.invert_toolsetter_input;
 
     probe_away = is_probe_away;
 
-    //call the HAL function.
-    if(SLB_probeConfigure)
-        SLB_probeConfigure(is_probe_away, probing);
+    if(hal_probe_configure)
+        hal_probe_configure(is_probe_away, probing);
 }
 
 #if TRINAMIC_ENABLE
@@ -90,7 +130,8 @@ static void onStateChanged (sys_state_t state)
 
     if(estop && !(state & (STATE_ESTOP|STATE_ALARM))) {
         estop = false;
-        trinamic_drivers_reinit();
+        if(hal.stepper.stepper_status)
+            hal.stepper.stepper_status(true);
     }
 
     if(state == STATE_ESTOP)
@@ -102,31 +143,38 @@ static void onStateChanged (sys_state_t state)
 
 #endif // TRINAMIC_ENABLE
 
-static void onReportOptions (bool newopt)
+static control_signals_t getControlState (void)
 {
-    on_report_options(newopt);
+    control_signals_t state = hal_control_get_state();
 
-    if(!newopt)
-        report_plugin("SLB Probing", "0.02");
+    state.motor_fault = motor_fault;
+
+    return state;
 }
 
 static bool driverSetup (settings_t *settings)
 {
     hal.homing.get_state = NULL; // for now, StallGuard sensorless homing not yet in use. Later check if sensorless homing is enabled.
+    hal.home_cap.a.bits = hal.home_cap.b.bits = 0;
+    xbar_set_homing_source();
+
+    if((hal.signals_cap.motor_fault = settings->motor_fault_enable.value && (fault_inputs = get_motor_fault_inputs()))) {
+
+        task_add_delayed(poll_motor_fault, NULL, 25);
+
+        hal_control_get_state = hal.control.get_state;
+        hal.control.get_state = getControlState;
+    }
 
     return driver_setup(settings);
 }
 
-static void clear_ringleds (void *data)
+static void onReportOptions (bool newopt)
 {
-    if(hal.rgb1.num_devices && hal.rgb1.out) {
+    on_report_options(newopt);
 
-        uint_fast8_t idx;
-        for(idx = 0; idx < hal.rgb1.num_devices; idx++)
-            hal.rgb1.out(idx, (rgb_color_t){ .value = 0 });
-
-        hal.rgb1.write();
-    }
+    if(!newopt)
+        report_plugin("SLB Probing", "0.03");
 }
 
 void board_init (void)
@@ -154,11 +202,11 @@ void board_init (void)
         driver_setup = hal.driver_setup;
         hal.driver_setup = driverSetup;
 
-        SLB_get_state = hal.probe.get_state;
-        hal.probe.get_state = probeSLBGetState;
+        hal_probe_get_state = hal.probe.get_state;
+        hal.probe.get_state = getProbeState;
 
-        SLB_probeConfigure = hal.probe.configure;
-        hal.probe.configure = probeSLBConfigure;
+        hal_probe_configure = hal.probe.configure;
+        hal.probe.configure = probeConfigure;
 
         on_report_options = grbl.on_report_options;
         grbl.on_report_options = onReportOptions;

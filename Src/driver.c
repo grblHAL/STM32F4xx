@@ -73,6 +73,12 @@
 
 #define DRIVER_IRQMASK (LIMIT_MASK|CONTROL_MASK|DEVICES_IRQ_MASK)
 
+/* TODO: add support for IRQ driven fault inputs?
+#if DRIVER_IRQMASK & MOTOR_FAULT_MASK
+#else
+#endif
+*/
+
 #if DRIVER_IRQMASK != (LIMIT_MASK_SUM+CONTROL_MASK_SUM+DEVICES_IRQ_MASK_SUM)
 #error Interrupt enabled input pins must have unique pin numbers!
 #endif
@@ -222,6 +228,34 @@ static input_signal_t inputpin[] = {
 #ifdef C_HOME_PIN
     { .id = Input_HomeC,          .port = C_HOME_PORT,        .pin = C_HOME_PIN,          .group = PinGroup_Home },
 #endif
+// MOTOR_FAULT input pins must be consecutive in this array
+#ifdef X_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultX,    .port = X_MOTOR_FAULT_PORT,  .pin = X_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef Y_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultY,    .port = Y_MOTOR_FAULT_PORT,  .pin = Y_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef Z_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultZ,    .port = Z_MOTOR_FAULT_PORT,  .pin = Z_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef A_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultA,    .port = A_MOTOR_FAULT_PORT,  .pin = A_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef B_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultB,    .port = B_MOTOR_FAULT_PORT,  .pin = B_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef C_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultC,    .port = C_MOTOR_FAULT_PORT,  .pin = C_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef X2_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultX_2,  .port = X2_MOTOR_FAULT_PORT, .pin = X2_MOTOR_FAULT_PIN, .group = PinGroup_Motor_Fault },
+#endif
+#ifdef Y2_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultY_2,  .port = Y2_MOTOR_FAULT_PORT, .pin = Y2_MOTOR_FAULT_PIN, .group = PinGroup_Motor_Fault },
+#endif
+#ifdef Z2_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultZ_2,  .port = Z2_MOTOR_FAULT_PORT, .pin = Z2_MOTOR_FAULT_PIN, .group = PinGroup_Motor_Fault },
+#endif
 #ifdef SPINDLE_INDEX_PIN
     { .id = Input_SpindleIndex,   .port = SPINDLE_INDEX_PORT, .pin = SPINDLE_INDEX_PIN,   .group = PinGroup_SpindleIndex },
 #endif
@@ -277,6 +311,9 @@ static input_signal_t inputpin[] = {
 #endif
 #ifdef AUXINPUT11_PIN
     { .id = Input_Aux11,          .port = AUXINPUT11_PORT,    .pin = AUXINPUT11_PIN,      .group = PinGroup_AuxInput },
+#endif
+#ifdef AUXINPUT12_PIN
+    { .id = Input_Aux12,          .port = AUXINPUT12_PORT,    .pin = AUXINPUT12_PIN,      .group = PinGroup_AuxInput },
 #endif
 #ifdef AUXINTPUT0_ANALOG_PIN
     { .id = Input_Analog_Aux0,    .port = AUXINTPUT0_ANALOG_PORT, .pin = AUXINTPUT0_ANALOG_PIN, .group = PinGroup_AuxInputAnalog },
@@ -508,7 +545,7 @@ extern __IO uint32_t uwTick, cycle_count;
 static uint32_t systick_safe_read = 0, cycles2us_factor = 0;
 static uint32_t aux_irq = 0;
 static bool IOInitDone = false;
-static pin_group_pins_t limit_inputs = {0};
+static pin_group_pins_t limit_inputs = {0}, motor_fault_inputs = {};
 static delay_t delay = { .ms = 1, .callback = NULL }; // NOTE: initial ms set to 1 for "resetting" systick timer on startup
 static input_signal_t *pin_irq[16] = {0};
 static struct {
@@ -2318,6 +2355,9 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                 }
             }
 
+            if(input->group == PinGroup_Motor_Fault)
+                input->mode.inverted = bit_istrue(settings->motor_fault_invert.mask, bit(xbar_fault_pin_to_axis(input->id)));
+
             GPIO_Init.Pin = input->bit;
             GPIO_Init.Pull = input->mode.pull_mode == PullMode_Up ? GPIO_PULLUP : GPIO_NOPULL;
 
@@ -2969,7 +3009,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250107";
+    hal.driver_version = "250118";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3119,6 +3159,7 @@ bool driver_init (void)
 #endif
     hal.limits_cap = get_limits_cap();
     hal.home_cap = get_home_cap();
+    hal.motor_fault_cap = get_motor_fault_cap();
 #if SPINDLE_ENCODER_ENABLE
     hal.driver_cap.spindle_encoder = On;
 #endif
@@ -3139,65 +3180,94 @@ bool driver_init (void)
     input_signal_t *input;
 
     for(i = 0; i < sizeof(inputpin) / sizeof(input_signal_t); i++) {
+
         input = &inputpin[i];
         input->mode.input = input->cap.input = On;
         input->bit = 1 << input->pin;
-        if(input->group == PinGroup_AuxInput) {
-            if(aux_digital_in.pins.inputs == NULL)
-                aux_digital_in.pins.inputs = input;
-            input->user_port = aux_digital_in.n_pins++;
-            input->id = (pin_function_t)(Input_Aux0 + input->user_port);
-            input->mode.pull_mode = PullMode_Up;
-            input->cap.pull_mode = PullMode_UpDown;
-            if((input->cap.irq_mode = ((DRIVER_IRQMASK|aux_irq) & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges) != IRQ_Mode_None) {
-                aux_irq |= input->bit;
-                pin_irq[__builtin_ffs(input->bit) - 1] = input;
-            }
-            input->cap.debounce = !!input->cap.irq_mode;
+
+        switch(input->group) {
+
+            case PinGroup_AuxInput:
+                if(aux_digital_in.pins.inputs == NULL)
+                    aux_digital_in.pins.inputs = input;
+                input->user_port = aux_digital_in.n_pins++;
+                input->id = (pin_function_t)(Input_Aux0 + input->user_port);
+                input->mode.pull_mode = PullMode_Up;
+                input->cap.pull_mode = PullMode_UpDown;
+                if((input->cap.irq_mode = ((DRIVER_IRQMASK|aux_irq) & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges) != IRQ_Mode_None) {
+                    aux_irq |= input->bit;
+                    pin_irq[__builtin_ffs(input->bit) - 1] = input;
+                }
+                input->cap.debounce = !!input->cap.irq_mode;
 #if AUX_CONTROLS_ENABLED
-            aux_ctrl_t *aux_remap;
-            if((aux_remap = aux_ctrl_remap_explicit(input->port, input->pin, input->user_port, input))) {
-                if(aux_remap->function == Input_Probe && input->cap.irq_mode == IRQ_Mode_Edges)
-                    aux_remap->irq_mode = IRQ_Mode_Change;
-            }
+                aux_ctrl_t *aux_remap;
+                if((aux_remap = aux_ctrl_remap_explicit(input->port, input->pin, input->user_port, input))) {
+                    if(aux_remap->function == Input_Probe && input->cap.irq_mode == IRQ_Mode_Edges)
+                        aux_remap->irq_mode = IRQ_Mode_Change;
+                }
 #endif
-        } else if(input->group == PinGroup_AuxInputAnalog) {
-            if(aux_analog_in.pins.inputs == NULL)
-                aux_analog_in.pins.inputs = input;
-            input->id = (pin_function_t)(Input_Analog_Aux0 + aux_analog_in.n_pins++);
-            input->mode.analog = input->cap.analog = On;
-        }  else if(input->group & (PinGroup_Limit|PinGroup_LimitMax)) {
-            if(limit_inputs.pins.inputs == NULL)
-                limit_inputs.pins.inputs = input;
-            if(LIMIT_MASK & input->bit)
-                pin_irq[__builtin_ffs(input->bit) - 1] = input;
+                break;
+
+            case PinGroup_AuxInputAnalog:
+                if(aux_analog_in.pins.inputs == NULL)
+                    aux_analog_in.pins.inputs = input;
+                input->id = (pin_function_t)(Input_Analog_Aux0 + aux_analog_in.n_pins++);
+                input->mode.analog = input->cap.analog = On;
+                break;
+
+            case PinGroup_Limit:
+            case PinGroup_LimitMax:
+                if(limit_inputs.pins.inputs == NULL)
+                    limit_inputs.pins.inputs = input;
+                if(LIMIT_MASK & input->bit)
+                    pin_irq[__builtin_ffs(input->bit) - 1] = input;
 #ifdef Z_LIMIT_POLL
-            if(input->id == Input_LimitZ)
-                z_limit_pin = input;
+                if(input->id == Input_LimitZ)
+                    z_limit_pin = input;
 #endif
-            limit_inputs.n_pins++;
-        } else if(input->group & PinGroup_SdCard) {
-            if(input->bit & DEVICES_IRQ_MASK)
-                pin_irq[__builtin_ffs(input->bit) - 1] = input;
+                limit_inputs.n_pins++;
+                break;
+
+            case PinGroup_Motor_Fault:
+                if(motor_fault_inputs.pins.inputs == NULL)
+                    motor_fault_inputs.pins.inputs = input;
+                motor_fault_inputs.n_pins++;
+                break;
+
+            case PinGroup_SdCard:
+                if(input->bit & DEVICES_IRQ_MASK)
+                    pin_irq[__builtin_ffs(input->bit) - 1] = input;
+                break;
+
+            default: break;
         }
     }
 
     output_signal_t *output;
 
     for(i = 0; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
+
         output = &outputpin[i];
         output->mode.output = On;
-        if(output->group == PinGroup_AuxOutput) {
-            if(aux_digital_out.pins.outputs == NULL)
-                aux_digital_out.pins.outputs = output;
-            output->id = (pin_function_t)(Output_Aux0 + aux_digital_out.n_pins);
-            aux_out_remap_explicit(output->port, output->pin, aux_digital_out.n_pins, output);
-            aux_digital_out.n_pins++;
-        } else if(output->group == PinGroup_AuxOutputAnalog) {
-            if(aux_analog_out.pins.outputs == NULL)
-                aux_analog_out.pins.outputs = output;
-            output->mode.analog = On;
-            output->id = (pin_function_t)(Output_Analog_Aux0 + aux_analog_out.n_pins++);
+
+        switch(output->group) {
+
+            case PinGroup_AuxOutput:
+                if(aux_digital_out.pins.outputs == NULL)
+                    aux_digital_out.pins.outputs = output;
+                output->id = (pin_function_t)(Output_Aux0 + aux_digital_out.n_pins);
+                aux_out_remap_explicit(output->port, output->pin, aux_digital_out.n_pins, output);
+                aux_digital_out.n_pins++;
+                break;
+
+            case PinGroup_AuxOutputAnalog:
+                if(aux_analog_out.pins.outputs == NULL)
+                    aux_analog_out.pins.outputs = output;
+                output->mode.analog = On;
+                output->id = (pin_function_t)(Output_Analog_Aux0 + aux_analog_out.n_pins++);
+                break;
+
+            default: break;
         }
     }
 
@@ -3306,6 +3376,11 @@ bool driver_init (void)
     // No need to move version check before init.
     // Compiler will fail any signature mismatch for existing entries.
     return hal.version == 10;
+}
+
+pin_group_pins_t *get_motor_fault_inputs (void)
+{
+    return motor_fault_inputs.n_pins ? &motor_fault_inputs : NULL;
 }
 
 /* interrupt handlers */
