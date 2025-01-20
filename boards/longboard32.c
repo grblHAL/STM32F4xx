@@ -39,14 +39,12 @@ static probe_state_t state = {
     .connected = On
 };
 
-static bool probe_away, motor_fault = false;
+static bool probe_away;
 static xbar_t toolsetter;
 static driver_setup_ptr driver_setup;
 static on_report_options_ptr on_report_options;
 static probe_get_state_ptr hal_probe_get_state;
 static probe_configure_ptr hal_probe_configure;
-static control_signals_get_state_ptr hal_control_get_state;
-static pin_group_pins_t *fault_inputs;
 
 extern pin_group_pins_t *get_motor_fault_inputs (void);
 
@@ -59,32 +57,6 @@ static void clear_ringleds (void *data)
             hal.rgb1.out(idx, (rgb_color_t){ .value = 0 });
 
         hal.rgb1.write();
-    }
-}
-
-static void poll_motor_fault (void *data)
-{
-    motor_fault = false;
-
-    if(settings.motor_fault_enable.mask) {
-
-        uint_fast8_t idx;
-
-        task_add_delayed(poll_motor_fault, NULL, 25);
-
-        for(idx = 0; idx < fault_inputs->n_pins; idx++) {
-            if(bit_istrue(settings.motor_fault_enable.mask, bit(xbar_fault_pin_to_axis(fault_inputs->pins.inputs[idx].id)))) {
-                input_signal_t *input = &fault_inputs->pins.inputs[idx];
-                if((motor_fault = DIGITAL_IN(input->port, input->pin) ^ input->mode.inverted))
-                    break;
-            }
-        }
-
-        if(motor_fault && !(state_get() & (STATE_ALARM|STATE_ESTOP))) {
-            control_signals_t signals = hal_control_get_state();
-            signals.motor_fault = On;
-            hal.control.interrupt_callback(signals);
-        }
     }
 }
 
@@ -130,8 +102,8 @@ static void onStateChanged (sys_state_t state)
 
     if(estop && !(state & (STATE_ESTOP|STATE_ALARM))) {
         estop = false;
-        if(hal.stepper.stepper_status)
-            hal.stepper.stepper_status(true);
+        if(hal.stepper.status)
+            hal.stepper.status(true);
     }
 
     if(state == STATE_ESTOP)
@@ -141,16 +113,57 @@ static void onStateChanged (sys_state_t state)
         on_state_change(state);
 }
 
-#endif // TRINAMIC_ENABLE
+#else
+
+static control_signals_get_state_ptr hal_control_get_state;
+static pin_group_pins_t *fault_inputs;
+static stepper_status_t stepper_status = {};
+
+static void poll_motor_fault (void *data)
+{
+    stepper_status.fault.state = 0;
+
+    if(settings.motor_fault_enable.mask) {
+
+        uint_fast8_t idx;
+
+        task_add_delayed(poll_motor_fault, NULL, 25);
+
+        for(idx = 0; idx < fault_inputs->n_pins; idx++) {
+            uint8_t axis = xbar_fault_pin_to_axis(fault_inputs->pins.inputs[idx].id);
+            if(bit_istrue(settings.motor_fault_enable.mask, bit(axis))) {
+                input_signal_t *input = &fault_inputs->pins.inputs[idx];
+                if(DIGITAL_IN(input->port, input->pin) ^ input->mode.inverted)
+                    xbar_stepper_state_set(&stepper_status.fault, axis, fault_inputs->pins.inputs[idx].id >= Input_MotorFaultX_2);
+            }
+        }
+
+        if(stepper_status.fault.state && !(state_get() & (STATE_ALARM|STATE_ESTOP))) {
+            control_signals_t signals = hal_control_get_state();
+            signals.motor_fault = On;
+            hal.control.interrupt_callback(signals);
+        }
+    }
+}
+
+static stepper_status_t getDriverStatus (bool reset)
+{
+    if(reset)
+        stepper_status.fault.state = 0;
+
+    return stepper_status;
+}
 
 static control_signals_t getControlState (void)
 {
     control_signals_t state = hal_control_get_state();
 
-    state.motor_fault = motor_fault;
+    state.motor_fault = stepper_status.fault.state != 0;
 
     return state;
 }
+
+#endif // TRINAMIC_ENABLE
 
 static bool driverSetup (settings_t *settings)
 {
@@ -158,13 +171,17 @@ static bool driverSetup (settings_t *settings)
     hal.home_cap.a.bits = hal.home_cap.b.bits = 0;
     xbar_set_homing_source();
 
+#if !TRINAMIC_ENABLE
     if((hal.signals_cap.motor_fault = settings->motor_fault_enable.value && (fault_inputs = get_motor_fault_inputs()))) {
 
         task_add_delayed(poll_motor_fault, NULL, 25);
 
+        hal.stepper.status = getDriverStatus;
+
         hal_control_get_state = hal.control.get_state;
         hal.control.get_state = getControlState;
     }
+#endif
 
     return driver_setup(settings);
 }
