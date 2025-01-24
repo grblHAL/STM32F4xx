@@ -41,6 +41,7 @@
 #include "grbl/state_machine.h"
 #include "grbl/machine_limits.h"
 
+
 #if I2C_ENABLE
 #include "i2c.h"
 #endif

@@ -35,7 +35,7 @@
 #define I2C_ENABLE      1
 #define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #ifndef WEB_BUILD
-#define EEPROM_ENABLE   16  // 2K single byte addressing
+#define EEPROM_ENABLE   32  // 2K single byte addressing
 #endif
 
 // Define step pulse output pins.
@@ -74,6 +74,8 @@
 #define Y_LIMIT_PIN                 13                          // Y- Limit
 #define Z_LIMIT_PORT                GPIOA
 #define Z_LIMIT_PIN                 0                           // Z- Limit
+//#define A_LIMIT_PORT                GPIOC
+//#define A_LIMIT_PIN                 9
 #define LIMIT_INMODE                GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
@@ -83,8 +85,8 @@
 #define M3_STEP_PIN                 5
 #define M3_DIRECTION_PORT           GPIOD
 #define M3_DIRECTION_PIN            6
-//#define M3_LIMIT_PORT               GPIOA
-//#define M3_LIMIT_PIN                1
+#define M3_LIMIT_PORT               GPIOA
+#define M3_LIMIT_PIN                1
 #define M3_ENABLE_PORT              GPIOD
 #define M3_ENABLE_PIN               4
 #endif
@@ -115,8 +117,8 @@
 #define M5_ENABLE_PIN               3
 #endif
 
-#define AUXOUTPUT0_PORT             GPIOB // Spindle PWM, FAN0
-#define AUXOUTPUT0_PIN              0
+#define AUXOUTPUT0_PORT             GPIOC // Spindle PWM, FAN0
+#define AUXOUTPUT0_PIN              8
 #define AUXOUTPUT1_PORT             GPIOB // Spindle direction, FAN2
 #define AUXOUTPUT1_PIN              2
 #define AUXOUTPUT2_PORT             GPIOB // Spindle enable, FAN1
@@ -151,16 +153,16 @@
 #endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT                  GPIOC
-#define RESET_PIN                   1                           // THERM1
+#define RESET_PORT                  GPIOB
+#define RESET_PIN                   10                           // THERM1
 #define FEED_HOLD_PORT              GPIOA
 #define FEED_HOLD_PIN               2                           // Y+ Limit
 #define CYCLE_START_PORT            GPIOA
 #define CYCLE_START_PIN             3                           // Z+ Limit
 #define CONTROL_INMODE GPIO_BITBAND
 
-#define AUXINPUT0_PORT              GPIOA                       // BLTouch PA1
-#define AUXINPUT0_PIN               1
+//#define AUXINPUT0_PORT              GPIOA                       // BLTouch PA1
+//#define AUXINPUT0_PIN               1
 
 #if PROBE_ENABLE
 #define PROBE_PORT                  AUXINPUT0_PORT
