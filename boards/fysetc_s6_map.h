@@ -35,7 +35,7 @@
 #define I2C_ENABLE      1
 #define I2C_PORT        1   // GPIOB: SCL = 8, SDA = 9
 #ifndef WEB_BUILD
-#define EEPROM_ENABLE   32  // 2K single byte addressing
+#define EEPROM_ENABLE   32  // 4K single byte addressing
 #endif
 
 // Define step pulse output pins.
