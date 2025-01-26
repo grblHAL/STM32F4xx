@@ -354,9 +354,9 @@
 #define AUXINPUT12_PORT         GPIOD // External stepper driver alarm (A) or spindle encoder pulse
 #define AUXINPUT12_PIN          2
 
-#if N_AXIS > 2
-#undef MOTOR_FAULT_ENABLE
-#define MOTOR_FAULT_ENABLE      1
+#if (N_ABC_MOTORS == 1 && N_AXIS == 4) || N_AXIS == 5
+//#undef MOTOR_FAULT_ENABLE
+//#define MOTOR_FAULT_ENABLE      1
 #define MOTOR_FAULT_PORT        AUXINPUT12_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT12_PIN
 #endif

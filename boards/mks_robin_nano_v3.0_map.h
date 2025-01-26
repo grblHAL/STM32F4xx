@@ -4,7 +4,7 @@
   Part of grblHAL
 
   Copyright (c) 2021 qbazd
-  Copyright (c) 2023 Terje Io
+  Copyright (c) 2023-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -99,8 +99,8 @@
 #define M3_STEP_PIN             6
 #define M3_DIRECTION_PORT       GPIOD
 #define M3_DIRECTION_PIN        3
-#define M3_LIMIT_PORT           GPIOE
-#define M3_LIMIT_PIN            10
+#define M3_LIMIT_PORT           GPIOC
+#define M3_LIMIT_PIN            4
 #define M3_ENABLE_PORT          GPIOB
 #define M3_ENABLE_PIN           3
 #endif
@@ -118,16 +118,16 @@
 #define M4_ENABLE_PIN           3
 #endif
 
-#define AUXOUTPUT0_PORT         GPIOA // Spindle PWM, 3D touch
+#define AUXOUTPUT0_PORT         GPIOA // Spindle PWM, BLTOUCH
 #define AUXOUTPUT0_PIN          8
-#define AUXOUTPUT1_PORT         GPIOB // Spindle direction, FAN1
+#define AUXOUTPUT1_PORT         GPIOB // Spindle direction, FAN2
 #define AUXOUTPUT1_PIN          1
 #define AUXOUTPUT2_PORT         GPIOA // Spindle enable, HOTBED
 #define AUXOUTPUT2_PIN          0
 #define AUXOUTPUT3_PORT         GPIOE // Coolant flood, HEATER 1
 #define AUXOUTPUT3_PIN          5
-#define AUXOUTPUT4_PORT         GPIOB // Coolant mist, HEAT1
-#define AUXOUTPUT4_PIN          1
+#define AUXOUTPUT4_PORT         GPIOC // Coolant mist, FAN1
+#define AUXOUTPUT4_PIN          14
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
@@ -154,23 +154,23 @@
 #endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOC
-#define RESET_PIN               0                           // TB
-#define FEED_HOLD_PORT          GPIOC
-#define FEED_HOLD_PIN           1                           // TH1
+#define RESET_PORT              GPIOE
+#define RESET_PIN               12                          // EXP2 PE12
+#define FEED_HOLD_PORT          GPIOA
+#define FEED_HOLD_PIN           13                          // PW_DET
 #if IS_NUCLEO_DEVKIT
 #define CYCLE_START_PORT        GPIOA
 #define CYCLE_START_PIN         10                          // When debugging with Nucleo-144
 #else
-#define CYCLE_START_PORT        GPIOD
-#define CYCLE_START_PIN         9                           // ???
+#define CYCLE_START_PORT        GPIOE
+#define CYCLE_START_PIN         6                           // MT_DET2
 #endif
 #define CONTROL_INMODE GPIO_BITBAND
 
-#define AUXINPUT0_PORT          GPIOG                       // EXP1 PG4
+#define AUXINPUT0_PORT          GPIOA                       // EXP1 PA6
 #define AUXINPUT0_PIN           6
-#define AUXINPUT1_PORT          GPIOC
-#define AUXINPUT1_PIN           4
+#define AUXINPUT1_PORT          GPIOA                       // EXP1 PA5
+#define AUXINPUT1_PIN           5
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT1_PORT
@@ -180,14 +180,14 @@
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT0_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT0_PIN
-#endif
-
-#if MOTOR_FAULT_ENABLE
+#elif MOTOR_FAULT_ENABLE
 #define MOTOR_FAULT_PORT        AUXINPUT0_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT0_PIN
 #endif
 
 #if SDCARD_ENABLE
+#define SD_DETECT_PORT          GPIOD
+#define SD_DETECT_PIN           12
 #define SD_CS_PORT              GPIOC
 #define SD_CS_PIN               9
 #define SPI_PORT                3 // GPIOC, SCK_PIN = 10, MISO_PIN = 11, MOSI_PIN = 12 (SPI3)
@@ -207,45 +207,35 @@
 
 #ifdef  M3_AVAILABLE
 #define MOTOR_UARTM3_PORT       GPIOD
-#define MOTOR_UARTM3_PIN        4
+#define MOTOR_UARTM3_PIN        9
 #endif
 
 #ifdef  M4_AVAILABLE
 #define MOTOR_UARTM4_PORT       GPIOD
-#define MOTOR_UARTM4_PIN        9
-#endif
-
-#ifdef  M5_AVAILABLE
-#define MOTOR_UARTM5_PORT       GPIOD
-#define MOTOR_UARTM5_PIN        8
+#define MOTOR_UARTM4_PIN        8
 #endif
 
 #endif // TRINAMIC_UART_ENABLE
 
 #if TRINAMIC_SPI_ENABLE
 
-#define TRINAMIC_SPI_PORT       3 // GPIOC, SCK_PIN = 10, MISO_PIN = 12, MOSI_PIN = 11
+#define TRINAMIC_SOFTSPI // GPIOD, SCK_PIN = 0, MISO_PIN = 1, MOSI_PIN = 14
 
-#define MOTOR_CSX_PORT          GPIOA
-#define MOTOR_CSX_PIN           15
-#define MOTOR_CSY_PORT          GPIOB
-#define MOTOR_CSY_PIN           8
-#define MOTOR_CSZ_PORT          GPIOB
-#define MOTOR_CSZ_PIN           9
+#define MOTOR_CSX_PORT          GPIOD
+#define MOTOR_CSX_PIN           5
+#define MOTOR_CSY_PORT          GPIOD
+#define MOTOR_CSY_PIN           7
+#define MOTOR_CSZ_PORT          GPIOD
+#define MOTOR_CSZ_PIN           4
 
-#ifdef  M3_AVAILABLE
-#define MOTOR_CSM3_PORT         GPIOB
-#define MOTOR_CSM3_PIN          3
+#ifdef M3_AVAILABLE
+#define MOTOR_CSM3_PORT         GPIOD
+#define MOTOR_CSM3_PIN          9
 #endif
 
 #ifdef  M4_AVAILABLE
-#define MOTOR_CSM4_PORT         GPIOG
-#define MOTOR_CSM4_PIN          15
-#endif
-
-#ifdef  M5_AVAILABLE
-#define MOTOR_CSM5_PORT         GPIOG
-#define MOTOR_CSM5_PIN          12
+#define MOTOR_CSM4_PORT         GPIOD
+#define MOTOR_CSM4_PIN          8
 #endif
 
 #endif // TRINAMIC_SPI_PORT

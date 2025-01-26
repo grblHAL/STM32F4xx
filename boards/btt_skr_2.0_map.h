@@ -125,6 +125,9 @@
 #define AUXOUTPUT2_PORT             GPIOB // Spindle enable, FAN1
 #define AUXOUTPUT2_PIN              6
 
+#define AUXOUTPUT0_PWM_PORT         GPIOE // SERVOS
+#define AUXOUTPUT0_PWM_PIN          5
+
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE
 #define SPINDLE_ENABLE_PORT         AUXOUTPUT2_PORT
@@ -147,7 +150,7 @@
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // These are all available on EXP2 along with electrical RESET* (EXP2-8)
-#define CONTROL_PORT                GPIOE
+#define CONTROL_PORT                GPIOA
 #define RESET_PIN                   4                           // Exp2-4
 #define FEED_HOLD_PIN               5                           // Exp2-2
 #define CYCLE_START_PIN             6                           // Exp2-1
@@ -156,7 +159,7 @@
 #define AUXINPUT0_PORT              GPIOA
 #define AUXINPUT0_PIN               7                           // EXP2-6
 #define AUXINPUT1_PORT              GPIOE
-#define AUXINPUT1_PIN               4                           // BLTouch PE4
+#define AUXINPUT1_PIN               4                           // PROBE
 
 #if PROBE_ENABLE
 #define PROBE_PORT                  AUXINPUT1_PORT
