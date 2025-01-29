@@ -186,8 +186,8 @@
 #endif
 
 #if SDCARD_ENABLE
-#define SD_DETECT_PORT          GPIOD
-#define SD_DETECT_PIN           12
+//#define SD_DETECT_PORT          GPIOD
+//#define SD_DETECT_PIN           12 - // cannot be used, clashes with the reset port
 #define SD_CS_PORT              GPIOC
 #define SD_CS_PIN               9
 #define SPI_PORT                3 // GPIOC, SCK_PIN = 10, MISO_PIN = 11, MOSI_PIN = 12 (SPI3)
