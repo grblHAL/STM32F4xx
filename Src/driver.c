@@ -3011,7 +3011,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250129";
+    hal.driver_version = "250130";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3305,7 +3305,7 @@ bool driver_init (void)
 #if USB_SERIAL_CDC
 
     static const sys_command_t boot_command_list[] = {
-        {"DFU", enter_dfu, { .noargs = On }, { .str = "enter DFU bootloader" } }
+        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } }
     };
 
     static sys_commands_t boot_commands = {

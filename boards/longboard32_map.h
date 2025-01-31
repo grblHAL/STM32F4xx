@@ -116,12 +116,13 @@
 #define Z_LIMIT_PIN             13
 #define LIMIT_INMODE            GPIO_BITBAND
 
+// Define ganged axis or A axis step pulse and step direction output pins.
+
 #ifdef BOARD_LONGBOARD32
 
-// Define ganged axis or A axis step pulse and step direction output pins.
 // Note that because of how grblHAL iterates the axes, the M3 and M4 need to swap
-// TODO: use standard assignment for SLB EXT?
-#if (N_ABC_MOTORS == 1) && (N_AXIS == 4)
+
+#if N_GANGED && N_AXIS == 4
 
 #define M3_AVAILABLE
 #define M3_STEP_PORT            GPIOB
@@ -139,8 +140,10 @@
 #define M4_STEP_PIN             5
 #define M4_DIRECTION_PORT       GPIOE
 #define M4_DIRECTION_PIN        10
+#ifndef Y_GANGED
 #define M4_ENABLE_PORT          GPIOC
 #define M4_ENABLE_PIN           7
+#endif
 #define M4_LIMIT_PORT           GPIOE
 #define M4_LIMIT_PIN            6
 #define M4_HOME_PORT            GPIOA
@@ -354,14 +357,13 @@
 #define AUXINPUT12_PORT         GPIOD // External stepper driver alarm (A) or spindle encoder pulse
 #define AUXINPUT12_PIN          2
 
-#if (N_ABC_MOTORS == 1 && N_AXIS == 4) || N_AXIS == 5
-//#undef MOTOR_FAULT_ENABLE
-//#define MOTOR_FAULT_ENABLE      1
+#if MOTOR_FAULT_ENABLE && ((N_GANGED && N_AXIS == 4) || N_AXIS == 5)
+#define MOTOR_FAULT_ENABLE      1
 #define MOTOR_FAULT_PORT        AUXINPUT12_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT12_PIN
 #endif
 
-#define TMC_STEALTHCHOP 0
+#define TMC_STEALTHCHOP         0
 
 #define X_HOME_PORT             GPIOA
 #define X_HOME_PIN              15
