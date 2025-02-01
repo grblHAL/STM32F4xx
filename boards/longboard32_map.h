@@ -212,14 +212,14 @@
 #endif
 
 //*****Switchbank will always claim the first 4 aux outputs******
-#define AUXOUTPUT0_PORT         GPIOC
-#define AUXOUTPUT0_PIN          14
-#define AUXOUTPUT1_PORT         GPIOC
-#define AUXOUTPUT1_PIN          0
-#define AUXOUTPUT2_PORT         GPIOC
-#define AUXOUTPUT2_PIN          1
 #define AUXOUTPUT3_PORT         GPIOC
-#define AUXOUTPUT3_PIN          8
+#define AUXOUTPUT3_PIN          14
+#define AUXOUTPUT2_PORT         GPIOC
+#define AUXOUTPUT2_PIN          0
+#define AUXOUTPUT1_PORT         GPIOC
+#define AUXOUTPUT1_PIN          1
+#define AUXOUTPUT0_PORT         GPIOC
+#define AUXOUTPUT0_PIN          8
 #define AUXOUTPUT4_PORT         GPIOB // Modbus direction
 #define AUXOUTPUT4_PIN          0
 
