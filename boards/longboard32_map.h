@@ -117,10 +117,9 @@
 #define LIMIT_INMODE            GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
+// Note that because of how grblHAL iterates the axes, the M3 and M4 need to swap
 
 #ifdef BOARD_LONGBOARD32
-
-// Note that because of how grblHAL iterates the axes, the M3 and M4 need to swap
 
 #if N_GANGED && N_AXIS == 4
 
@@ -177,9 +176,36 @@
 #define M4_LIMIT_PORT           GPIOE
 #define M4_LIMIT_PIN            14
 #endif
+
 #endif
 
 #else // SLB EXT
+
+#if N_GANGED && N_AXIS == 4
+
+#define M3_AVAILABLE
+#define M3_STEP_PORT            GPIOB
+#define M3_STEP_PIN             10
+#define M3_DIRECTION_PORT       GPIOE
+#define M3_DIRECTION_PIN        11
+#define M3_ENABLE_PORT          GPIOC
+#define M3_ENABLE_PIN           10
+#define M3_LIMIT_PORT           GPIOE
+#define M3_LIMIT_PIN            14
+
+#define M4_AVAILABLE
+#define M4_STEP_PORT            GPIOE
+#define M4_STEP_PIN             5
+#define M4_DIRECTION_PORT       GPIOE
+#define M4_DIRECTION_PIN        10
+#ifndef Y_GANGED
+#define M4_ENABLE_PORT          GPIOC
+#define M4_ENABLE_PIN           7
+#endif
+#define M4_LIMIT_PORT           GPIOE
+#define M4_LIMIT_PIN            6
+
+#else
 
 #if N_ABC_MOTORS > 0
 #define M3_AVAILABLE
@@ -191,8 +217,6 @@
 #define M3_LIMIT_PIN            6
 #define M3_ENABLE_PORT          GPIOC
 #define M3_ENABLE_PIN           7
-#define M3_MOTOR_FAULT_PORT     GPIOA
-#define M3_MOTOR_FAULT_PIN      3
 #endif
 
 #if N_ABC_MOTORS == 2
@@ -203,10 +227,6 @@
 #define M4_DIRECTION_PIN        11
 #define M4_ENABLE_PORT          GPIOC
 #define M4_ENABLE_PIN           10
-#define M4_LIMIT_PORT           GPIOE
-#define M4_LIMIT_PIN            14
-#define M4_MOTOR_FAULT_PORT     GPIOD
-#define M4_MOTOR_FAULT_PIN      2
 #endif
 
 #endif
