@@ -231,6 +231,8 @@
 
 #endif
 
+#endif
+
 //*****Switchbank will always claim the first 4 aux outputs******
 #define AUXOUTPUT3_PORT         GPIOC
 #define AUXOUTPUT3_PIN          14
