@@ -123,6 +123,9 @@
 
 #if N_GANGED && N_AXIS == 4
 
+#define TRINAMIC_MIXED_DRIVERS  1
+#define TRINAMIC_DRIVER_MASK    0b111
+
 #define M3_AVAILABLE
 #define M3_STEP_PORT            GPIOB
 #define M3_STEP_PIN             10
@@ -166,6 +169,10 @@
 #endif
 
 #if N_ABC_MOTORS == 2
+
+#define TRINAMIC_MIXED_DRIVERS  1
+#define TRINAMIC_DRIVER_MASK    0b1111
+
 #define M4_AVAILABLE
 #define M4_STEP_PORT            GPIOB
 #define M4_STEP_PIN             10
@@ -175,6 +182,8 @@
 #define M4_ENABLE_PIN           10
 #define M4_LIMIT_PORT           GPIOE
 #define M4_LIMIT_PIN            14
+#else
+#define TRINAMIC_MIXED_DRIVERS  0
 #endif
 
 #endif
