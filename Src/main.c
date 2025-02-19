@@ -32,6 +32,16 @@ static void MX_GPIO_Init (void);
 int main (void)
 {
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+#ifdef HAS_BOOTLOADER
+    HAL_RCC_DeInit();
+    HAL_DeInit();
+    extern uint8_t _FLASH_VectorTable;
+    __disable_irq();
+    SCB->VTOR = (uint32_t)&_FLASH_VectorTable;
+    __DSB();
+    __enable_irq();
+#endif
+    
     HAL_Init();
 
     /* Configure the system clock */
@@ -85,7 +95,31 @@ static void SystemClock_Config (void)
 
 #elif defined(STM32F446xx)
 
-  #if defined(NUCLEO_F446)
+  #if defined(BOARD_FLEXI_HAL)
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 15;
+  RCC_OscInitStruct.PLL.PLLN = 216;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 8;
+  RCC_OscInitStruct.PLL.PLLR = 2;
+
+  #define APB1CLKDIV RCC_HCLK_DIV4
+  #define APB2CLKDIV RCC_HCLK_DIV2
+
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+  {
+    Error_Handler();
+  } 
+
+    #define FLASH_LATENCY FLASH_LATENCY_5
+
+  #elif defined(NUCLEO_F446)
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
@@ -408,6 +442,10 @@ static void SystemClock_Config (void)
     {
         Error_Handler();
     }
+
+  #if defined(BOARD_FLEXI_HAL)
+    __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
+  #endif
 
 #endif
 }

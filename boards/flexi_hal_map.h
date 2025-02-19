@@ -56,7 +56,11 @@
 #define MODBUS_RTU_STREAM 2
 #endif
 
+<<<<<<< HEAD
 #if MPG_ENABLE == 1
+=======
+#if MPG_ENABLE
+>>>>>>> upstream-flexi/F446_Flexi_HAL
 #define MPG_MODE_PORT           GPIOA
 #define MPG_MODE_PIN            15
 #undef MPG_STREAM
@@ -170,6 +174,7 @@
 #define AUXOUTPUT8_PIN          7
 
 
+
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
 #define SPINDLE_ENABLE_PORT     AUXOUTPUT6_PORT
@@ -179,10 +184,17 @@
 #define SPINDLE_PWM_PORT        AUXOUTPUT4_PORT
 #define SPINDLE_PWM_PIN         AUXOUTPUT4_PIN
 #endif
+<<<<<<< HEAD
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
 #define SPINDLE_DIRECTION_PORT  AUXOUTPUT5_PORT
 #define SPINDLE_DIRECTION_PIN   AUXOUTPUT5_PIN
 #endif
+=======
+// Define spindle enable and spindle direction output pins.
+#define SPINDLE_DIRECTION_PORT  AUXOUTPUT5_PORT
+#define SPINDLE_DIRECTION_PIN   AUXOUTPUT5_PIN
+#endif //DRIVER_SPINDLE_ENABLE
+>>>>>>> upstream-flexi/F446_Flexi_HAL
 
 // Define flood and mist coolant enable output pins.
 #if COOLANT_ENABLE & COOLANT_FLOOD
@@ -270,4 +282,8 @@
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOA
 #define SD_CS_PIN               10
+<<<<<<< HEAD
 #endif
+=======
+#endif
+>>>>>>> upstream-flexi/F446_Flexi_HAL
