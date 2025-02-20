@@ -35,14 +35,14 @@
 #include "ethernetif.h"
 
 #include "grbl/report.h"
+#include "grbl/task.h"
 #include "grbl/nvs_buffer.h"
 
 #include "networking/networking.h"
 
 #define MDNS_TTL 32
 
-static volatile bool linkUp = false;
-static char IPAddress[IP4ADDR_STRLEN_MAX];
+static char IPAddress[IP4ADDR_STRLEN_MAX], if_name[NETIF_NAMESIZE] = "";
 static stream_type_t active_stream = StreamType_Null;
 static network_services_t services = {0}, allowed_services;
 static nvs_address_t nvs_address;
@@ -51,6 +51,8 @@ static on_report_options_ptr on_report_options;
 static on_execute_realtime_ptr on_execute_realtime;
 static on_stream_changed_ptr on_stream_changed;
 static char netservices[NETWORK_SERVICES_LEN] = "";
+static network_flags_t network_status = {};
+
 #if MQTT_ENABLE
 
 static bool mqtt_connected = false;
@@ -65,6 +67,44 @@ static void mqtt_connection_changed (bool connected)
 }
 
 #endif
+
+static network_info_t *get_info (const char *interface)
+{
+    static network_info_t info;
+
+    memcpy(&info.status, &network, sizeof(network_settings_t));
+
+    strcpy(info.status.ip, IPAddress);
+
+    if(info.status.ip_mode == IpMode_DHCP) {
+        *info.status.gateway = '\0';
+        *info.status.mask = '\0';
+    }
+
+    info.interface = (const char *)if_name;
+    info.is_ethernet = true;
+    info.link_up = network_status.link_up;
+    info.mbps = 100;
+    info.status.services = services;
+
+    struct netif *netif = netif_default; // netif_find(info.interface);
+
+    if(netif) {
+
+        if(network_status.link_up) {
+            ip4addr_ntoa_r(netif_ip_gw4(netif), info.status.gateway, IP4ADDR_STRLEN_MAX);
+            ip4addr_ntoa_r(netif_ip_netmask4(netif), info.status.mask, IP4ADDR_STRLEN_MAX);
+        }
+
+        strcpy(info.mac, networking_mac_to_string(netif->hwaddr));
+    }
+
+#if MQTT_ENABLE
+    networking_make_mqtt_clientid(info.mac, info.mqtt_client_id);
+#endif
+
+    return &info;
+}
 
 static void report_options (bool newopt)
 {
@@ -90,7 +130,7 @@ static void report_options (bool newopt)
 #endif
     } else {
 
-        network_info_t *network = networking_get_info();
+        network_info_t *network = get_info(NULL);
 
         hal.stream.write("[MAC:");
         hal.stream.write(network->mac);
@@ -108,7 +148,7 @@ static void report_options (bool newopt)
 
 #if MQTT_ENABLE
         char *client_id;
-        if(*(client_id = networking_get_info()->mqtt_client_id)) {
+        if(*(client_id = get_info(NULL)->mqtt_client_id)) {
             hal.stream.write("[MQTT CLIENTID:");
             hal.stream.write(client_id);
             hal.stream.write(mqtt_connected ? "]" ASCII_EOL : " (offline)]" ASCII_EOL);
@@ -117,51 +157,26 @@ static void report_options (bool newopt)
     }
 }
 
-network_info_t *networking_get_info (void)
+static void status_event_out (void *data)
 {
-    static network_info_t info;
+    networking.event(if_name, (network_status_t){ .value = (uint32_t)data });
+}
 
-    memcpy(&info.status, &network, sizeof(network_settings_t));
-
-    strcpy(info.status.ip, IPAddress);
-
-    if(info.status.ip_mode == IpMode_DHCP) {
-        *info.status.gateway = '\0';
-        *info.status.mask = '\0';
-    }
-
-    info.is_ethernet = true;
-    info.link_up = linkUp;
-    info.mbps = 100;
-    info.status.services = services;
-
-    struct netif *netif = netif_default; // netif_get_by_index(0);
-
-    if(netif) {
-
-        if(linkUp) {
-            ip4addr_ntoa_r(netif_ip_gw4(netif), info.status.gateway, IP4ADDR_STRLEN_MAX);
-            ip4addr_ntoa_r(netif_ip_netmask4(netif), info.status.mask, IP4ADDR_STRLEN_MAX);
-        }
-
-        strcpy(info.mac, networking_mac_to_string(netif->hwaddr));
-    }
-
-#if MQTT_ENABLE
-    networking_make_mqtt_clientid(info.mac, info.mqtt_client_id);
-#endif
-
-    return &info;
+static void status_event_publish (network_flags_t changed)
+{
+    task_add_immediate(status_event_out, (void *)((network_status_t){ .changed = changed, .flags = network_status }).value);
 }
 
 static void link_status_callback (struct netif *netif)
 {
     bool isLinkUp = netif_is_link_up(netif);
 
-    if(isLinkUp != linkUp) {
-        linkUp = isLinkUp;
+    if(isLinkUp != network_status.link_up) {
+        if(!(network_status.link_up = isLinkUp))
+            network_status.ip_aquired = Off;
+        status_event_publish((network_flags_t){ .link_up = On, .ip_aquired = !isLinkUp });
 #if TELNET_ENABLE
-        telnetd_notify_link_status(linkUp);
+        telnetd_notify_link_status(network_status.link_up);
 #endif
     }
 }
@@ -254,12 +269,17 @@ static void netif_status_callback (struct netif *netif)
 
 #if MQTT_ENABLE
     if(!mqtt_connected)
-        mqtt_connect(&network.mqtt, networking_get_info()->mqtt_client_id);
+        mqtt_connect(&network.mqtt, get_info(NULL)->mqtt_client_id);
 #endif
 
 #if MODBUS_ENABLE & MODBUS_TCP_ENABLED
     modbus_tcp_client_start();
 #endif
+
+    if(!network_status.ip_aquired) {
+        network_status.ip_aquired = On;
+        status_event_publish((network_flags_t){ .ip_aquired = On });
+    }
 }
 
 static void enet_poll (sys_state_t state)
@@ -278,7 +298,7 @@ static void enet_poll (sys_state_t state)
     sys_check_timeouts();
     ethernetif_input(netif_default);
 
-    if(linkUp && ms - last_ms0 > 3) {
+    if(network_status.link_up && ms - last_ms0 > 3) {
         last_ms0 = ms;
 #if TELNET_ENABLE
         if(services.telnet)
@@ -335,6 +355,11 @@ bool enet_start (void)
 
         netif_set_default(&ethif);
         netif_set_up(&ethif);
+        netif_index_to_name(1, if_name);
+
+        network_status.interface_up = On;
+        status_event_publish((network_flags_t){ .interface_up = On });
+
         netif_set_link_callback(netif_default, link_status_callback);
         netif_set_status_callback(netif_default, netif_status_callback);
 
@@ -346,26 +371,26 @@ bool enet_start (void)
     #endif
         if(network.ip_mode == IpMode_DHCP)
             dhcp_start(netif_default);
-    }
 
 #if MDNS_ENABLE || SSDP_ENABLE || LWIP_IGMP
 
-    if(network.services.mdns || network.services.ssdp) {
+        if(network.services.mdns || network.services.ssdp) {
 
-        ETH_MACFilterConfigTypeDef filters;
+            ETH_MACFilterConfigTypeDef filters;
 
-        HAL_ETH_GetMACFilterConfig(&heth, &filters);
+            HAL_ETH_GetMACFilterConfig(&heth, &filters);
 
-        // TODO: add filters for SSDP and mDNS
-        filters.PassAllMulticast = On;
-    //    filters.PromiscuousMode = On;
+            // TODO: add filters for SSDP and mDNS
+            filters.PassAllMulticast = On;
+        //    filters.PromiscuousMode = On;
 
-        HAL_ETH_SetMACFilterConfig(&heth, &filters);
+            HAL_ETH_SetMACFilterConfig(&heth, &filters);
 
-        netif_default->flags |= NETIF_FLAG_IGMP;
-    }
+            netif_default->flags |= NETIF_FLAG_IGMP;
+        }
 
 #endif
+    }
 
     return nvs_address != 0;
 }
@@ -624,6 +649,8 @@ bool enet_init (network_settings_t *settings)
 
     if((nvs_address = nvs_alloc(sizeof(network_settings_t)))) {
 
+        networking_init();
+
         on_report_options = grbl.on_report_options;
         grbl.on_report_options = report_options;
 
@@ -641,6 +668,7 @@ bool enet_init (network_settings_t *settings)
         modbus_tcp_client_init ();
 #endif
 
+        networking.get_info = get_info;
         allowed_services.mask = networking_get_services_list((char *)netservices).mask;
     }
 
