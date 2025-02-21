@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2024 Terje Io
+  Copyright (c) 2019-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -153,7 +153,7 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 
 #if SERIAL1_PORT
 
-#if SERIAL_PORT1 == SERIAL_PORT || SERIAL1_PORT == SERIAL2_PORT
+#if SERIAL1_PORT == SERIAL_PORT || SERIAL1_PORT == SERIAL2_PORT
 #error Conflicting use of UART peripherals!
 #endif
 
