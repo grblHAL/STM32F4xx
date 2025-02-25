@@ -2728,7 +2728,8 @@ static bool driver_setup (settings_t *settings)
                 outputpin[i].group == PinGroup_MotorUART ||
                  outputpin[i].id == Output_SPICS ||
                   outputpin[i].id == Output_FlashCS ||
-                   outputpin[i].group == PinGroup_StepperEnable)
+                 outputpin[i].id == Output_SdCardCS ||
+                  outputpin[i].group == PinGroup_StepperEnable)
                 outputpin[i].port->ODR |= GPIO_Init.Pin;
 
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
