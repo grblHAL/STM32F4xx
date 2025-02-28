@@ -33,7 +33,7 @@
 #define DMAhandler(d, p) DMAhandlerI(d, p)
 #define DMAhandlerI(d, p) DMA ## d ## _Stream ## p ## _IRQHandler
 
-#if SPI_PORT == 11 || SPI_PORT == 12
+#if SPI_PORT == 11 || SPI_PORT == 12 || SPI_PORT == 13
 #define SPIPORT SPIport(1)
 #elif SPI_PORT == 21
 #define SPIPORT SPIport(2)
