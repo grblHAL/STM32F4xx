@@ -33,12 +33,6 @@
 #define SPIport(p) SPIportI(p)
 #define SPIportI(p) SPI ## p
 
-#define DMAirq(d, p) DMAirqI(d, p)
-#define DMAirqI(d, p) DMA ## d ## _Stream ## p ## _IRQn
-
-#define DMAhandler(d, p) DMAhandlerI(d, p)
-#define DMAhandlerI(d, p) DMA ## d ## _Stream ## p ## _IRQHandler
-
 #if NEOPIXEL_SPI == 11 || NEOPIXEL_SPI == 12
 #define SPIPORT SPIport(1)
 #else

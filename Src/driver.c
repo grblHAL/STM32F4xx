@@ -3116,10 +3116,6 @@ bool driver_init (void)
         while(true); // Cannot boot if no communication channel is available!
 #endif
 
-#if I2C_ENABLE
-    i2c_init();
-#endif
-
 #if EEPROM_ENABLE
     i2c_eeprom_init();
 #elif FLASH_ENABLE

@@ -1,9 +1,9 @@
 /*
-  i2c.c - I2C support for EEPROM, keypad and Trinamic plugins
+  i2c.c - I2C support for STM32F4xx
 
-  Part of grblHAL driver for STM32F4xx
+  Part of grblHAL
 
-  Copyright (c) 2018-2024 Terje Io
+  Copyright (c) 2018-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,19 +32,36 @@
 #define I2C_KHZ 400
 #endif
 
-#define I2CPORT FMPI2C1
-#define I2C_SCL_PIN 6
-#define I2C_SDA_PIN 7
-#define I2C_GPIO GPIOC
-#define I2C_GPIO_AF GPIO_AF4_FMPI2C1
-#define I2C_CLKENA __HAL_RCC_FMPI2C1_CLK_ENABLE
-#define I2C_IRQEVT FMPI2C1_EV_IRQn
-#define I2C_IRQERR FMPI2C1_ER_IRQn
-#define I2C_IRQEVT_Handler FMPI2C1_EV_IRQHandler
-#define I2C_IRQERR_Handler FMPI2C1_ER_IRQHandler
+#define I2CPORT             FMPI2C1
+#define I2C_SCL_PIN         6
+#define I2C_SDA_PIN         7
+#define I2C_GPIO            GPIOC
+#define I2C_GPIO_AF         GPIO_AF4_FMPI2C1
+#define I2C_CLKENA          __HAL_RCC_FMPI2C1_CLK_ENABLE
+#define I2C_IRQEVT          FMPI2C1_EV_IRQn
+#define I2C_IRQERR          FMPI2C1_ER_IRQn
+#define I2C_IRQEVT_Handler  FMPI2C1_EV_IRQHandler
+#define I2C_IRQERR_Handler  FMPI2C1_ER_IRQHandler
+#define I2C_EV_IRQHandler   HAL_FMPI2C_EV_IRQHandler
+#define I2C_ER_IRQHandler   HAL_FMPI2C_ER_IRQHandler
+#define MEMADD_SIZE_8BIT    FMPI2C_MEMADD_SIZE_8BIT
+#define MEMADD_SIZE_16BIT   FMPI2C_MEMADD_SIZE_16BIT
 
-#define I2C_EV_IRQHandler HAL_FMPI2C_EV_IRQHandler
-#define I2C_ER_IRQHandler HAL_FMPI2C_ER_IRQHandler
+#define DMA_TX_IRQ DMAirq(1, 5)
+#define DMA_TX_IRQ_HANDLER DMAhandler(1, 5)
+
+static DMA_HandleTypeDef i2c_dma_tx = {
+    .Instance = DMA1_Stream5,
+    .Init.Channel = DMA_CHANNEL_2,
+    .Init.Direction = DMA_MEMORY_TO_PERIPH,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
 
 #else
 
@@ -52,7 +69,9 @@
 #define I2C_KHZ 100
 #endif
 
-#define I2C_GPIO GPIOB
+#define I2C_GPIO            GPIOB
+#define MEMADD_SIZE_8BIT    I2C_MEMADD_SIZE_8BIT
+#define MEMADD_SIZE_16BIT   I2C_MEMADD_SIZE_16BIT
 
 #if I2C_PORT == 1
 
@@ -64,10 +83,41 @@
   #define I2C_SDA_PIN 9
 #endif
 
+#define DMA_TX_IRQ DMAirq(1, 6)
+#define DMA_TX_IRQ_HANDLER DMAhandler(1, 6)
+
+static DMA_HandleTypeDef i2c_dma_tx = {
+    .Instance = DMA1_Stream6,
+    .Init.Channel = DMA_CHANNEL_1,
+    .Init.Direction = DMA_MEMORY_TO_PERIPH,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
+
 #else // 2
 
 #define I2C_SCL_PIN 10
 #define I2C_SDA_PIN 11
+
+#define DMA_TX_IRQ DMAirq(1, 7)
+#define DMA_TX_IRQ_HANDLER DMAhandler(1, 7)
+
+static DMA_HandleTypeDef i2c_dma_tx = {
+    .Instance = DMA1_Stream7,
+    .Init.Channel = DMA_CHANNEL_7,
+    .Init.Direction = DMA_MEMORY_TO_PERIPH,
+    .Init.PeriphInc = DMA_PINC_DISABLE,
+    .Init.MemInc = DMA_MINC_ENABLE,
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.MemDataAlignment = DMA_PDATAALIGN_BYTE,
+    .Init.Mode = DMA_NORMAL,
+    .Init.Priority = DMA_PRIORITY_VERY_HIGH,
+    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
 
 #endif
 
@@ -107,12 +157,12 @@ static FMPI2C_HandleTypeDef i2c_port = {
     .Init.Timing = 0x00401650, //400 KHz
 #endif
     .Init.OwnAddress1 = 0,
-    .Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT,
-    .Init.DualAddressMode = I2C_DUALADDRESS_DISABLE,
+    .Init.AddressingMode = FMPI2C_ADDRESSINGMODE_7BIT,
+    .Init.DualAddressMode = FMPI2C_DUALADDRESS_DISABLE,
     .Init.OwnAddress2 = 0,
     .Init.OwnAddress2Masks = FMPI2C_OA2_NOMASK,
-    .Init.GeneralCallMode = I2C_GENERALCALL_DISABLE,
-    .Init.NoStretchMode = I2C_NOSTRETCH_DISABLE
+    .Init.GeneralCallMode = FMPI2C_GENERALCALL_DISABLE,
+    .Init.NoStretchMode = FMPI2C_NOSTRETCH_DISABLE
 };
 
 FMPI2C_HandleTypeDef *I2C_GetPort (void)
@@ -144,14 +194,12 @@ I2C_HandleTypeDef *I2C_GetPort (void)
 static uint8_t keycode = 0;
 static keycode_callback_ptr keypad_callback = NULL;
 
-void i2c_init (void)
+i2c_cap_t i2c_start (void)
 {
-    static bool init_ok = false;
+    static i2c_cap_t cap = {};
 
-    if(init_ok)
-        return;
-
-    init_ok = true;
+    if(cap.started)
+        return cap;
 
     GPIO_InitTypeDef GPIO_InitStruct = {
         .Pin = (1 << I2C_SCL_PIN)|(1 << I2C_SDA_PIN),
@@ -190,109 +238,94 @@ void i2c_init (void)
         .mode = { .mask = PINMODE_OD }
     };
 
+    __HAL_RCC_DMA1_CLK_ENABLE();
+
+    __HAL_LINKDMA(&i2c_port, hdmatx, i2c_dma_tx);
+
+    HAL_DMA_Init(&i2c_dma_tx);
+
+    HAL_NVIC_SetPriority(DMA_TX_IRQ, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA_TX_IRQ);
+
     hal.periph_port.register_pin(&scl);
     hal.periph_port.register_pin(&sda);
+
+    cap.started = cap.tx_non_blocking = cap.tx_dma = On;
+
+    return cap;
 }
 
-bool i2c_probe (uint_fast16_t i2cAddr)
+static inline __attribute__((always_inline)) bool wait_ready (void)
 {
-    // wait for bus to be ready
-    while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
+    while(i2c_port.State != I2C_STATE_READY) {
         if(!hal.stream_blocking_callback())
             return false;
     }
 
+    return true;
+}
+
+bool i2c_probe (i2c_address_t i2cAddr)
+{
 #ifdef I2C_FASTMODE
-    return HAL_FMPI2C_IsDeviceReady(&i2c_port, i2cAddr << 1, 4, 10) == HAL_OK;
+    return wait_ready() && HAL_FMPI2C_IsDeviceReady(&i2c_port, i2cAddr << 1, 4, 10) == HAL_OK;
 #else
-    return HAL_I2C_IsDeviceReady(&i2c_port, i2cAddr << 1, 4, 10) == HAL_OK;
+    return wait_ready() && HAL_I2C_IsDeviceReady(&i2c_port, i2cAddr << 1, 4, 10) == HAL_OK;
 #endif
 }
 
-bool i2c_send (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block)
+bool i2c_send (i2c_address_t i2cAddr, uint8_t *buf, size_t size, bool block)
 {
-    //wait for bus to be ready
-    while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
-        if(!hal.stream_blocking_callback())
-            return false;
-    }
+    if(!wait_ready())
+        return false;
 
-    bool ok = I2C_Master_Transmit_IT(&i2c_port, i2cAddr << 1, buf, size) == HAL_OK;
+    bool ok = I2C_Master_Transmit_DMA(&i2c_port, i2cAddr << 1, buf, (uint16_t)size) == HAL_OK;
 
-    if (ok && block) {
-        while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
-            if(!hal.stream_blocking_callback())
-                return false;
-        }
-    }
+//    __HAL_DMA_DISABLE(&i2c_dma_tx);
 
-    return ok;
+    return ok && (!block || wait_ready());
 }
 
-bool i2c_receive (uint_fast16_t i2cAddr, uint8_t *buf, size_t size, bool block)
+bool i2c_receive (i2c_address_t i2cAddr, uint8_t *buf, size_t size, bool block)
 {
-    //wait for bus to be ready
-    while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
-        if(!hal.stream_blocking_callback())
-            return false;
-    }
+    if(!wait_ready())
+        return false;
 
     bool ok = I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, buf, size) == HAL_OK;
 
-    if (ok && block) {
-        while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
-            if(!hal.stream_blocking_callback())
-                return false;
-        }
+    return ok && (!block || wait_ready());
+}
+
+bool i2c_transfer (i2c_transfer_t *i2c, bool read)
+{
+    if(!wait_ready())
+        return false;
+
+    HAL_StatusTypeDef ret;
+
+    if(read)
+        ret = I2C_Mem_Read(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? MEMADD_SIZE_16BIT : MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
+    else {
+        if(i2c->no_block)
+            ret = I2C_Mem_Write_DMA(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? MEMADD_SIZE_16BIT : MEMADD_SIZE_8BIT, i2c->data, i2c->count);
+        else
+            ret = I2C_Mem_Write(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? MEMADD_SIZE_16BIT : MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
+    }
+
+    return ret == HAL_OK;
+}
+
+bool i2c_get_keycode (i2c_address_t i2cAddr, keycode_callback_ptr callback)
+{
+    bool ok;
+
+    if((ok = wait_ready() && I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, &keycode, 1) == HAL_OK)) {
+        keycode = 0;
+        keypad_callback = callback;
     }
 
     return ok;
 }
-
-void i2c_get_keycode (uint_fast16_t i2cAddr, keycode_callback_ptr callback)
-{
-    keycode = 0;
-    keypad_callback = callback;
-
-    I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, &keycode, 1);
-}
-
-void I2C_IRQEVT_Handler (void)
-{
-    I2C_EV_IRQHandler(&i2c_port);
-}
-
-void I2C_IRQERR_Handler (void)
-{
-    I2C_ER_IRQHandler(&i2c_port);
-}
-
-#if EEPROM_ENABLE
-
-nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
-{
-    while (I2C_GetState(&i2c_port) != I2C_STATE_READY) {
-        if(!hal.stream_blocking_callback())
-            return NVS_TransferResult_Failed;
-    }
-
-    //    while (HAL_I2C_IsDeviceReady(&i2c_port, (uint16_t)(0xA0), 3, 100) != HAL_OK);
-    HAL_StatusTypeDef ret;
-
-    if(read)
-        ret = I2C_Mem_Read(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? I2C_MEMADD_SIZE_16BIT : I2C_MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
-    else {
-        ret = I2C_Mem_Write(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? I2C_MEMADD_SIZE_16BIT : I2C_MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
-#if !EEPROM_IS_FRAM
-        hal.delay_ms(5, NULL);
-#endif
-    }
-    i2c->data += i2c->count;
-
-    return ret == HAL_OK ? NVS_TransferResult_OK : NVS_TransferResult_Failed;
-}
-
-#endif // EEPROM_ENABLE
 
 #ifdef I2C_FASTMODE
 void HAL_FMPI2C_MasterRxCpltCallback (FMPI2C_HandleTypeDef *hi2c)
@@ -318,12 +351,12 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
 
     if(driver.axis != axis) {
         buffer[0] = driver.axis | 0x80;
-        I2C_Mem_Write(&i2c_port, tmc_addr, axis, I2C_MEMADD_SIZE_8BIT, buffer, 1, 100);
+        I2C_Mem_Write(&i2c_port, tmc_addr, axis, MEMADD_SIZE_8BIT, buffer, 1, 100);
 
         axis = driver.axis;
     }
 
-    I2C_Mem_Read(&i2c_port, tmc_addr, (uint16_t)reg->addr.idx, I2C_MEMADD_SIZE_8BIT, buffer, 5, 100);
+    I2C_Mem_Read(&i2c_port, tmc_addr, (uint16_t)reg->addr.idx, MEMADD_SIZE_8BIT, buffer, 5, 100);
 
     status = buffer[0];
     reg->payload.value = buffer[4];
@@ -341,7 +374,7 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
 
     if(driver.axis != axis) {
         buffer[0] = driver.axis | 0x80;
-        I2C_Mem_Write(&i2c_port, tmc_addr, axis, I2C_MEMADD_SIZE_8BIT, buffer, 1, 100);
+        I2C_Mem_Write(&i2c_port, tmc_addr, axis, MEMADD_SIZE_8BIT, buffer, 1, 100);
 
         axis = driver.axis;
     }
@@ -352,12 +385,27 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
     buffer[3] = reg->payload.value & 0xFF;
 
     reg->addr.write = 1;
-    I2C_Mem_Write(&i2c_port, tmc_addr, (uint16_t)reg->addr.idx, I2C_MEMADD_SIZE_8BIT, buffer, 4, 100);
+    I2C_Mem_Write(&i2c_port, tmc_addr, (uint16_t)reg->addr.idx, MEMADD_SIZE_8BIT, buffer, 4, 100);
     reg->addr.write = 0;
 
     return status;
 }
 
 #endif // TRINAMIC_ENABLE && TRINAMIC_I2C
+
+void I2C_IRQEVT_Handler (void)
+{
+    I2C_EV_IRQHandler(&i2c_port);
+}
+
+void I2C_IRQERR_Handler (void)
+{
+    I2C_ER_IRQHandler(&i2c_port);
+}
+
+void DMA_TX_IRQ_HANDLER(void)
+{
+  HAL_DMA_IRQHandler(&i2c_dma_tx);
+}
 
 #endif // I2C_ENABLE
