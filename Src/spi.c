@@ -205,7 +205,6 @@ void spi_init (void)
             .pin = 7,
             .mode = { .mask = PINMODE_NONE }
         };
-    #endif
 
 #elif SPI_PORT == 11
 
