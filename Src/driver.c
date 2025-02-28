@@ -2938,6 +2938,8 @@ static status_code_t enter_dfu (sys_state_t state, char *args)
     return Status_OK;
 }
 
+#ifdef UF2_BOOTLOADER
+
 status_code_t enter_uf2 (sys_state_t state, char *args)
 {
     extern uint32_t _board_dfu_dbl_tap; /* Symbol defined in the linker script */
@@ -2955,15 +2957,7 @@ status_code_t enter_uf2 (sys_state_t state, char *args)
     return Status_OK;
 }
 
-const sys_command_t boot_command_list[2] = {
-    {"DFU", enter_dfu, { .noargs = On }, { .str = "enter DFU bootloader" } },
-	{"UF2", enter_uf2, { .noargs = On }, { .str = "enter UF2 bootloader" } }
-};
-
-static sys_commands_t boot_commands = {
-    .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
-    .commands = boot_command_list
-};
+#endif //UF2_BOOTLOADER
 
 static void onReportOptions (bool newopt)
 {
@@ -3333,9 +3327,16 @@ bool driver_init (void)
 
 #if USB_SERIAL_CDC
 
+    #ifdef UF2_BOOTLOADER
+    static const sys_command_t boot_command_list[] = {
+        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
+    	{"UF2", enter_uf2, { .noargs = On }, { .str = "enter UF2 bootloader" } }
+    };
+    #else
     static const sys_command_t boot_command_list[] = {
         {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } }
     };
+    #endif
 
     static sys_commands_t boot_commands = {
         .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),

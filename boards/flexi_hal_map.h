@@ -253,7 +253,7 @@
 #endif
 
 #if SDCARD_ENABLE || ETHERNET_ENABLE
-#define SPI_PORT                1 // GPIOB, SCK_PIN = 3, MISO_PIN = 4, MOSI_PIN = 5  probably needs fixing
+#define SPI_PORT                13 // GPIOB, SCK_PIN = 3, MISO_PIN = 4, MOSI_PIN = 5  probably needs fixing
 #endif
 
 #if ETHERNET_ENABLE
