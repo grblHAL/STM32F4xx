@@ -3333,6 +3333,15 @@ bool driver_init (void)
 
 #if USB_SERIAL_CDC
 
+    static const sys_command_t boot_command_list[] = {
+        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } }
+    };
+
+    static sys_commands_t boot_commands = {
+        .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
+        .commands = boot_command_list
+    };
+
     grbl.on_report_options = onReportOptions;
 
     system_register_commands(&boot_commands);

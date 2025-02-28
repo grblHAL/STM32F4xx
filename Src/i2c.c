@@ -167,8 +167,7 @@ void i2c_init (void)
 #ifdef I2C_FASTMODE
     HAL_FMPI2CEx_ConfigAnalogFilter(&i2c_port, FMPI2C_ANALOGFILTER_ENABLE);
     HAL_FMPI2C_Init(&i2c_port);
-    __HAL_FMPI2C_ENABLE(&i2c_port);
-    HAL_NVIC_SetPriority(FMPI2C1_EV_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(FMPI2C1_EV_IRQn, 0, 2);
 #else
     HAL_I2C_Init(&i2c_port);
 #endif
@@ -280,17 +279,10 @@ nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
 
     //    while (HAL_I2C_IsDeviceReady(&i2c_port, (uint16_t)(0xA0), 3, 100) != HAL_OK);
     HAL_StatusTypeDef ret;
-    #ifdef I2C_FASTMODE
-    if(read)
-        ret = I2C_Mem_Read(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes, i2c->data, i2c->count, 100);
-    else {
-        ret = I2C_Mem_Write(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes, i2c->data, i2c->count, 100);
-    #else
     if(read)
         ret = I2C_Mem_Read(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? I2C_MEMADD_SIZE_16BIT : I2C_MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
     else {
         ret = I2C_Mem_Write(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? I2C_MEMADD_SIZE_16BIT : I2C_MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
-    #endif
 #if !EEPROM_IS_FRAM
         hal.delay_ms(5, NULL);
 #endif
