@@ -282,9 +282,9 @@ nvs_transfer_result_t i2c_nvs_transfer (nvs_transfer_t *i2c, bool read)
 
     #ifdef I2C_FASTMODE
     if(read)
-        ret = I2C_Mem_Read(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes, i2c->data, i2c->count, 100);
+        ret = I2C_Mem_Read(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? FMPI2C_MEMADD_SIZE_16BIT : FMPI2C_MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
     else {
-        ret = I2C_Mem_Write(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes, i2c->data, i2c->count, 100);
+        ret = I2C_Mem_Write(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? FMPI2C_MEMADD_SIZE_16BIT : FMPI2C_MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);
     #else
     if(read)
         ret = I2C_Mem_Read(&i2c_port, i2c->address << 1, i2c->word_addr, i2c->word_addr_bytes == 2 ? I2C_MEMADD_SIZE_16BIT : I2C_MEMADD_SIZE_8BIT, i2c->data, i2c->count, 100);

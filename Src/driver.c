@@ -3327,16 +3327,13 @@ bool driver_init (void)
 
 #if USB_SERIAL_CDC
 
-    #ifdef UF2_BOOTLOADER
     static const sys_command_t boot_command_list[] = {
         {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
+
+        #ifdef UF2_BOOTLOADER
     	{"UF2", enter_uf2, { .noargs = On }, { .str = "enter UF2 bootloader" } }
+        #endif
     };
-    #else
-    static const sys_command_t boot_command_list[] = {
-        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } }
-    };
-    #endif
 
     static sys_commands_t boot_commands = {
         .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
