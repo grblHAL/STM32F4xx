@@ -22,14 +22,16 @@
 
 #include "driver.h"
 
-#include "grbl/protocol.h"
-#include "grbl/state_machine.h"
-
 #if defined(BOARD_LONGBOARD32) || defined(BOARD_LONGBOARD32_EXT)
 
 #ifndef SLB_TLS_AUX_INPUT
 #define SLB_TLS_AUX_INPUT 3
 #endif
+
+#include "grbl/protocol.h"
+#include "grbl/state_machine.h"
+
+#include "sdcard/sdcard.h"
 
 static probe_state_t tls_input = {
     .connected = On
@@ -239,6 +241,10 @@ void board_init (void)
     on_state_change = grbl.on_state_change;
     grbl.on_state_change = onStateChanged;
 
+#endif
+
+#if (FS_ENABLE & FS_SDCARD) && ETHERNET_ENABLE
+    sdcard_early_mount();
 #endif
 }
 

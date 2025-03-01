@@ -118,6 +118,7 @@ static DMA_HandleTypeDef i2c_dma_tx = {
     .Init.Mode = DMA_NORMAL,
     .Init.Priority = DMA_PRIORITY_VERY_HIGH,
     .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+};
 
 #endif
 
