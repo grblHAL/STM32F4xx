@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2024 Terje Io
+  Copyright (c) 2019-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -93,6 +93,12 @@
 #define usarthandler(t) USART ## t ## _IRQHandler
 #define usartCLKEN(t) usartclken(t)
 #define usartclken(t) __HAL_RCC_USART ## t ## _CLK_ENABLE
+
+#define DMAirq(d, p) DMAirqI(d, p)
+#define DMAirqI(d, p) DMA ## d ## _Stream ## p ## _IRQn
+#define DMAhandler(d, p) DMAhandlerI(d, p)
+#define DMAhandlerI(d, p) DMA ## d ## _Stream ## p ## _IRQHandler
+
 // Configuration, do not change here
 
 #define CNC_BOOSTERPACK     0

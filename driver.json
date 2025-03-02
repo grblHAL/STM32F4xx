@@ -461,7 +461,6 @@
       "symbols": {
           "STM32F412Vx": "",
           "STEP_PULSE_LATENCY": 1.3,
-          "TRINAMIC_MIXED_DRIVERS": 1,
           "TRINAMIC_DYNAMIC_CURRENT": 1,
           "RTC_ENABLE": 1,
           "TMC_X_ENABLE": 1,
