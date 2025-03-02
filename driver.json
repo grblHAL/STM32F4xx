@@ -132,7 +132,6 @@
       "caps": {
         "axes": 4,
         "serial_ports": 0,
-        "probe": 0,
         "digital_in": 1,
         "digital_out": 2,
         "spindle_sync": 1,
