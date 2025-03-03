@@ -23,60 +23,13 @@
 
 #if defined(BOARD_FLEXI_HAL)
 
-#include <math.h>
-#include <string.h>
-
-#include "main.h"
-#include "i2c.h"
-#include "grbl/protocol.h"
-#include "grbl/settings.h"
-
-#if SDCARD_ENABLE
-#include "../sdcard/sdcard.h"
-#endif
-
+#include "sdcard/sdcard.h"
 
 void board_init (void)
 {
 
-#if SDCARD_ENABLE
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-    GPIO_InitStruct.Pin = 1 << SD_CS_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(SD_CS_PORT, &GPIO_InitStruct);
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    __HAL_RCC_GPIOB_CLK_ENABLE();    
-
-    HAL_GPIO_WritePin(SD_CS_PORT, SD_CS_PIN, 1);
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 1);
-    volatile uint32_t dly = 1000;
-    volatile uint32_t count = 100;
-
-    while(--dly)
-        __ASM volatile ("nop");  
-
-    while(--count) {
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 1);         
-        dly = 25;  // Reset dly before first delay
-        while(--dly)    
-            __ASM volatile ("nop");
-
-        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 0);         
-        dly = 25;  // Reset dly before second delay
-        while(--dly)
-            __ASM volatile ("nop");
-    }
-
-    sdcard_getfs(); // Mounts SD card if not already mounted
+#if (FS_ENABLE & FS_SDCARD) && ETHERNET_ENABLE
+    sdcard_early_mount();
 #endif
 }
 

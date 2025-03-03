@@ -27,12 +27,6 @@
 #define SPIport(p) SPIportI(p)
 #define SPIportI(p) SPI ## p
 
-#define DMAirq(d, p) DMAirqI(d, p)
-#define DMAirqI(d, p) DMA ## d ## _Stream ## p ## _IRQn
-
-#define DMAhandler(d, p) DMAhandlerI(d, p)
-#define DMAhandlerI(d, p) DMA ## d ## _Stream ## p ## _IRQHandler
-
 #if SPI_PORT == 11 || SPI_PORT == 12 || SPI_PORT == 13
 #define SPIPORT SPIport(1)
 #elif SPI_PORT == 21
