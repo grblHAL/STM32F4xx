@@ -32,7 +32,7 @@
 
 #define AUX_DEVICES // until all drivers are converted?
 #ifndef AUX_CONTROLS
-#define AUX_CONTROLS (AUX_CONTROL_SPINDLE|AUX_CONTROL_COOLANT)
+#define AUX_CONTROLS (AUX_CONTROL_SPINDLE|AUX_CONTROL_COOLANT|COPROC_PASSTHRU)
 #endif
 
 #include "grbl/protocol.h"
@@ -2940,7 +2940,7 @@ static status_code_t enter_dfu (sys_state_t state, char *args)
 static void onReportOptions (bool newopt)
 {
     if(!newopt)
-        hal.stream.write("[PLUGIN:Bootloader Entry v0.02]" ASCII_EOL);
+        report_plugin("Bootloader Entry", "0.02");
 }
 
 #if COPROC_PASSTHRU
