@@ -425,7 +425,7 @@ uint32_t spi_set_speed (uint32_t prescaler)
 {
     uint32_t cur;
 
-    if((cur = spi_port.Instance->CR1 & SPI_BAUDRATEPRESCALER_256) != prescaler) {
+    if((cur = (spi_port.Instance->CR1 & SPI_BAUDRATEPRESCALER_256)) != prescaler) {
         spi_port.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
         spi_port.Instance->CR1 |= prescaler;
     }

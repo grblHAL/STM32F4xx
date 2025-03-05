@@ -39,7 +39,7 @@
 //#define BOARD_STM32F407VET6_DEV   // F407 based industrial control board
 //#define BOARD_FYSETC_S6           // F446 based 3D Printer board
 //#define BOARD_FLEXI_HAL           // F446 CNC board
-#define BOARD_LONGBOARD32         // F412 Sienci SLB, onboard Trinamic drivers version
+//#define BOARD_LONGBOARD32         // F412 Sienci SLB, onboard Trinamic drivers version
 //#define BOARD_LONGBOARD32_EXT     // F412 Sienci SLB, external drivers version
 //#define BOARD_STM32F401_UNI       // F401 CNC board
 //#define BOARD_MKS_ROBIN_NANO_30   // F407 based 3D Printer board - untested!
@@ -80,17 +80,17 @@
 // **********************
 //#define MODBUS_ENABLE           1 // Set to 1 for auto direction, 2 for direction signal on auxiliary output pin.
 //#define ETHERNET_ENABLE         1 // Ethernet streaming. Uses networking plugin.
-#define _WIZCHIP_            5500 // Enables ethernet via WIZnet breakout connected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
-#define WEBUI_ENABLE            3 // Enable ESP3D-WEBUI plugin along with networking and SD card plugins.
+//#define _WIZCHIP_            5500 // Enables ethernet via WIZnet breakout connected via SPI. Set to 5500 for W5500 chip, 5105 for W5100S.
+//#define WEBUI_ENABLE            3 // Enable ESP3D-WEBUI plugin along with networking and SD card plugins.
                                     // NOTE: Only fully compatible with F412 and F429 MCUs.
 //#define WEBUI_AUTH_ENABLE       1 // Enable ESP3D-WEBUI authentication.
-#define SDCARD_ENABLE           1 // Run gcode programs from SD card. Set to 2 to enable YModem upload.
+//#define SDCARD_ENABLE           1 // Run gcode programs from SD card. Set to 2 to enable YModem upload.
 //#define MPG_ENABLE              1 // Enable MPG interface. Requires a serial stream and means to switch between normal and MPG mode.
                                     // 1: Mode switching is by handshake pin.
                                     // 2: Mode switching is by the CMD_MPG_MODE_TOGGLE (0x8B) command character.
 //#define KEYPAD_ENABLE           1 // 1: uses a I2C keypad for input.
                                     // 2: uses a serial stream for input. If MPG_ENABLE is set > 0 the serial stream is shared with the MPG.
-//#define DISPLAY_ENABLE          9 // Set to 1 for I2C display protocol, 2 for I2C LED protocol.
+//#define DISPLAY_ENABLE          1 // Set to 1 for I2C display protocol, 2 for I2C LED protocol.
 //#define MACROS_ENABLE           1 // Macros plugin. For macros that can be triggered by keypad plugin or auxiliary inputs.
                                     // Set to 1 for aux input triggers, 2 for keypad triggers or 3 for both.
 //#define N_MACROS                1 // Number of macros to enable, max 8. If commented out default is 4 when triggered by aux inputs, 8 otherwise.
@@ -152,9 +152,6 @@
 //#define Z_GANGED_LIM_MAX    1
 //
 
-#define I2C_ENABLE 1
-//#define I2C_KHZ 400
-
 #ifdef _WIZCHIP_
 #define ETHERNET_ENABLE 1
 #endif
@@ -163,8 +160,8 @@
 #define TELNET_ENABLE       1 // Telnet daemon - requires Ethernet streaming enabled.
 #define WEBSOCKET_ENABLE    1 // Websocket daemon - requires Ethernet streaming enabled.
 //#define MDNS_ENABLE         1 // mDNS daemon.
-#define SSDP_ENABLE         1 // SSDP daemon - requires HTTP enabled.
-#define MQTT_ENABLE         1 // MQTT client API, only enable if needed by plugin code.
+//#define SSDP_ENABLE         1 // SSDP daemon - requires HTTP enabled.
+//#define MQTT_ENABLE         1 // MQTT client API, only enable if needed by plugin code.
 #if SDCARD_ENABLE || WEBUI_ENABLE
 //#define FTP_ENABLE         1 // Ftp daemon - requires SD card enabled.
 //#define HTTP_ENABLE         1 // http daemon - requires SD card enabled.
