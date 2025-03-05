@@ -43,7 +43,7 @@
  *                             -----------
  */
 
-#if N_ABC_MOTORS > 2
+#if N_ABC_MOTORS > 2 || N_AUTO_SQUARED
 #error "Axis configuration is not supported!"
 #endif
 

@@ -306,6 +306,7 @@
       "caps": {
         "axes": 5,
         "auto_square": 0,
+        "digital_in": 1,
         "serial_ports": 0,
         "spindle_dir": 0,
         "pio_board": "blackpill_f401cc",
@@ -323,6 +324,7 @@
       "caps": {
         "axes": 5,
         "auto_square": 0,
+        "digital_in": 1,
         "serial_ports": 0,
         "spindle_dir": 0,
         "pio_board": "blackpill_f411ce",
@@ -620,6 +622,7 @@
       "MAP": "boards/uno_map.h",
       "caps": {
         "usb_cdc": 0,
+        "ganged_axes": 0,
         "safety_door": 0,
         "pio_board": "nucleo_f411re",
         "ldscript": "STM32F411CEUX_FLASH.ld"    
