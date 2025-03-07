@@ -640,6 +640,7 @@
       "MAP": "boards/uno_map.h",
       "caps": {
         "usb_cdc": 0,
+        "ganged_axes": 0,
         "safety_door": 0,
         "pio_board": "nucleo_f446re",
         "ldscript": "STM32F446RETX_FLASH.ld"    
