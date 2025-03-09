@@ -225,9 +225,6 @@
 #define RPM_TIMER_N     2
 #endif
 
-#if PULSE2_TIMER_N == RPM_COUNTER_N || PULSE2_TIMER_N == RPM_TIMER_N
-#error Timer conflict: spindle sync and step inject!
-#endif
 #define RPM_COUNTER                 timer(RPM_COUNTER_N)
 #define RPM_COUNTER_BASE            timerBase(RPM_COUNTER_N)
 #define RPM_COUNTER_CLKEN           timerCLKEN(RPM_COUNTER_N)

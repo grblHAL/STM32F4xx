@@ -53,6 +53,10 @@
 #define TRUE true
 #define FALSE false
 
+#ifndef FATFS_SPI_PRESCALER
+#define FATFS_SPI_PRESCALER SPI_BAUDRATEPRESCALER_16
+#endif
+
 static uint32_t prescaler = SPI_BAUDRATEPRESCALER_256;
 
 /* asserts the CS pin to the card */
@@ -69,8 +73,6 @@ static inline
 void DESELECT (void)
 {
     DIGITAL_OUT(SD_CS_PORT, SD_CS_PIN, 1);
-
-//    spi_set_speed(SPI_BAUDRATEPRESCALER_4);
 }
 
 /*--------------------------------------------------------------------------
@@ -200,7 +202,7 @@ void power_on (void)
 static
 void set_max_speed(void)
 {
-    prescaler = SPI_BAUDRATEPRESCALER_4;
+    prescaler = (FATFS_SPI_PRESCALER & SPI_BAUDRATEPRESCALER_256);
 }
 
 static
