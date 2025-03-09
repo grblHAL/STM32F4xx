@@ -2728,7 +2728,8 @@ static bool driver_setup (settings_t *settings)
                 outputpin[i].group == PinGroup_MotorUART ||
                  outputpin[i].id == Output_SPICS ||
                   outputpin[i].id == Output_FlashCS ||
-                   outputpin[i].group == PinGroup_StepperEnable)
+                 outputpin[i].id == Output_SdCardCS ||
+                  outputpin[i].group == PinGroup_StepperEnable)
                 outputpin[i].port->ODR |= GPIO_Init.Pin;
 
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
@@ -2931,16 +2932,37 @@ static status_code_t enter_dfu (sys_state_t state, char *args)
 
     __disable_irq();
     *addr = 0xDEADBEEF;
-    __disable_irq();
+    __enable_irq();
     NVIC_SystemReset();
 
     return Status_OK;
 }
 
+#ifdef UF2_BOOTLOADER
+
+status_code_t enter_uf2 (sys_state_t state, char *args)
+{
+    extern uint32_t _board_dfu_dbl_tap; /* Symbol defined in the linker script */
+
+    hal.stream.write("Entering UF2 Bootloader" ASCII_EOL);
+    hal.delay_ms(100, NULL);
+
+    uint32_t *addr = (uint32_t *)(&_board_dfu_dbl_tap);
+
+    __disable_irq();
+    *addr = 0xF01669EF; //UF2 DBL_TAP_MAGIC (defined in TinyUF2)
+    __enable_irq();
+    NVIC_SystemReset();
+
+    return Status_OK;
+}
+
+#endif //UF2_BOOTLOADER
+
 static void onReportOptions (bool newopt)
 {
-    if(!newopt)
-        report_plugin("Bootloader Entry", "0.02");
+    if(!newopt) 
+        report_plugin("Bootloader Entry", "0.03");
 }
 
 #if COPROC_PASSTHRU
@@ -3302,7 +3324,11 @@ bool driver_init (void)
 #if USB_SERIAL_CDC
 
     static const sys_command_t boot_command_list[] = {
-        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } }
+        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
+
+        #ifdef UF2_BOOTLOADER
+    	{"UF2", enter_uf2, { .noargs = On }, { .str = "enter UF2 bootloader" } }
+        #endif
     };
 
     static sys_commands_t boot_commands = {
