@@ -90,7 +90,7 @@ framework = stm32cube
 # Do not produce .a files for lib deps (which would prevent them from overriding weak symbols)
 lib_archive = no
 lib_ldf_mode = off
-extra_scripts = post:extra_script.py
+extra_scripts = %extra_scripts%
 
 [env:%env_name%]
 board = %board%
