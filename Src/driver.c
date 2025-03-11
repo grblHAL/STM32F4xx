@@ -1183,18 +1183,13 @@ static void stepperPulseStartDelayed (stepper_t *stepper)
 
         if(stepper->step_outbits.value) {
             step_pulse.out = stepper->step_outbits; // Store out_bits
-            PULSE_TIMER->ARR = step_pulse.length + step_pulse.delay;
-            PULSE_TIMER->DIER |= TIM_DIER_CC1IE;
+            PULSE_TIMER->DIER = TIM_DIER_CC1IE;
             PULSE_TIMER->CR1 |= TIM_CR1_CEN;
         }
 
-        return;
-    }
-
-    if(stepper->step_outbits.value) {
+    } else if(stepper->step_outbits.value) {
         stepperSetStepOutputs(stepper->step_outbits);
-        PULSE_TIMER->ARR = step_pulse.length;
-        PULSE_TIMER->DIER &= ~TIM_DIER_CC1IE;
+        PULSE_TIMER->DIER = TIM_DIER_UIE;
         PULSE_TIMER->CR1 |= TIM_CR1_CEN;
     }
 }
@@ -1211,11 +1206,13 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
 
     if(stepper->new_block) {
         if(!stepper->exec_segment->spindle_sync) {
+            PULSE_TIMER->ARR = step_pulse.length + step_pulse.delay;
             hal.stepper.pulse_start = spindle_tracker.stepper_pulse_start_normal;
             hal.stepper.pulse_start(stepper);
             return;
         }
         sync = true;
+        PULSE_TIMER->ARR = step_pulse.length; // dir delay not supported
         stepperSetDirOutputs(stepper->dir_outbits);
         spindle_tracker.programmed_rate = stepper->exec_block->programmed_rate;
         spindle_tracker.steps_per_mm = stepper->exec_block->steps_per_mm;
@@ -1231,8 +1228,7 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
 
     if(stepper->step_outbits.value) {
         stepperSetStepOutputs(stepper->step_outbits);
-        PULSE_TIMER->ARR = step_pulse.length;
-        PULSE_TIMER->DIER &= ~TIM_DIER_CC1IE; // dir delay not supported
+        PULSE_TIMER->DIER = TIM_DIER_UIE;
         PULSE_TIMER->CR1 |= TIM_CR1_CEN;
     }
 
@@ -2140,17 +2136,15 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
             step_pulse.delay = (uint32_t)(10.0f * settings->steppers.pulse_delay_microseconds) - 1;
             if(step_pulse.delay > (uint32_t)(10.0f * STEP_PULSE_LATENCY))
                 step_pulse.delay = max(10, step_pulse.delay - (uint32_t)(10.0f * STEP_PULSE_LATENCY));
-            PULSE_TIMER->CCR1 = step_pulse.length;
             hal.stepper.pulse_start = stepperPulseStartDelayed;
         } else {
-            PULSE_TIMER->ARR = step_pulse.length;
-            PULSE_TIMER->DIER &= ~TIM_DIER_CC1IE;
             step_pulse.delay = 0;
             hal.stepper.pulse_start = stepperPulseStart;
         }
 
-        PULSE_TIMER->ARR = step_pulse.length;
-        PULSE_TIMER->EGR = TIM_EGR_UG;
+        PULSE_TIMER->DIER = TIM_DIER_UIE;
+        PULSE_TIMER->CCR1 = step_pulse.delay ? step_pulse.length : 0;
+        PULSE_TIMER->ARR = step_pulse.length + step_pulse.delay;
 
 #if STEP_INJECT_ENABLE
 
@@ -2728,8 +2722,8 @@ static bool driver_setup (settings_t *settings)
                 outputpin[i].group == PinGroup_MotorUART ||
                  outputpin[i].id == Output_SPICS ||
                   outputpin[i].id == Output_FlashCS ||
-                 outputpin[i].id == Output_SdCardCS ||
-                  outputpin[i].group == PinGroup_StepperEnable)
+                   outputpin[i].id == Output_SdCardCS ||
+                    outputpin[i].group == PinGroup_StepperEnable)
                 outputpin[i].port->ODR |= GPIO_Init.Pin;
 
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
@@ -2758,7 +2752,6 @@ static bool driver_setup (settings_t *settings)
     PULSE_TIMER->PSC = (HAL_RCC_GetPCLK1Freq() * 2) / 10000000UL - 1;
     PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
     PULSE_TIMER->CNT = 0;
-    PULSE_TIMER->DIER |= TIM_DIER_UIE;
 
     HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 0, 1);
     NVIC_EnableIRQ(PULSE_TIMER_IRQn);
@@ -2950,7 +2943,7 @@ status_code_t enter_uf2 (sys_state_t state, char *args)
     uint32_t *addr = (uint32_t *)(&_board_dfu_dbl_tap);
 
     __disable_irq();
-    *addr = 0xF01669EF; //UF2 DBL_TAP_MAGIC (defined in TinyUF2)
+    *addr = 0xF01669EF; // UF2 DBL_TAP_MAGIC (defined in TinyUF2)
     __enable_irq();
     NVIC_SystemReset();
 
@@ -3034,7 +3027,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250201";
+    hal.driver_version = "250311";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3325,10 +3318,9 @@ bool driver_init (void)
 
     static const sys_command_t boot_command_list[] = {
         {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
-
-        #ifdef UF2_BOOTLOADER
-    	{"UF2", enter_uf2, { .noargs = On }, { .str = "enter UF2 bootloader" } }
-        #endif
+  #ifdef UF2_BOOTLOADER
+    	{"UF2", enter_uf2, { .allow_blocking = On, .noargs = On }, { .str = "enter UF2 bootloader" } }
+  #endif
     };
 
     static sys_commands_t boot_commands = {
@@ -3432,9 +3424,12 @@ void PULSE_TIMER_IRQHandler (void)
 
     PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);  // Clear IRQ flags
 
-    if(irq & TIM_SR_CC1IF)
+    if(irq & TIM_SR_CC1IF) {                        // Delayed step pulse?
+        PULSE_TIMER->DIER = TIM_DIER_UIE;
+        PULSE_TIMER->ARR = PULSE_TIMER->CCR1;
         stepperSetStepOutputs(step_pulse.out);      // Yes, begin step pulse
-    else
+        PULSE_TIMER->CR1 |= TIM_CR1_CEN;
+    } else
         stepperSetStepOutputs((axes_signals_t){0}); // else end step pulse
 }
 
