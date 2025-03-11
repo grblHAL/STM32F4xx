@@ -443,11 +443,12 @@
         "auto_square": 2,
         "digital_in": 3,
         "digital_out": 4,
-        "eeprom": 128,
+        "eeprom": -128,
         "fram": 1,
         "i2c": 1,
         "sdcard": 1,
         "keypad": 1,
+        "wiznet": 5500,
         "pio_board": "genericSTM32F446RE",
         "ldscript": "FLEXI_STM32F446RETX_BL_FLASH.ld"
       },
