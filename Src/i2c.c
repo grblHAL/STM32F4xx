@@ -258,7 +258,7 @@ i2c_cap_t i2c_start (void)
 
 static inline __attribute__((always_inline)) bool wait_ready (void)
 {
-    while(i2c_port.State != I2C_STATE_READY) {
+    while(i2c_port.State != I2C_STATE_READY && __HAL_I2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET) {
         if(!hal.stream_blocking_callback())
             return false;
     }
