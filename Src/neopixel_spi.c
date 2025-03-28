@@ -5,7 +5,7 @@
 
   Part of grblHAL driver for STM32F7xx
 
-  Copyright (c) 2024 Terje Io
+  Copyright (c) 2024-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -323,7 +323,7 @@ void neopixel_init (void)
 
         HAL_DMA_Init(&spi_dma_tx);
 
-        HAL_NVIC_SetPriority(DMA_TX_IRQ, 0, 0);
+        HAL_NVIC_SetPriority(DMA_TX_IRQ, 1, 0);
         HAL_NVIC_EnableIRQ(DMA_TX_IRQ);
 
         hal.periph_port.register_pin(&sdi);

@@ -247,29 +247,29 @@ static bool claim (io_port_type_t type, io_port_direction_t dir, uint8_t *port, 
 
                 uint8_t i;
 
-                hal.port.num_digital_in--;
+                digital.in.idx_last--;
 
-                for(i = ioports_map_reverse(&digital.in, *port); i < hal.port.num_digital_in ; i++) {
+                for(i = ioports_map_reverse(&digital.in, *port); i < digital.in.idx_last ; i++) {
                     digital.in.map[i] = digital.in.map[i + 1];
                     aux_in[digital.in.map[i]].user_port = i;
                     aux_in[digital.in.map[i]].description = iports_get_pnum(digital, i);
                 }
 
                 aux_in[*port].mode.claimed = On;
-                aux_in[*port].user_port = hal.port.num_digital_in;
+                aux_in[*port].user_port = digital.in.idx_last;
                 aux_in[*port].description = description;
 
-                digital.in.map[hal.port.num_digital_in] = *port;
-                *port = hal.port.num_digital_in;
+                digital.in.map[digital.in.idx_last] = *port;
+                *port = digital.in.idx_last;
             }
 
         } else if((ok = digital.out.map && *port < digital.out.n_ports && !aux_out[*port].mode.claimed)) {
 
             uint8_t i;
 
-            hal.port.num_digital_out--;
+            digital.out.idx_last--;
 
-            for(i = ioports_map_reverse(&digital.out, *port); i < hal.port.num_digital_out; i++) {
+            for(i = ioports_map_reverse(&digital.out, *port); i < digital.out.idx_last; i++) {
                 digital.out.map[i] = digital.out.map[i + 1];
                 aux_out[digital.out.map[i]].description = iports_get_pnum(digital, i);
             }
@@ -277,8 +277,8 @@ static bool claim (io_port_type_t type, io_port_direction_t dir, uint8_t *port, 
             aux_out[*port].mode.claimed = On;
             aux_out[*port].description = description;
 
-            digital.out.map[hal.port.num_digital_out] = *port;
-            *port = hal.port.num_digital_out;
+            digital.out.map[digital.out.idx_last] = *port;
+            *port = digital.out.idx_last;
         }
     }
 
@@ -326,6 +326,20 @@ void ioports_init (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs)
 
     hal.port.set_pin_description = set_pin_description;
 
+    digital.in.n_ports = aux_inputs->n_pins;
+    digital.out.n_ports = aux_outputs->n_pins;
+
+/*    static io_digital_t ports = {
+        .digital = &digital,
+        .digital_out = digital_out,
+        .claim = claim,
+        .swap_pins = swap_pins,
+        .get_pin_info = get_pin_info,
+        .wait_on_input = wait_on_input,
+        .register_interrupt_handler = register_interrupt_handler
+    };*/
+
+//    if(ioports_add_digital(&ports)) {
     if(ioports_add(&digital, Port_Digital, aux_inputs->n_pins, aux_outputs->n_pins))  {
 
         if(digital.in.n_ports) {

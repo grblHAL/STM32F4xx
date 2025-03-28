@@ -209,13 +209,6 @@
 #define STEPPER_TIMER_IRQn          timerINT(STEPPER_TIMER_N)
 #define STEPPER_TIMER_IRQHandler    timerHANDLER(STEPPER_TIMER_N)
 
-#define PULSE_TIMER_N               4
-#define PULSE_TIMER_BASE            timerBase(PULSE_TIMER_N)
-#define PULSE_TIMER                 timer(PULSE_TIMER_N)
-#define PULSE_TIMER_CLKEN           timerCLKEN(PULSE_TIMER_N)
-#define PULSE_TIMER_IRQn            timerINT(PULSE_TIMER_N)
-#define PULSE_TIMER_IRQHandler      timerHANDLER(PULSE_TIMER_N)
-
 #if SPINDLE_ENCODER_ENABLE
 
 #ifndef RPM_COUNTER_N
@@ -247,14 +240,33 @@
 #endif
 
 #define IS_TIMER_CLAIMED(INSTANCE) (((INSTANCE) == STEPPER_TIMER_BASE) || \
-                                    ((INSTANCE) == PULSE_TIMER_BASE) || \
                                     ((INSTANCE) == RPM_TIMER_BASE) || \
                                     ((INSTANCE) == RPM_COUNTER_BASE) || \
                                     ((INSTANCE) == TMC_UART_TIMER_BASE))
 
-// Adjust STEP_PULSE_LATENCY to get accurate step pulse length when required, e.g if using high step rates.
-// The default value is calibrated for 10 microseconds length.
-// NOTE: step output mode, number of axes and compiler optimization settings may all affect this value.
+// Adjust these values to get more accurate step pulse timings when required, e.g if using high step rates.
+// The default values below are calibrated for 5 microsecond pulses on a F446 @ 180 MHz.
+// NOTE: step output mode, number of axes and compiler optimization setting may all affect these values.
+
+// Minimum pulse off time.
+#ifndef STEP_PULSE_TOFF_MIN
+#define STEP_PULSE_TOFF_MIN 2.0f
+#endif
+// Time from main stepper interrupt to pulse output, must be less than STEP_PULSE_TOFF_MIN.
+// Adjust for correct pulse off time after configuring and running at a step rate > max possible.
+#ifndef STEP_PULSE_TON_LATENCY
+#if SPINDLE_SYNC_ENABLE
+#define STEP_PULSE_TON_LATENCY 1.35f
+#else
+#define STEP_PULSE_TON_LATENCY 0.95f
+#endif
+#endif
+// Time from step out to step reset.
+// Adjust for correct step pulse time
+#ifndef STEP_PULSE_TOFF_LATENCY
+#define STEP_PULSE_TOFF_LATENCY 0.85f
+#endif
+// Only used when step injection is enabled (stepper spindle and plasma THC)
 #ifndef STEP_PULSE_LATENCY
 #define STEP_PULSE_LATENCY 1.0f // microseconds
 #endif

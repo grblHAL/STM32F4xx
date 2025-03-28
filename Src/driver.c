@@ -549,10 +549,17 @@ static pin_group_pins_t limit_inputs = {0}, motor_fault_inputs = {};
 static delay_t delay = { .ms = 1, .callback = NULL }; // NOTE: initial ms set to 1 for "resetting" systick timer on startup
 static input_signal_t *pin_irq[16] = {0};
 static struct {
-    uint32_t length;
-    uint32_t delay;
+    // t_* parameters are timer ticks
+    uint32_t t_min_period;
+    uint32_t t_on; // delayed pulse
+    uint32_t t_off;
+    uint32_t t_on_off_min;
+    uint32_t t_off_min;
+    uint32_t t_dly_off_min;
     axes_signals_t out;
 #if STEP_INJECT_ENABLE
+    uint32_t length;
+    uint32_t delay;
     struct {
         hal_timer_t timer;
         axes_signals_t claimed;
@@ -560,7 +567,7 @@ static struct {
         volatile axes_signals_t out;
     } inject;
 #endif
-} step_pulse = {0};
+} step_pulse = {};
 
 #ifdef Z_LIMIT_POLL
 static input_signal_t *z_limit_pin;
@@ -685,28 +692,28 @@ static void stepperWakeUp (void)
 
     STEPPER_TIMER->ARR = hal.f_step_timer / 500; // ~2ms delay to allow drivers time to wake up.
     STEPPER_TIMER->EGR = TIM_EGR_UG;
-    STEPPER_TIMER->SR = ~TIM_SR_UIF;
+    STEPPER_TIMER->SR = 0;
+    STEPPER_TIMER->DIER = TIM_DIER_UIE;
     STEPPER_TIMER->CR1 |= TIM_CR1_CEN;
 }
 
 // Disables stepper driver interrupts
 static void stepperGoIdle (bool clear_signals)
 {
-    STEPPER_TIMER->CR1 &= ~TIM_CR1_CEN;
-    STEPPER_TIMER->CNT = 0;
+    STEPPER_TIMER->DIER &= ~TIM_DIER_UIE;
 }
 
 // Sets up stepper driver interrupt timeout, "Normal" version
-static void stepperCyclesPerTick (uint32_t cycles_per_tick)
+ISR_CODE static void stepperCyclesPerTick (uint32_t cycles_per_tick)
 {
-    STEPPER_TIMER->ARR = cycles_per_tick < (1UL << 20) ? cycles_per_tick : 0x000FFFFFUL;
+    STEPPER_TIMER->ARR = cycles_per_tick < (1UL << 20) ? max(cycles_per_tick, step_pulse.t_min_period) : 0x000FFFFFUL;
 }
 
 // Set stepper pulse output pins
 // NOTE: step_outbits are: bit0 -> X, bit1 -> Y, bit2 -> Z...
 #ifdef SQUARING_ENABLED
 
-inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_signals_t step_out1)
+inline static __attribute__((always_inline)) void stepper_step_out (axes_signals_t step_out1)
 {
     axes_signals_t step_out2;
 
@@ -859,7 +866,7 @@ static void StepperDisableMotors (axes_signals_t axes, squaring_mode_t mode)
 
 #else // SQUARING DISABLED
 
-inline static __attribute__((always_inline)) void stepperSetStepOutputs (axes_signals_t step_out)
+inline static __attribute__((always_inline)) void stepper_step_out (axes_signals_t step_out)
 {
 #if STEP_INJECT_ENABLE
 
@@ -1014,8 +1021,8 @@ static axes_signals_t getGangedAxes (bool auto_squared)
 #endif
 
 // Set stepper direction output pins
-// NOTE: see note for stepperSetStepOutputs()
-inline static __attribute__((always_inline)) void stepperSetDirOutputs (axes_signals_t dir_out)
+// NOTE: see note for stepper_step_out()
+inline static __attribute__((always_inline)) void stepper_dir_out (axes_signals_t dir_out)
 {
 #if STEP_INJECT_ENABLE
 
@@ -1143,8 +1150,22 @@ inline static __attribute__((always_inline)) void stepperSetDirOutputs (axes_sig
 #endif
 }
 
+static inline __attribute__((always_inline)) void _stepper_step_out (axes_signals_t step_out)
+{
+    stepper_step_out(step_out);
+
+    if((STEPPER_TIMER->SR & TIM_SR_UIF) || STEPPER_TIMER->CNT < step_pulse.t_on_off_min) {
+        STEPPER_TIMER->CNT = step_pulse.t_on_off_min;
+        NVIC_ClearPendingIRQ(STEPPER_TIMER_IRQn);
+    }
+
+    STEPPER_TIMER->CCR1 = STEPPER_TIMER->CNT - step_pulse.t_off;
+    STEPPER_TIMER->SR = 0;
+    STEPPER_TIMER->DIER |= TIM_DIER_CC1IE;
+}
+
 // Sets stepper direction and pulse pins and starts a step pulse.
-static void stepperPulseStart (stepper_t *stepper)
+ISR_CODE static void stepperPulseStart (stepper_t *stepper)
 {
 #if SPINDLE_SYNC_ENABLE
     if(stepper->new_block && stepper->exec_segment->spindle_sync) {
@@ -1155,18 +1176,18 @@ static void stepperPulseStart (stepper_t *stepper)
     }
 #endif
 
-    if(stepper->dir_change)
-        stepperSetDirOutputs(stepper->dir_outbits);
-
-    if(stepper->step_outbits.value) {
-        stepperSetStepOutputs(stepper->step_outbits);
-        PULSE_TIMER->CR1 |= TIM_CR1_CEN;
+    if(stepper->dir_changed.bits) {
+        stepper->dir_changed.bits = 0;
+        stepper_dir_out(stepper->dir_out);
     }
+
+    if(stepper->step_out.bits)
+        _stepper_step_out(stepper->step_out);
 }
 
 // Start a stepper pulse, delay version.
 // Note: delay is only added when there is a direction change and a pulse to be output.
-static void stepperPulseStartDelayed (stepper_t *stepper)
+ISR_CODE static void stepperPulseStartDelayed (stepper_t *stepper)
 {
 #if SPINDLE_SYNC_ENABLE
     if(stepper->new_block && stepper->exec_segment->spindle_sync) {
@@ -1177,21 +1198,37 @@ static void stepperPulseStartDelayed (stepper_t *stepper)
     }
 #endif
 
-    if(stepper->dir_change) {
+    if(stepper->dir_changed.bits) {
 
-        stepperSetDirOutputs(stepper->dir_outbits);
+        stepper_dir_out(stepper->dir_out);
 
-        if(stepper->step_outbits.value) {
-            step_pulse.out = stepper->step_outbits; // Store out_bits
-            PULSE_TIMER->DIER = TIM_DIER_CC1IE;
-            PULSE_TIMER->CR1 |= TIM_CR1_CEN;
+        if(stepper->step_out.bits) {
+
+            if(stepper->step_out.bits & stepper->dir_changed.bits) {
+
+                step_pulse.out = stepper->step_out; // Store out_bits
+
+                if(STEPPER_TIMER->CNT < step_pulse.t_dly_off_min) {
+                    STEPPER_TIMER->CNT = step_pulse.t_dly_off_min;
+                    NVIC_ClearPendingIRQ(STEPPER_TIMER_IRQn);
+                }
+
+                STEPPER_TIMER->CCR2 = STEPPER_TIMER->CNT - step_pulse.t_on;
+
+                STEPPER_TIMER->SR = 0;
+                STEPPER_TIMER->DIER |= TIM_DIER_CC2IE;
+
+            } else
+                _stepper_step_out(stepper->step_out);
         }
 
-    } else if(stepper->step_outbits.value) {
-        stepperSetStepOutputs(stepper->step_outbits);
-        PULSE_TIMER->DIER = TIM_DIER_UIE;
-        PULSE_TIMER->CR1 |= TIM_CR1_CEN;
+        stepper->dir_changed.bits = 0;
+
+        return;
     }
+
+    if(stepper->step_out.bits)
+        _stepper_step_out(stepper->step_out);
 }
 
 #if SPINDLE_SYNC_ENABLE
@@ -1199,21 +1236,19 @@ static void stepperPulseStartDelayed (stepper_t *stepper)
 // Spindle sync version: sets stepper direction and pulse pins and starts a step pulse.
 // Switches back to "normal" version if spindle synchronized motion is finished.
 // TODO: add delayed pulse handling...
-static void stepperPulseStartSynchronized (stepper_t *stepper)
+ISR_CODE static void stepperPulseStartSynchronized (stepper_t *stepper)
 {
     static bool sync = false;
     static float block_start;
 
     if(stepper->new_block) {
         if(!stepper->exec_segment->spindle_sync) {
-            PULSE_TIMER->ARR = step_pulse.length + step_pulse.delay;
             hal.stepper.pulse_start = spindle_tracker.stepper_pulse_start_normal;
             hal.stepper.pulse_start(stepper);
             return;
         }
         sync = true;
-        PULSE_TIMER->ARR = step_pulse.length; // dir delay not supported
-        stepperSetDirOutputs(stepper->dir_outbits);
+        stepper_dir_out(stepper->dir_out);
         spindle_tracker.programmed_rate = stepper->exec_block->programmed_rate;
         spindle_tracker.steps_per_mm = stepper->exec_block->steps_per_mm;
         spindle_tracker.segment_id = 0;
@@ -1226,11 +1261,8 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
 #endif
     }
 
-    if(stepper->step_outbits.value) {
-        stepperSetStepOutputs(stepper->step_outbits);
-        PULSE_TIMER->DIER = TIM_DIER_UIE;
-        PULSE_TIMER->CR1 |= TIM_CR1_CEN;
-    }
+    if(stepper->step_out.bits)
+        _stepper_step_out(stepper->step_out);
 
     if(spindle_tracker.segment_id != stepper->exec_segment->id) {
 
@@ -1256,7 +1288,7 @@ static void stepperPulseStartSynchronized (stepper_t *stepper)
                 int32_t step_delta = (int32_t)(pidf(&spindle_tracker.pid, spindle_tracker.prev_pos, actual_pos, dt) * spindle_tracker.steps_per_mm);
                 int32_t ticks = (((int32_t)stepper->step_count + step_delta) * (int32_t)stepper->exec_segment->cycles_per_tick) / (int32_t)stepper->step_count;
 
-                stepper->exec_segment->cycles_per_tick = (uint32_t)max(ticks, spindle_tracker.min_cycles_per_tick >> stepper->exec_segment->amass_level);
+                stepper->exec_segment->cycles_per_tick = (uint32_t)max(ticks, spindle_tracker.min_cycles_per_tick >> stepper->amass_level);
 
                 stepperCyclesPerTick(stepper->exec_segment->cycles_per_tick);
            } else
@@ -1364,7 +1396,7 @@ static void stepperClaimMotor (uint_fast8_t axis_id, bool claim)
     }
 }
 
-void stepperOutputStep (axes_signals_t step_out, axes_signals_t dir_out)
+ISR_CODE void stepperOutputStep (axes_signals_t step_out, axes_signals_t dir_out)
 {
     if(step_out.bits) {
 
@@ -2079,8 +2111,8 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
             .Speed = GPIO_SPEED_FREQ_HIGH
         };
 
-        stepperSetStepOutputs((axes_signals_t){0});
-        stepperSetDirOutputs((axes_signals_t){0});
+        stepper_step_out((axes_signals_t){0});
+        stepper_dir_out((axes_signals_t){0});
 
 #ifdef SQUARING_ENABLED
         hal.stepper.disable_motors((axes_signals_t){0}, SquaringMode_Both);
@@ -2130,21 +2162,21 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 
 #endif // SPINDLE_ENCODER_ENABLE
 
-        step_pulse.length = (uint32_t)(10.0f * (settings->steppers.pulse_microseconds - STEP_PULSE_LATENCY)) - 1;
+        float sl = (float)hal.f_step_timer / 1000000.0f;
 
         if(hal.driver_cap.step_pulse_delay && settings->steppers.pulse_delay_microseconds > 0.0f) {
-            step_pulse.delay = (uint32_t)(10.0f * settings->steppers.pulse_delay_microseconds) - 1;
-            if(step_pulse.delay > (uint32_t)(10.0f * STEP_PULSE_LATENCY))
-                step_pulse.delay = max(10, step_pulse.delay - (uint32_t)(10.0f * STEP_PULSE_LATENCY));
+            step_pulse.t_on = (uint32_t)ceilf(sl * (max(STEP_PULSE_TOFF_MIN, settings->steppers.pulse_delay_microseconds) - STEP_PULSE_TOFF_LATENCY));
             hal.stepper.pulse_start = stepperPulseStartDelayed;
         } else {
-            step_pulse.delay = 0;
+            step_pulse.t_on = 0;
             hal.stepper.pulse_start = stepperPulseStart;
         }
 
-        PULSE_TIMER->DIER = TIM_DIER_UIE;
-        PULSE_TIMER->CCR1 = step_pulse.delay ? step_pulse.length : 0;
-        PULSE_TIMER->ARR = step_pulse.length + step_pulse.delay;
+        step_pulse.t_min_period = (uint32_t)ceilf(sl * (settings->steppers.pulse_microseconds + STEP_PULSE_TOFF_MIN));
+        step_pulse.t_off = (uint32_t)ceilf(sl * (settings->steppers.pulse_microseconds - STEP_PULSE_TOFF_LATENCY));
+        step_pulse.t_off_min = (uint32_t)ceilf(sl * (STEP_PULSE_TOFF_MIN - STEP_PULSE_TON_LATENCY));
+        step_pulse.t_on_off_min = step_pulse.t_off + step_pulse.t_off_min;
+        step_pulse.t_dly_off_min = step_pulse.t_on + step_pulse.t_on_off_min;
 
 #if STEP_INJECT_ENABLE
 
@@ -2154,6 +2186,15 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
         };
         step_inject_cfg.irq0_callback = step_pulse.delay ? step_inject_on : NULL;
         step_inject_cfg.irq0 = step_pulse.delay;
+
+        step_pulse.length = (uint32_t)(10.0f * (settings->steppers.pulse_microseconds - STEP_PULSE_LATENCY)) - 1;
+
+        if(hal.driver_cap.step_pulse_delay && settings->steppers.pulse_delay_microseconds > 0.0f) {
+            step_pulse.delay = (uint32_t)(10.0f * settings->steppers.pulse_delay_microseconds) - 1;
+            if(step_pulse.delay > (uint32_t)(10.0f * STEP_PULSE_LATENCY))
+                step_pulse.delay = max(10, step_pulse.delay - (uint32_t)(10.0f * STEP_PULSE_LATENCY));
+        } else
+            step_pulse.delay = 0;
 
         hal.timer.configure(step_pulse.inject.timer, &step_inject_cfg);
 
@@ -2735,26 +2776,12 @@ static bool driver_setup (settings_t *settings)
  // Stepper init
 
     STEPPER_TIMER_CLKEN();
-    STEPPER_TIMER->CR1 &= ~TIM_CR1_CEN;
-    STEPPER_TIMER->SR &= ~TIM_SR_UIF;
+    STEPPER_TIMER->CR1 = 0;
     STEPPER_TIMER->PSC = STEPPER_TIMER_DIV - 1;
-    STEPPER_TIMER->CNT = 0;
-    STEPPER_TIMER->CR1 |= TIM_CR1_DIR;
-    STEPPER_TIMER->DIER |= TIM_DIER_UIE;
+    STEPPER_TIMER->CR1 = TIM_CR1_DIR|TIM_CR1_ARPE;
 
-    HAL_NVIC_SetPriority(STEPPER_TIMER_IRQn, 0, 2);
+    HAL_NVIC_SetPriority(STEPPER_TIMER_IRQn, 0, 0);
     NVIC_EnableIRQ(STEPPER_TIMER_IRQn);
-
- // Single-shot 100 ns per tick
-
-    PULSE_TIMER_CLKEN();
-    PULSE_TIMER->CR1 |= TIM_CR1_OPM|TIM_CR1_DIR|TIM_CR1_CKD_1|TIM_CR1_ARPE|TIM_CR1_URS;
-    PULSE_TIMER->PSC = (HAL_RCC_GetPCLK1Freq() * 2) / 10000000UL - 1;
-    PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);
-    PULSE_TIMER->CNT = 0;
-
-    HAL_NVIC_SetPriority(PULSE_TIMER_IRQn, 0, 1);
-    NVIC_EnableIRQ(PULSE_TIMER_IRQn);
 
 #if SDCARD_SDIO
 
@@ -3027,7 +3054,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250311";
+    hal.driver_version = "250323";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3403,39 +3430,43 @@ pin_group_pins_t *get_motor_fault_inputs (void)
 /* interrupt handlers */
 
 // Main stepper driver
-void STEPPER_TIMER_IRQHandler (void)
+ISR_CODE void STEPPER_TIMER_IRQHandler (void)
 {
-    if((STEPPER_TIMER->SR & TIM_SR_UIF) != 0) {     // check interrupt source
-        STEPPER_TIMER->SR = ~TIM_SR_UIF;            // clear UIF flag
+//    DIGITAL_OUT(AUXOUTPUT9_PORT, AUXOUTPUT9_PIN, 1);
+
+    // Delayed step pulse handler
+    if((STEPPER_TIMER->SR & STEPPER_TIMER->DIER) & TIM_SR_CC2IF) {
+
+        STEPPER_TIMER->DIER &= ~TIM_DIER_CC2IE;
+
+        _stepper_step_out(step_pulse.out);
+    }
+    // Step pulse off handler
+    else if((STEPPER_TIMER->SR & STEPPER_TIMER->DIER) & TIM_SR_CC1IF) {
+
+        STEPPER_TIMER->DIER &= ~TIM_DIER_CC1IE;
+
+        stepper_step_out((axes_signals_t){0});
+
+        if((STEPPER_TIMER->SR & TIM_SR_UIF) || STEPPER_TIMER->CNT < step_pulse.t_off_min) {
+            STEPPER_TIMER->CNT = step_pulse.t_off_min;
+            NVIC_ClearPendingIRQ(STEPPER_TIMER_IRQn);
+        }
+
+        STEPPER_TIMER->SR &= ~TIM_SR_CC1IF;
+    }
+    // Stepper timeout handler
+    else if(STEPPER_TIMER->SR & TIM_SR_UIF) {
+        STEPPER_TIMER->SR = 0;
         hal.stepper.interrupt_callback();
     }
-}
 
-/* The Stepper Port Reset Interrupt: This interrupt handles the falling edge of the step
-   pulse. This should always trigger before the next general stepper driver interrupt and independently
-   finish, if stepper driver interrupts is disabled after completing a move.
-   NOTE: Interrupt collisions between the serial and stepper interrupts can cause delays by
-   a few microseconds, if they execute right before one another. Not a big deal, but can
-   cause issues at high step rates if another high frequency asynchronous interrupt is added.
-*/
-void PULSE_TIMER_IRQHandler (void)
-{
-    uint32_t irq = PULSE_TIMER->SR & PULSE_TIMER->DIER;
-
-    PULSE_TIMER->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF);  // Clear IRQ flags
-
-    if(irq & TIM_SR_CC1IF) {                        // Delayed step pulse?
-        PULSE_TIMER->DIER = TIM_DIER_UIE;
-        PULSE_TIMER->ARR = PULSE_TIMER->CCR1;
-        stepperSetStepOutputs(step_pulse.out);      // Yes, begin step pulse
-        PULSE_TIMER->CR1 |= TIM_CR1_CEN;
-    } else
-        stepperSetStepOutputs((axes_signals_t){0}); // else end step pulse
+//    DIGITAL_OUT(AUXOUTPUT9_PORT, AUXOUTPUT9_PIN, 0);
 }
 
 #if SPINDLE_ENCODER_ENABLE
 
-void RPM_COUNTER_IRQHandler (void)
+ISR_CODE void RPM_COUNTER_IRQHandler (void)
 {
     spindle_encoder.spin_lock = true;
 
@@ -3457,7 +3488,7 @@ void RPM_COUNTER_IRQHandler (void)
 
 #if RPM_TIMER_N != 2
 
-void RPM_TIMER_IRQHandler (void)
+ISR_CODE void RPM_TIMER_IRQHandler (void)
 {
     RPM_TIMER->SR &= ~TIM_SR_UIF;
 
