@@ -697,12 +697,6 @@ static void stepperWakeUp (void)
     STEPPER_TIMER->CR1 |= TIM_CR1_CEN;
 }
 
-// Disables stepper driver interrupts
-static void stepperGoIdle (bool clear_signals)
-{
-    STEPPER_TIMER->DIER &= ~TIM_DIER_UIE;
-}
-
 // Sets up stepper driver interrupt timeout, "Normal" version
 ISR_CODE static void stepperCyclesPerTick (uint32_t cycles_per_tick)
 {
@@ -1148,6 +1142,17 @@ inline static __attribute__((always_inline)) void stepper_dir_out (axes_signals_
 #if STEP_INJECT_ENABLE
     }
 #endif
+}
+
+// Disables stepper driver interrupts
+static void stepperGoIdle (bool clear_signals)
+{
+    STEPPER_TIMER->DIER &= ~TIM_DIER_UIE;
+
+    if(clear_signals) {
+        stepper_dir_out((axes_signals_t){0});
+        stepper_step_out((axes_signals_t){0});
+    }
 }
 
 static inline __attribute__((always_inline)) void _stepper_step_out (axes_signals_t step_out)
@@ -2111,8 +2116,7 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
             .Speed = GPIO_SPEED_FREQ_HIGH
         };
 
-        stepper_step_out((axes_signals_t){0});
-        stepper_dir_out((axes_signals_t){0});
+        hal.stepper.go_idle(true);
 
 #ifdef SQUARING_ENABLED
         hal.stepper.disable_motors((axes_signals_t){0}, SquaringMode_Both);
@@ -3054,7 +3058,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250323";
+    hal.driver_version = "250328";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
