@@ -445,7 +445,7 @@
         "digital_out": 4,
         "serial_ports": 2,
         "eeprom": -128,
-        "fram": 1,
+        "fram": 0,
         "i2c": 1,
         "i2c_strobe": 1,
         "sdcard": 1,
