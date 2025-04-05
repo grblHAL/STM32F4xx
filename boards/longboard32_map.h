@@ -315,8 +315,8 @@
 #define LED1_PIN                13
 #endif
 
-#define AUXINTPUT0_ANALOG_PORT  GPIOA
-#define AUXINTPUT0_ANALOG_PIN   0
+#define AUXINPUT0_ANALOG_PORT  GPIOA
+#define AUXINPUT0_ANALOG_PIN   0
 
 #define AUXINPUT0_PORT          GPIOD // AUX_IN_0
 #define AUXINPUT0_PIN           12

@@ -315,11 +315,11 @@ static input_signal_t inputpin[] = {
 #ifdef AUXINPUT12_PIN
     { .id = Input_Aux12,          .port = AUXINPUT12_PORT,    .pin = AUXINPUT12_PIN,      .group = PinGroup_AuxInput },
 #endif
-#ifdef AUXINTPUT0_ANALOG_PIN
-    { .id = Input_Analog_Aux0,    .port = AUXINTPUT0_ANALOG_PORT, .pin = AUXINTPUT0_ANALOG_PIN, .group = PinGroup_AuxInputAnalog },
+#ifdef AUXINPUT0_ANALOG_PIN
+    { .id = Input_Analog_Aux0,    .port = AUXINPUT0_ANALOG_PORT, .pin = AUXINPUT0_ANALOG_PIN, .group = PinGroup_AuxInputAnalog },
 #endif
-#ifdef AUXINTPUT1_ANALOG_PIN
-    { .id = Input_Analog_Aux1,    .port = AUXINTPUT1_ANALOG_PORT, .pin = AUXINTPUT1_ANALOG_PIN, .group = PinGroup_AuxInputAnalog }
+#ifdef AUXINPUT1_ANALOG_PIN
+    { .id = Input_Analog_Aux1,    .port = AUXINPUT1_ANALOG_PORT, .pin = AUXINPUT1_ANALOG_PIN, .group = PinGroup_AuxInputAnalog }
 #endif
 };
 
@@ -1752,7 +1752,7 @@ static void probeConfigure (bool is_probe_away, bool probing)
 {
     probe.inverted = is_probe_away ? !settings.probe.invert_probe_pin : settings.probe.invert_probe_pin;
 
-    if(hal.signals_cap.probe_triggered) {
+    if(hal.driver_cap.probe_latch) {
         probe.is_probing = Off;
         probe.triggered = hal.probe.get_state().triggered;
         pin_irq_mode_t irq_mode = probing && !probe.triggered ? (probe.inverted ? IRQ_Mode_Falling : IRQ_Mode_Rising) : IRQ_Mode_None;
@@ -1848,12 +1848,15 @@ static bool aux_claim_explicit (aux_ctrl_t *aux_ctrl)
         ioport_assign_function(aux_ctrl, &((input_signal_t *)aux_ctrl->input)->id);
 #ifdef PROBE_PIN
         if(aux_ctrl->function == Input_Probe) {
+
+            xbar_t *pin = hal.port.get_pin_info(Port_Digital, Port_Input, aux_ctrl->aux_port);
+
             probe_port = aux_ctrl->aux_port;
             hal.probe.get_state = probeGetState;
             hal.probe.configure = probeConfigure;
             hal.probe.connected_toggle = probeConnectedToggle;
             hal.driver_cap.probe_pull_up = On;
-            hal.signals_cap.probe_triggered = hal.driver_cap.probe_latch = aux_ctrl->irq_mode != IRQ_Mode_None;
+            hal.signals_cap.probe_triggered = hal.driver_cap.probe_latch = (pin->cap.irq_mode & aux_ctrl->irq_mode) == aux_ctrl->irq_mode;
         }
 #endif
 #if defined(SAFETY_DOOR_PIN) || defined(QEI_SELECT_PIN)
@@ -3407,6 +3410,11 @@ bool driver_init (void)
 #if defined(NEOPIXEL_SPI) || defined(NEOPIXEL_GPO)
     extern void neopixel_init (void);
     neopixel_init();
+#endif
+
+#if MCP3221_ENABLE_NEW
+    extern void mcp3221_init (void);
+    mcp3221_init();
 #endif
 
 #include "grbl/plugins_init.h"
