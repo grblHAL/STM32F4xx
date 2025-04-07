@@ -40,6 +40,7 @@
       { "id": "laser_ppi" },
       { "id": "laser_cluster" },
       { "id": "laser_coolant" },
+      { "id": "laser_overdrive" },
       { "id": "motors" },
       { "id": "odometer" },
       { "id": "sdcard" },
