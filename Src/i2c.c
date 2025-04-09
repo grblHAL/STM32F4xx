@@ -194,6 +194,7 @@ I2C_HandleTypeDef *I2C_GetPort (void)
 
 static uint8_t keycode = 0;
 static keycode_callback_ptr keypad_callback = NULL;
+static volatile bool await_rx = false;
 
 i2c_cap_t i2c_start (void)
 {
@@ -259,9 +260,9 @@ i2c_cap_t i2c_start (void)
 static inline __attribute__((always_inline)) bool wait_ready (void)
 {
 #ifdef I2C_FASTMODE
-    while(i2c_port.State != I2C_STATE_READY && __HAL_FMPI2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET) {
+    while((await_rx && i2c_port.State != I2C_STATE_READY && __HAL_FMPI2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET) {
 #else
-    while(i2c_port.State != I2C_STATE_READY && __HAL_I2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET) {
+    while(await_rx && i2c_port.State != I2C_STATE_READY && __HAL_I2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET) {
 #endif
         if(!hal.stream_blocking_callback())
             return false;
@@ -296,9 +297,9 @@ bool i2c_receive (i2c_address_t i2cAddr, uint8_t *buf, size_t size, bool block)
     if(!wait_ready())
         return false;
 
-    bool ok = I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, buf, size) == HAL_OK;
+    await_rx = I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, buf, size) == HAL_OK;
 
-    return ok && (!block || wait_ready());
+    return await_rx && (!block || wait_ready());
 }
 
 bool i2c_transfer (i2c_transfer_t *i2c, bool read)
@@ -322,22 +323,22 @@ bool i2c_transfer (i2c_transfer_t *i2c, bool read)
 
 bool i2c_get_keycode (i2c_address_t i2cAddr, keycode_callback_ptr callback)
 {
-    bool ok;
-
-    if((ok = wait_ready() && I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, &keycode, 1) == HAL_OK)) {
+    if((await_rx = wait_ready() && I2C_Master_Receive_IT(&i2c_port, i2cAddr << 1, &keycode, 1) == HAL_OK)) {
         keycode = 0;
         keypad_callback = callback;
     }
 
-    return ok;
+    return await_rx;
 }
 
 #ifdef I2C_FASTMODE
 void HAL_FMPI2C_MasterRxCpltCallback (FMPI2C_HandleTypeDef *hi2c)
 #else
-void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+void HAL_I2C_MasterRxCpltCallback (I2C_HandleTypeDef *hi2c)
 #endif
 {
+    await_rx = false;
+
     if(keypad_callback && keycode != 0) {
         keypad_callback(keycode);
         keypad_callback = NULL;
@@ -405,6 +406,8 @@ void I2C_IRQEVT_Handler (void)
 
 void I2C_IRQERR_Handler (void)
 {
+    await_rx = false;
+
     I2C_ER_IRQHandler(&i2c_port);
 }
 

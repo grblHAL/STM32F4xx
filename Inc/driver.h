@@ -42,11 +42,6 @@
 #define ETHERNET_ENABLE 1
 #endif
 
-#if defined(MCP3221_ENABLE)
-#define I2C_ENABLE 1
-#define MCP3221_ENABLE_NEW MCP3221_ENABLE
-#endif
-
 #define OPTS_POSTPROCESSING
 
 #include "grbl/driver_opts.h"
@@ -307,7 +302,7 @@
 
 #if defined(AUXOUTPUT0_PWM_PORT) || defined(AUXOUTPUT1_PWM_PORT) ||\
      defined(AUXOUTPUT0_ANALOG_PORT) || defined(AUXOUTPUT1_ANALOG_PORT) ||\
-      defined(AUXINTPUT0_ANALOG_PORT) || defined(AUXINTPUT1_ANALOG_PORT) ||\
+      defined(AUXINPUT0_ANALOG_PORT) || defined(AUXINPUT1_ANALOG_PORT) ||\
        defined(MCP3221_ENABLE)
 #define AUX_ANALOG 1
 #else
