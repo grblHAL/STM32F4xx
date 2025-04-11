@@ -84,7 +84,6 @@ inline static void spindle_off (spindle_ptrs_t *spindle)
 
 inline static void spindle_on (spindle_ptrs_t *spindle)
 {
-    spindle->context.pwm->flags.enable_out = On;
 #ifdef SPINDLE_DIRECTION_PIN
     if(spindle->context.pwm->flags.cloned) {
         DIGITAL_OUT(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN, !settings.pwm_spindle.invert.ccw);
@@ -95,9 +94,10 @@ inline static void spindle_on (spindle_ptrs_t *spindle)
     DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, !settings.pwm_spindle.invert.on);
 #endif
 #if SPINDLE_ENCODER_ENABLE
-    if(spindle->reset_data)
+    if(!spindle->context.pwm->flags.enable_out && spindle->reset_data)
         spindle->reset_data();
 #endif
+    spindle->context.pwm->flags.enable_out = On;
 }
 
 inline static void spindle_dir (bool ccw)
@@ -295,7 +295,6 @@ inline static void spindle1_off (spindle_ptrs_t *spindle)
 
 inline static void spindle1_on (spindle_ptrs_t *spindle)
 {
-    spindle->context.pwm->flags.enable_out = On;
 #ifdef SPINDLE1_DIRECTION_PIN
     if(spindle->context.pwm->flags.cloned) {
         DIGITAL_OUT(SPINDLE1_DIRECTION_PORT, SPINDLE1_DIRECTION_PIN, !spindle_config->cfg.invert.ccw);
@@ -306,9 +305,10 @@ inline static void spindle1_on (spindle_ptrs_t *spindle)
     DIGITAL_OUT(SPINDLE1_ENABLE_PORT, SPINDLE1_ENABLE_PIN, !spindle_config->cfg.invert.on);
 #endif
 #if SPINDLE_ENCODER_ENABLE
-    if(spindle->reset_data)
+    if(!spindle->context.pwm->flags.enable_out && spindle->reset_data)
         spindle->reset_data();
 #endif
+    spindle->context.pwm->flags.enable_out = On;
 }
 
 inline static void spindle1_dir (bool ccw)
