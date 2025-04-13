@@ -200,6 +200,16 @@ static int32_t wait_on_input (uint8_t port, wait_mode_t wait_mode, float timeout
     return value;
 }
 
+static bool set_function (xbar_t *port, pin_function_t function)
+{
+    if(port->mode.input)
+        aux_in_analog[port->id].id = function;
+    else
+        aux_out_analog[port->id].id = function;
+
+    return true;
+}
+
 static xbar_t *get_pin_info (io_port_direction_t dir, uint8_t port)
 {
     static xbar_t pin;
@@ -207,18 +217,20 @@ static xbar_t *get_pin_info (io_port_direction_t dir, uint8_t port)
 
     memset(&pin, 0, sizeof(xbar_t));
 
+    pin.set_function = set_function;
+
     switch(dir) {
 
         case Port_Input:
             if(port < analog.in.n_ports) {
                 pin.id = port;
-                pin.mode = aux_in_analog[pin.id].mode;
-                pin.cap = aux_in_analog[pin.id].cap;
-                pin.function = aux_in_analog[pin.id].id;
-                pin.group = aux_in_analog[pin.id].group;
-                pin.pin = aux_in_analog[pin.id].pin;
-                pin.port = (void *)aux_in_analog[pin.id].port;
-                pin.description = aux_in_analog[pin.id].description;
+                pin.mode = aux_in_analog[port].mode;
+                pin.cap = aux_in_analog[port].cap;
+                pin.function = aux_in_analog[port].id;
+                pin.group = aux_in_analog[port].group;
+                pin.pin = aux_in_analog[port].pin;
+                pin.port = (void *)aux_in_analog[port].port;
+                pin.description = aux_in_analog[port].description;
                 pin.get_value = analog_in_state;
                 info = &pin;
             }
@@ -228,15 +240,15 @@ static xbar_t *get_pin_info (io_port_direction_t dir, uint8_t port)
 #if AUX_ANALOG_OUT
             if(port < analog.out.n_ports) {
                 pin.id = port;
-                pin.port = aux_out_analog[pin.id].port;
-                pin.mode = aux_out_analog[pin.id].mode;
+                pin.port = aux_out_analog[port].port;
+                pin.mode = aux_out_analog[port].mode;
                 pin.mode.pwm = !pin.mode.servo_pwm; //?? for easy filtering
                 XBAR_SET_CAP(pin.cap, pin.mode);
-                pin.function = aux_out_analog[pin.id].id;
-                pin.group = aux_out_analog[pin.id].group;
-                pin.pin = aux_out_analog[pin.id].pin;
-                pin.port = (void *)aux_out_analog[pin.id].port;
-                pin.description = aux_out_analog[pin.id].description;
+                pin.function = aux_out_analog[port].id;
+                pin.group = aux_out_analog[port].group;
+                pin.pin = aux_out_analog[port].pin;
+                pin.port = (void *)aux_out_analog[port].port;
+                pin.description = aux_out_analog[port].description;
                 pin.get_value = pwm_get_value;
                 pin.config = init_pwm;
                 info = &pin;
