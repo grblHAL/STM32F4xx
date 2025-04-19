@@ -371,7 +371,7 @@ void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_ou
             };
 
             for(i = 0; i < analog.out.n_ports; i++) {
-                if((pin = get_pin_info(Port_Analog, Port_Output, i)))
+                if((pin = get_pin_info(Port_Output, i)))
                     pin->config(pin, &config, false);
             }
         }
