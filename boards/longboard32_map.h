@@ -25,7 +25,7 @@
 #error "Axis configuration is not supported!"
 #endif
 
-#if !defined(STM32F412Vx) || HSE_VALUE != 25000000
+#if !(defined(STM32F412Vx) && HSE_VALUE == 25000000) && !(defined(DEBUG) && IS_NUCLEO_DEVKIT == 144)
 #error "This board has STM32F412 processor with a 25MHz crystal, select a corresponding build!"
 #endif
 
@@ -41,11 +41,14 @@
 #endif
 #endif
 
-#if EEPROM_ENABLE || SLB_EEPROM_ENABLE
+#if (EEPROM_ENABLE || SLB_EEPROM_ENABLE) && !IS_NUCLEO_DEVKIT
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
 #define I2C_ENABLE 1
 #define EEPROM_ENABLE 128
+#endif
+
+#if I2C_ENABLE
 #define I2C_PORT 1
 #define I2C1_ALT_PINMAP 1
 #endif
@@ -55,9 +58,9 @@
 
 #define HAS_BOARD_INIT
 #define WIZCHIP_SPI_PRESCALER   SPI_BAUDRATEPRESCALER_2
-#define FATFS_SPI_PRESCALER     SPI_BAUDRATEPRESCALER_4
+#define FATFS_SPI_PRESCALER     SPI_BAUDRATEPRESCALER_8
 
-#ifdef BOARD_LONGBOARD32
+#if defined(BOARD_LONGBOARD32) && !IS_NUCLEO_DEVKIT
 #undef TRINAMIC_ENABLE
 #define TRINAMIC_ENABLE      2660
 #define TRINAMIC_SPI_PORT       2

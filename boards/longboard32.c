@@ -28,7 +28,7 @@
 #define SLB_TLS_AUX_INPUT 3
 #endif
 
-#include "grbl/protocol.h"
+#include "grbl/task.h"
 #include "grbl/state_machine.h"
 
 #include "sdcard/sdcard.h"
@@ -108,7 +108,7 @@ static void onStateChanged (sys_state_t state)
             hal.stepper.status(true);
     }
 
-    if(state == STATE_ESTOP)
+    if(state & (STATE_ESTOP))
         estop = true;
 
     if(on_state_change)
@@ -232,9 +232,9 @@ void board_init (void)
 
         hal.driver_cap.toolsetter = On;
     } else
-        protocol_enqueue_foreground_task(report_warning, "SLB toolsetter: configured port number is not available!");
+        task_run_on_startup(report_warning, "SLB toolsetter: configured port number is not available!");
 
-    protocol_enqueue_foreground_task(clear_ringleds, NULL);
+    task_run_on_startup(clear_ringleds, NULL);
 
 #if TRINAMIC_ENABLE
 

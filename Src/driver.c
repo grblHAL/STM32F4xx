@@ -35,7 +35,7 @@
 #define AUX_CONTROLS (AUX_CONTROL_SPINDLE|AUX_CONTROL_COOLANT|COPROC_PASSTHRU)
 #endif
 
-#include "grbl/protocol.h"
+#include "grbl/task.h"
 #include "grbl/motor_pins.h"
 #include "grbl/pin_bits_masks.h"
 #include "grbl/state_machine.h"
@@ -463,10 +463,10 @@ static output_signal_t outputpin[] = {
 #ifdef SPI_RST_PORT
     { .id = Output_SPIRST,          .port = SPI_RST_PORT,           .pin = SPI_RST_PIN,             .group = PinGroup_SPI },
 #endif
-#ifdef LED_PORT
+#if defined(LED_PORT) && defined(NEOPIXEL_GPO)
     { .id = Output_LED0_Adressable, .port = LED_PORT,               .pin = LED_PIN,                 .group = PinGroup_LED },
 #endif
-#ifdef LED1_PORT
+#if defined(LED1_PORT) && defined(NEOPIXEL_GPO)
     { .id = Output_LED1_Adressable, .port = LED1_PORT,              .pin = LED1_PIN,                .group = PinGroup_LED },
 #endif
 #ifdef LED_R_PORT
@@ -1824,7 +1824,7 @@ static void aux_irq_handler (uint8_t port, bool state)
 #endif
 #ifdef MPG_MODE_PIN
             case Input_MPGSelect:
-                protocol_enqueue_foreground_task(mpg_select, NULL);
+                task_add_immediate(mpg_select, NULL);
                 break;
 #endif
             default:
@@ -3408,7 +3408,7 @@ bool driver_init (void)
     qei_enable = encoder_init(QEI_ENABLE);
 #endif
 
-#if defined(NEOPIXEL_SPI) || defined(NEOPIXEL_GPO)
+#if defined(NEOPIXEL_SPI) || defined(NEOPIXEL_PWM) || defined(NEOPIXEL_GPO)
     extern void neopixel_init (void);
     neopixel_init();
 #endif
@@ -3419,7 +3419,7 @@ bool driver_init (void)
     if(!hal.driver_cap.mpg_mode)
         hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, NULL);
     if(hal.driver_cap.mpg_mode)
-        protocol_enqueue_foreground_task(mpg_enable, NULL);
+        task_run_on_startup(mpg_enable, NULL);
 #elif MPG_ENABLE == 2
     if(!hal.driver_cap.mpg_mode)
         hal.driver_cap.mpg_mode = stream_mpg_register(stream_open_instance(MPG_STREAM, 115200, NULL, NULL), false, stream_mpg_check_enable);

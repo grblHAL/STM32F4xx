@@ -27,8 +27,12 @@
 #error "Trinamic plugin not supported!"
 #endif
 
-#if !defined(STM32F446xx) || HSE_VALUE != 25000000
+#if !(defined(STM32F446xx) && HSE_VALUE == 25000000) && !(defined(DEBUG) && IS_NUCLEO_DEVKIT == 144)
 #error "This board has STM32F446 processor with a 25MHz crystal, select a corresponding build!"
+#endif
+
+#if defined(DEBUG) && IS_NUCLEO_DEVKIT == 144
+#define ENABLE_SWD
 #endif
 
 #if MPG_ENABLE && ETHERNET_ENABLE
@@ -42,13 +46,14 @@
 
 #define WIZCHIP_SPI_PRESCALER SPI_BAUDRATEPRESCALER_4
 
+#if !(IS_NUCLEO_DEVKIT == 144)
 #undef I2C_ENABLE
 #undef EEPROM_ENABLE
-
 #define I2C_ENABLE 1
 #define I2C_FASTMODE
-#define EEPROM_ENABLE 2
-#define HAS_IOPORTS
+#define EEPROM_ENABLE 128
+#endif
+
 #define HAS_BOARD_INIT
 
 #if MODBUS_ENABLE

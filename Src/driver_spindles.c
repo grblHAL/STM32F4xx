@@ -29,7 +29,7 @@
 
 #include "grbl/pin_bits_masks.h"
 #include "grbl/nvs_buffer.h"
-#include "grbl/protocol.h"
+#include "grbl/task.h"
 
 static settings_changed_ptr settings_changed;
 
@@ -581,7 +581,7 @@ void driver_spindles_init (void)
     };
 
     if(!(spindle_timer.timer && (spindle_id = spindle_register(&spindle, DRIVER_SPINDLE_NAME)) != -1))
-        protocol_enqueue_foreground_task(report_warning, "PWM spindle failed to initialize!");
+        task_run_on_startup(report_warning, "PWM spindle failed to initialize!");
 
  #else
 
@@ -640,7 +640,7 @@ void driver_spindles_init (void)
         if((spindle1_id = spindle_register(&spindle1, DRIVER_SPINDLE1_NAME)) != -1)
             spindle1_settings_register(spindle1.cap, spindle1_settings_changed);
         else
-            protocol_enqueue_foreground_task(report_warning, "PWM2 spindle failed to initialize!");
+            task_run_on_startup(report_warning, "PWM2 spindle failed to initialize!");
     }
 
  #else
