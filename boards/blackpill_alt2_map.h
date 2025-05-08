@@ -18,6 +18,24 @@
   You should have received a copy of the GNU General Public License
   along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
+/*
+C13 	Step En/Dis  	A Step
+C14 	Coolant Flood  	Coolant Flood
+C15 	Coolant Mist  	Coolant Mist
+RST	RST	RST
+A0 	Reset   	Reset
+A1 	 Safety door/I2C strobe  	Safety door/I2C strobe
+A2 	X Step  	A Direction
+A3	X Direction 	Spindle Enable
+A4	Y Step 	Spindle Direction
+A5	Y Direction 	Step En/Dis
+A6 	Z Step   	Z Direction
+A7	Z Direction 	Y Direction
+B0	A Step 	X Direction
+B1	A Direction 	Z Step
+B2	Spindle Enable   	Y Step
+B10	Spindle Direction  	X Step
+*/
 
 /* Pin Assignments:
  *
@@ -59,20 +77,21 @@
 #define I2C_PORT    1   // GPIOB: SCL = 8, SDA = 9
 
 // Define step pulse output pins.
-#define STEP_PORT               GPIOA
-#define X_STEP_PIN              2
-#define Y_STEP_PIN              4
-#define Z_STEP_PIN              6
+#define STEP_PORT               GPIOB
+#define X_STEP_PIN              10
+#define Y_STEP_PIN              2
+#define Z_STEP_PIN              1
 #if N_ABC_MOTORS == 1
 #define STEP_OUTMODE            GPIO_BITBAND
 #else
 #define STEP_OUTMODE            GPIO_MAP
 #endif
 
+#define DIRECTION_PORT          GPIOB
+#define X_DIRECTION_PIN         0
 #define DIRECTION_PORT          GPIOA
-#define X_DIRECTION_PIN         3
-#define Y_DIRECTION_PIN         5
-#define Z_DIRECTION_PIN         7
+#define Y_DIRECTION_PIN         7
+#define Z_DIRECTION_PIN         6
 #if N_ABC_MOTORS == 1
 #define DIRECTION_OUTMODE       GPIO_BITBAND
 #else
@@ -80,8 +99,8 @@
 #endif
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_ENABLE_PORT    GPIOC
-#define STEPPERS_ENABLE_PIN     13
+#define STEPPERS_ENABLE_PORT    GPIOA
+#define STEPPERS_ENABLE_PIN     5
 #define STEPPERS_ENABLE_MASK    STEPPERS_ENABLE_BIT
 
 // Define homing/hard limit switch input pins.
@@ -94,10 +113,10 @@
 // Define ganged axis or A axis step pulse and step direction output pins.
 #if N_ABC_MOTORS == 1
 #define M3_AVAILABLE
-#define M3_STEP_PORT            GPIOB
-#define M3_STEP_PIN             0
-#define M3_DIRECTION_PORT       GPIOB
-#define M3_DIRECTION_PIN        1
+#define M3_STEP_PORT            GPIOC
+#define M3_STEP_PIN             13
+#define M3_DIRECTION_PORT       GPIOA
+#define M3_DIRECTION_PIN        2
 #define M3_LIMIT_PORT           GPIOB
 #define M3_LIMIT_PIN            15
 #else
@@ -111,10 +130,10 @@
 
 #define AUXOUTPUT3_PORT         GPIOA // Spindle PWM
 #define AUXOUTPUT3_PIN          8
-#define AUXOUTPUT4_PORT         GPIOB // Spindle direction
-#define AUXOUTPUT4_PIN          10
-#define AUXOUTPUT5_PORT         GPIOB // Spindle enable
-#define AUXOUTPUT5_PIN          2
+#define AUXOUTPUT4_PORT         GPIOA // Spindle direction
+#define AUXOUTPUT4_PIN          4
+#define AUXOUTPUT5_PORT         GPIOA // Spindle enable
+#define AUXOUTPUT5_PIN          3
 #define AUXOUTPUT6_PORT         GPIOC // Coolant flood
 #define AUXOUTPUT6_PIN          15
 #define AUXOUTPUT7_PORT         GPIOC // Coolant mist
@@ -195,3 +214,4 @@
 #endif
 
 /* EOF */
+
