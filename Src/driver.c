@@ -1586,7 +1586,7 @@ static control_signals_t systemGetState (void)
   #ifdef SAFETY_DOOR_PIN
     signals.safety_door_ajar = !!(bits & SAFETY_DOOR_BIT);
   #endif
-#else
+#elif CONTROL_MASK
     signals.value &= ~(CONTROL_MASK >> CONTROL_INMODE);
     signals.value |= (uint16_t)((CONTROL_PORT->IDR & CONTROL_MASK) >> CONTROL_INMODE);
   #if ESTOP_ENABLE
@@ -2946,7 +2946,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250412";
+    hal.driver_version = "250514";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

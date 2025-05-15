@@ -61,8 +61,8 @@ static spindle_id_t spindle_id = -1;
 
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
 
-static spindle_pwm_t spindle_pwm;
-static pwm_signal_t spindle_timer = {0};
+static spindle_pwm_t spindle_pwm = { .offset = -1 };
+static pwm_signal_t spindle_timer = {};
 
 #endif // SPINDLE_PWM
 
@@ -70,34 +70,42 @@ static pwm_signal_t spindle_timer = {0};
 
 inline static void spindle_off (spindle_ptrs_t *spindle)
 {
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
     spindle->context.pwm->flags.enable_out = Off;
-#ifdef SPINDLE_DIRECTION_PIN
+  #ifdef SPINDLE_DIRECTION_PIN
     if(spindle->context.pwm->flags.cloned) {
         DIGITAL_OUT(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN, settings.pwm_spindle.invert.ccw);
     } else {
         DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, settings.pwm_spindle.invert.on);
     }
-#elif defined(SPINDLE_ENABLE_PIN)
+  #elif defined(SPINDLE_ENABLE_PIN)
+    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, settings.pwm_spindle.invert.on);
+  #endif
+#else
     DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, settings.pwm_spindle.invert.on);
 #endif
 }
 
 inline static void spindle_on (spindle_ptrs_t *spindle)
 {
-#ifdef SPINDLE_DIRECTION_PIN
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
+  #ifdef SPINDLE_DIRECTION_PIN
     if(spindle->context.pwm->flags.cloned) {
         DIGITAL_OUT(SPINDLE_DIRECTION_PORT, SPINDLE_DIRECTION_PIN, !settings.pwm_spindle.invert.ccw);
     } else {
         DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, !settings.pwm_spindle.invert.on);
     }
-#elif defined(SPINDLE_ENABLE_PIN)
+  #elif defined(SPINDLE_ENABLE_PIN)
     DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, !settings.pwm_spindle.invert.on);
-#endif
-#if SPINDLE_ENCODER_ENABLE
+  #endif
+  #if SPINDLE_ENCODER_ENABLE
     if(!spindle->context.pwm->flags.enable_out && spindle->reset_data)
         spindle->reset_data();
-#endif
+  #endif
     spindle->context.pwm->flags.enable_out = On;
+#else
+    DIGITAL_OUT(SPINDLE_ENABLE_PORT, SPINDLE_ENABLE_PIN, !settings.pwm_spindle.invert.on);
+#endif
 }
 
 inline static void spindle_dir (bool ccw)
@@ -203,9 +211,10 @@ static bool spindleConfig (spindle_ptrs_t *spindle)
                 spindle_precompute_pwm_values(spindle, &spindle_pwm, &settings.pwm_spindle, clock_hz / prescaler);
             }
 
-            spindle->set_state = spindleSetStateVariable;
+            pwm_config(&spindle_timer, prescaler, spindle_pwm.period, spindle_pwm.flags.invert_pwm);
 
-            pwm_config(&spindle_timer, prescaler, spindle_pwm.period, settings.pwm_spindle.invert.pwm);
+            spindle_pwm.flags.invert_pwm = Off; // Handled in hardware
+            spindle->set_state = spindleSetStateVariable;
 
             if((spindle_pwm.flags.laser_mode_disable = settings.pwm_spindle.flags.laser_mode_disable)) {
 #if PPI_ENABLE
@@ -272,8 +281,8 @@ static spindle1_pwm_settings_t *spindle_config;
 
 #if DRIVER_SPINDLE1_ENABLE & SPINDLE_PWM
 
-static spindle_pwm_t spindle1_pwm;
-static pwm_signal_t spindle1_timer = {0};
+static spindle_pwm_t spindle1_pwm = { .offset = -1 };
+static pwm_signal_t spindle1_timer = {};
 
 #endif // SPINDLE_PWM
 
@@ -281,34 +290,42 @@ static pwm_signal_t spindle1_timer = {0};
 
 inline static void spindle1_off (spindle_ptrs_t *spindle)
 {
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
     spindle->context.pwm->flags.enable_out = Off;
-#ifdef SPINDLE1_DIRECTION_PIN
+  #ifdef SPINDLE1_DIRECTION_PIN
     if(spindle->context.pwm->flags.cloned) {
         DIGITAL_OUT(SPINDLE1_DIRECTION_PORT, SPINDLE1_DIRECTION_PIN, spindle_config->cfg.invert.ccw);
     } else {
         DIGITAL_OUT(SPINDLE1_ENABLE_PORT, SPINDLE1_ENABLE_PIN, spindle_config->cfg.invert.on);
     }
-#elif defined(SPINDLE1_ENABLE_PIN)
+  #elif defined(SPINDLE1_ENABLE_PIN)
+    DIGITAL_OUT(SPINDLE1_ENABLE_PORT, SPINDLE1_ENABLE_PIN, spindle_config->cfg.invert.on);
+  #endif
+#else
     DIGITAL_OUT(SPINDLE1_ENABLE_PORT, SPINDLE1_ENABLE_PIN, spindle_config->cfg.invert.on);
 #endif
 }
 
 inline static void spindle1_on (spindle_ptrs_t *spindle)
 {
-#ifdef SPINDLE1_DIRECTION_PIN
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
+  #ifdef SPINDLE1_DIRECTION_PIN
     if(spindle->context.pwm->flags.cloned) {
         DIGITAL_OUT(SPINDLE1_DIRECTION_PORT, SPINDLE1_DIRECTION_PIN, !spindle_config->cfg.invert.ccw);
     } else {
         DIGITAL_OUT(SPINDLE1_ENABLE_PORT, SPINDLE1_ENABLE_PIN, !spindle_config->cfg.invert.on);
     }
-#elif defined(SPINDLE1_ENABLE_PIN)
+  #elif defined(SPINDLE1_ENABLE_PIN)
     DIGITAL_OUT(SPINDLE1_ENABLE_PORT, SPINDLE1_ENABLE_PIN, !spindle_config->cfg.invert.on);
-#endif
-#if SPINDLE_ENCODER_ENABLE
+  #endif
+  #if SPINDLE_ENCODER_ENABLE
     if(!spindle->context.pwm->flags.enable_out && spindle->reset_data)
         spindle->reset_data();
-#endif
+  #endif
     spindle->context.pwm->flags.enable_out = On;
+#else
+    DIGITAL_OUT(SPINDLE1_ENABLE_PORT, SPINDLE1_ENABLE_PIN, !spindle_config->cfg.invert.on);
+#endif
 }
 
 inline static void spindle1_dir (bool ccw)
@@ -414,9 +431,10 @@ static bool spindle1Config (spindle_ptrs_t *spindle)
                 spindle_precompute_pwm_values(spindle, &spindle1_pwm, &spindle_config->cfg, clock_hz / prescaler);
             }
 
-            spindle->set_state = spindle1SetStateVariable;
+            pwm_config(&spindle1_timer, prescaler, spindle1_pwm.period, spindle1_pwm.flags.invert_pwm);
 
-            pwm_config(&spindle1_timer, prescaler, spindle1_pwm.period, spindle_config->cfg.invert.pwm);
+            spindle1_pwm.flags.invert_pwm = Off; // Handled in hardware
+            spindle->set_state = spindleSetStateVariable;
 
 #if PPI_ENABLE
             if(ppi_spindle == NULL && ppi_timer) {
