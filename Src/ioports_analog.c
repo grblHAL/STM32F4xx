@@ -85,6 +85,10 @@ static const adc_map_t adc_map[] = {
 static io_ports_data_t analog;
 static input_signal_t *aux_in_analog;
 static output_signal_t *aux_out_analog;
+static ADC_ChannelConfTypeDef adc_config = {
+    .Rank = 1,
+    .SamplingTime = ADC_SAMPLETIME_3CYCLES
+};
 
 #if AUX_ANALOG_OUT
 
@@ -174,30 +178,32 @@ static bool init_pwm (xbar_t *output, pwm_config_t *config, bool persistent)
 
 #endif // AUX_ANALOG_OUT
 
-static float analog_in_state (xbar_t *input)
+static inline int32_t adc_read (ADC_HandleTypeDef *adc, uint32_t channel)
 {
-    float value = -1.0f;
+    int32_t value = -1;
 
-    if(input->id < analog.in.n_ports) {
-        HAL_ADC_Start(aux_in_analog[input->id].adc);
-        if(HAL_ADC_PollForConversion(aux_in_analog[input->id].adc, 2) == HAL_OK)
-            value = HAL_ADC_GetValue(aux_in_analog[input->id].adc);
+    if(adc) {
+
+        if(adc_config.Channel != channel) {
+            adc_config.Channel = channel;
+            HAL_ADC_ConfigChannel(adc, &adc_config);
+        }
+
+        if(HAL_ADC_Start(adc) == HAL_OK && HAL_ADC_PollForConversion(adc, 2) == HAL_OK)
+            value = (int32_t)HAL_ADC_GetValue(adc);
     }
 
     return value;
 }
 
+static float analog_in_state (xbar_t *input)
+{
+    return input->id < analog.in.n_ports ? (float)adc_read(aux_in_analog[input->id].adc, aux_in_analog[input->id].channel) : -1.0f;
+}
+
 static int32_t wait_on_input (uint8_t port, wait_mode_t wait_mode, float timeout)
 {
-    int32_t value = -1;
-
-    if(port < analog.in.n_ports && aux_in_analog[port].adc) {
-        HAL_ADC_Start(aux_in_analog[port].adc);
-        if(HAL_ADC_PollForConversion(aux_in_analog[port].adc, 2) == HAL_OK)
-            value = HAL_ADC_GetValue(aux_in_analog[port].adc);
-    }
-
-    return value;
+    return port < analog.in.n_ports ? adc_read(aux_in_analog[port].adc, aux_in_analog[port].channel) : -1;
 }
 
 static bool set_function (xbar_t *port, pin_function_t function)
@@ -295,11 +301,6 @@ void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_ou
                 .Pull = GPIO_NOPULL
             };
 
-            ADC_ChannelConfTypeDef adc_config = {
-                .Rank = 1,
-                .SamplingTime = ADC_SAMPLETIME_3CYCLES
-            };
-
             uint_fast8_t i;
 
             for(i = 0; i < aux_inputs->n_pins; i++) {
@@ -329,7 +330,7 @@ void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_ou
                             gpio_init.Pin = aux_inputs->pins.inputs[i].bit;
                             HAL_GPIO_Init(aux_inputs->pins.inputs[i].port, &gpio_init);
 
-                            adc_config.Channel = adc_map[j].ch;
+                            adc_config.Channel = aux_inputs->pins.inputs[i].channel = adc_map[j].ch;
 
                             adc->Instance = adc_map[j].adc;
                             adc->Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
@@ -380,5 +381,4 @@ void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_ou
     }
 }
 
-#endif
-
+#endif // AUX_ANALOG

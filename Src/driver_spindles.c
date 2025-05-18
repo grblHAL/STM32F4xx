@@ -434,7 +434,7 @@ static bool spindle1Config (spindle_ptrs_t *spindle)
             pwm_config(&spindle1_timer, prescaler, spindle1_pwm.period, spindle1_pwm.flags.invert_pwm);
 
             spindle1_pwm.flags.invert_pwm = Off; // Handled in hardware
-            spindle->set_state = spindleSetStateVariable;
+            spindle->set_state = spindle1SetStateVariable;
 
 #if PPI_ENABLE
             if(ppi_spindle == NULL && ppi_timer) {
