@@ -49,3 +49,6 @@
 [submodule "plugins"]
 	path = plugins
 	url = https://github.com/grblHAL/Plugins_misc/
+[submodule "openpnp"]
+	path = openpnp
+	url = https://github.com/grblHAL/Plugin_OpenPNP/
