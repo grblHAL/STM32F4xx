@@ -321,6 +321,7 @@ typedef struct {
     volatile bool active;
     ioport_interrupt_callback_ptr interrupt_callback;
     ADC_HandleTypeDef *adc;
+    uint32_t channel; // ADC channel;
     const char *description;
 } input_signal_t;
 

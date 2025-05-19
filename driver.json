@@ -49,6 +49,7 @@
       { "id": "networking" },
       { "id": "spindle" },
       { "id": "modbus" },
+      { "id": "openpnp" },
       { "id": "rgb_leds" },
       { "id": "eventout" },
       { "id": "homing_pulloff" },

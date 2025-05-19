@@ -32,6 +32,7 @@ lib_deps =
   motors
   trinamic
   odometer
+  openpnp
   fans
   plugins
   FatFs
