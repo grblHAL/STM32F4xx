@@ -153,19 +153,30 @@
 #define COOLANT_MIST_PIN            AUXOUTPUT4_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT                  GPIOG
-#define RESET_PIN                   6                           // EXP1 PG6
-#define FEED_HOLD_PORT              GPIOD
-#define FEED_HOLD_PIN               11                          // EXP1 PD11
-#define CYCLE_START_PORT            GPIOG
-#define CYCLE_START_PIN             2                           // EXP1 PG2
-#define CONTROL_INMODE GPIO_BITBAND
+#define AUXINPUT0_PORT              GPIOG // EXP1 PG4 - safety door
+#define AUXINPUT0_PIN               4
+#define AUXINPUT1_PORT              GPIOA // BLTouch PA1 - probe
+#define AUXINPUT1_PIN               1
+#define AUXINPUT2_PORT              GPIOG // EXP1 PG6 - reset/EStop
+#define AUXINPUT2_PIN               6
+#define AUXINPUT3_PORT              GPIOD // EXP1 PD11 - feed hold
+#define AUXINPUT3_PIN               11
+#define AUXINPUT4_PORT              GPIOG // EXP1 PG2 - cycle start
+#define AUXINPUT4_PIN               2
 
-#define AUXINPUT0_PORT              GPIOG
-#define AUXINPUT0_PIN               4                           // EXP1 PG4
-#define AUXINPUT1_PORT              GPIOA
-#define AUXINPUT1_PIN               1                           // BLTouch PA1
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT                  AUXINPUT2_PORT
+#define RESET_PIN                   AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT              AUXINPUT3_PORT
+#define FEED_HOLD_PIN               AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT            AUXINPUT4_PORT
+#define CYCLE_START_PIN             AUXINPUT4_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT                  AUXINPUT1_PORT

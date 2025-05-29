@@ -150,24 +150,34 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOC
-#define RESET_PIN               0                           // TB
-#define FEED_HOLD_PORT          GPIOC
-#define FEED_HOLD_PIN           1                           // TH1
-#if IS_NUCLEO_DEVKIT
-#define CYCLE_START_PORT        GPIOA
-#define CYCLE_START_PIN         10                          // When debugging with Nucleo-144
-#else
-#define CYCLE_START_PORT        GPIOA
-#define CYCLE_START_PIN         4                           // MT_DET1
-#endif
-#define CONTROL_INMODE GPIO_BITBAND
-
-#define AUXINPUT0_PORT          GPIOC                       // EXP1 PC5
+#define AUXINPUT0_PORT          GPIOC // EXP1 PC5
 #define AUXINPUT0_PIN           5
-#define AUXINPUT1_PORT          GPIOC                       //Z+ Limit
+#define AUXINPUT1_PORT          GPIOC // Z+ Limit
 #define AUXINPUT1_PIN           4
+#define AUXINPUT2_PORT          GPIOC // Reset/EStop
+#define AUXINPUT2_PIN           0
+#define AUXINPUT3_PORT          GPIOC // Feed hold
+#define AUXINPUT3_PIN           1
+#define AUXINPUT4_PORT          GPIOA // Cycle start
+#if IS_NUCLEO_DEVKIT
+#define AUXINPUT4_PIN           10    //  - when debugging with Nucleo-144
+#else
+#define AUXINPUT4_PIN           4     //  - MT_DET1
+#endif
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT2_PORT
+#define RESET_PIN               AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT3_PORT
+#define FEED_HOLD_PIN           AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT4_PORT
+#define CYCLE_START_PIN         AUXINPUT4_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT1_PORT
@@ -177,9 +187,7 @@
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT0_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT0_PIN
-#endif
-
-#if MOTOR_FAULT_ENABLE
+#elif MOTOR_FAULT_ENABLE
 #define MOTOR_FAULT_PORT        AUXINPUT0_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT0_PIN
 #endif

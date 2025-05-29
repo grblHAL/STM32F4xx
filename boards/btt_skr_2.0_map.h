@@ -124,6 +124,10 @@
 #define AUXOUTPUT1_PIN              5
 #define AUXOUTPUT2_PORT             GPIOB // Spindle enable, FAN1
 #define AUXOUTPUT2_PIN              6
+#define AUXOUTPUT3_PORT             GPIOB // Coolant flood
+#define AUXOUTPUT3_PIN              3
+#define AUXOUTPUT4_PORT             GPIOB // Coolant mist
+#define AUXOUTPUT4_PIN              4
 
 #define AUXOUTPUT0_PWM_PORT         GPIOE // SERVOS
 #define AUXOUTPUT0_PWM_PIN          5
@@ -143,23 +147,40 @@
 #endif //DRIVER_SPINDLE_ENABLE
 
 // Define flood and mist coolant enable output pins.
-#define COOLANT_FLOOD_PORT          GPIOB
-#define COOLANT_FLOOD_PIN           3                           // HEAT0
-#define COOLANT_MIST_PORT           GPIOB
-#define COOLANT_MIST_PIN            4                           // HEAT1
+#if COOLANT_ENABLE & COOLANT_FLOOD
+#define COOLANT_FLOOD_PORT          AUXOUTPUT3_PORT
+#define COOLANT_FLOOD_PIN           AUXOUTPUT3_PIN
+#endif
+#if COOLANT_ENABLE & COOLANT_MIST
+#define COOLANT_MIST_PORT           AUXOUTPUT4_PORT
+#define COOLANT_MIST_PIN            AUXOUTPUT4_PIN
+#endif
+
+#define AUXINPUT0_PORT              GPIOA // EXP2-6 - safety door
+#define AUXINPUT0_PIN               7
+#define AUXINPUT1_PORT              GPIOE // Probe
+#define AUXINPUT1_PIN               4
+#define AUXINPUT2_PORT              GPIOA // Exp2-4 - reset/EStop
+#define AUXINPUT2_PIN               4
+#define AUXINPUT3_PORT              GPIOA // Exp2-2 - feed hold
+#define AUXINPUT3_PIN               5
+#define AUXINPUT4_PORT              GPIOA // Exp2-1 - cycle start
+#define AUXINPUT4_PIN               6
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // These are all available on EXP2 along with electrical RESET* (EXP2-8)
-#define CONTROL_PORT                GPIOA
-#define RESET_PIN                   4                           // Exp2-4
-#define FEED_HOLD_PIN               5                           // Exp2-2
-#define CYCLE_START_PIN             6                           // Exp2-1
-#define CONTROL_INMODE              GPIO_BITBAND
-
-#define AUXINPUT0_PORT              GPIOA
-#define AUXINPUT0_PIN               7                           // EXP2-6
-#define AUXINPUT1_PORT              GPIOE
-#define AUXINPUT1_PIN               4                           // PROBE
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT                  AUXINPUT2_PORT
+#define RESET_PIN                   AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT              AUXINPUT3_PORT
+#define FEED_HOLD_PIN               AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT            AUXINPUT4_PORT
+#define CYCLE_START_PIN             AUXINPUT4_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT                  AUXINPUT1_PORT

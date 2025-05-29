@@ -19,8 +19,6 @@
   along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define AUX_CONTROLS (AUX_CONTROL_SPINDLE|AUX_CONTROL_COOLANT|AUX_CONTROL_DEVICES)
-
 #if TRINAMIC_ENABLE == 2130
 #include "trinamic/tmc2130.h"
 #endif
@@ -119,10 +117,17 @@
 #define AUXOUTPUT1_PIN          2
 #endif
 #ifndef SPI_PORT
+
+#define AUXINPUT0_ANALOG_PORT   GPIOA
+#define AUXINPUT0_ANALOG_PIN    5
+#define AUXINPUT1_ANALOG_PORT   GPIOA
+#define AUXINPUT1_ANALOG_PIN    6
+/*
 #define AUXOUTPUT2_PORT         GPIOA // SDO
 #define AUXOUTPUT2_PIN          6
 #define AUXOUTPUT3_PORT         GPIOA // SCK
 #define AUXOUTPUT3_PIN          5
+*/
 #endif
 
 #define AUXOUTPUT4_PORT         GPIOA // Spindle PWM
@@ -175,13 +180,6 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT8_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define CONTROL_PORT            GPIOC
-#define RESET_PIN               2
-#define FEED_HOLD_PIN           3
-#define CYCLE_START_PIN         4
-#define CONTROL_INMODE          GPIO_BITBAND
-
 #ifdef SPI_PORT
 #if SDCARD_ENABLE
 #define SD_CS_PORT              GPIOC
@@ -203,8 +201,8 @@
 */
 
 //#define NEOPIXEL_GPO
-//#define LED_PORT                GPIOA
-//#define LED_PIN                 7
+#define LED_PORT                GPIOA
+#define LED_PIN                 7
 
 //#define NEOPIXEL_SPI            1 // PA7
 //#define NEOPIXELS_NUM           6
@@ -238,6 +236,28 @@
 #define AUXINPUT6_PORT          GPIOC
 #define AUXINPUT6_PIN           11
 #endif
+
+#define AUXINPUT7_PORT          GPIOC // Reset/EStop
+#define AUXINPUT7_PIN           2
+#define AUXINPUT8_PORT          GPIOC // Feed hold
+#define AUXINPUT8_PIN           3
+#define AUXINPUT9_PORT          GPIOC // Cycle start
+#define AUXINPUT9_PIN           4
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT7_PORT
+#define RESET_PIN               AUXINPUT7_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT8_PORT
+#define FEED_HOLD_PIN           AUXINPUT8_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT9_PORT
+#define CYCLE_START_PIN         AUXINPUT9_PIN
+#endif
+#define CONTROL_INMODE          GPIO_BITBAND
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT5_PORT

@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2022 Terje Io
+  Copyright (c) 2020-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -109,19 +109,30 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT6_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define CONTROL_PORT            GPIOB
-#define RESET_PIN               5
-#define FEED_HOLD_PIN           6
-#define CYCLE_START_PIN         7
-#define CONTROL_INMODE GPIO_SHIFT5
-
-#define AUXINPUT0_PORT          GPIOB
+#define AUXINPUT0_PORT          GPIOB // Safety door
 #define AUXINPUT0_PIN           8
-#define AUXINPUT1_PORT          GPIOA
+#define AUXINPUT1_PORT          GPIOA // Probe
 #define AUXINPUT1_PIN           7
-#define AUXINPUT2_PORT          GPIOB
-#define AUXINPUT2_PIN           7
+#define AUXINPUT2_PORT          GPIOB // Reset/EStop
+#define AUXINPUT2_PIN           5
+#define AUXINPUT3_PORT          GPIOB // Feed hold
+#define AUXINPUT3_PIN           6
+#define AUXINPUT4_PORT          GPIOB // Cycle start
+#define AUXINPUT4_PIN           7
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT2_PORT
+#define RESET_PIN               AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT3_PORT
+#define FEED_HOLD_PIN           AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT4_PORT
+#define CYCLE_START_PIN         AUXINPUT4_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT1_PORT
@@ -131,9 +142,7 @@
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT0_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT0_PIN
-#endif
-
-#if MOTOR_FAULT_ENABLE
+#elif MOTOR_FAULT_ENABLE
 #define MOTOR_FAULT_PORT        AUXINPUT0_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT0_PIN
 #endif

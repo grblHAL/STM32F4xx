@@ -159,20 +159,31 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOB
-#define RESET_PIN               15
-#define FEED_HOLD_PORT          GPIOC
-#define FEED_HOLD_PIN           13
-#define CYCLE_START_PORT        GPIOC
-#define CYCLE_START_PIN         10
-#define CONTROL_INMODE          GPIO_BITBAND
-
 #define AUXINPUT0_PORT          GPIOB
 #define AUXINPUT0_PIN           13
 #if !N_AUTO_SQUARED
 #define AUXINPUT1_PORT          GPIOB
 #define AUXINPUT1_PIN           12
+#endif
+#define AUXINPUT2_PORT          GPIOB // Reset/EStop
+#define AUXINPUT2_PIN           15
+#define AUXINPUT3_PORT          GPIOC // Feed hold
+#define AUXINPUT3_PIN           13
+#define AUXINPUT4_PORT          GPIOC // Cycle start
+#define AUXINPUT4_PIN           10
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT2_PORT
+#define RESET_PIN               AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT3_PORT
+#define FEED_HOLD_PIN           AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT4_PORT
+#define CYCLE_START_PIN         AUXINPUT4_PIN
 #endif
 
 #if PROBE_ENABLE && defined(AUXINPUT1_PIN)
@@ -183,18 +194,16 @@
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT0_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT0_PIN
-#endif
-
-#if MOTOR_FAULT_ENABLE
+#elif MOTOR_FAULT_ENABLE
 #define MOTOR_FAULT_PORT        AUXINPUT0_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT0_PIN
 #endif
 
 #if SDCARD_ENABLE
   #define SDCARD_SDIO           0
-	#define SPI_PORT            1                                  // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
-	#define SD_CS_PORT          GPIOA
-	#define SD_CS_PIN           4
+  #define SPI_PORT              1                                  // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
+  #define SD_CS_PORT            GPIOA
+  #define SD_CS_PIN             4
 #endif
 
 #if TRINAMIC_UART_ENABLE

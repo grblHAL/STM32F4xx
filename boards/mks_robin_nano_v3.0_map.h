@@ -56,7 +56,7 @@
 
 // Define step pulse output pins.
 #define X_STEP_PORT             GPIOE
-#define X_STEP_PIN              3                   // X
+#define X_STEP_PIN              3                  // X
 #define Y_STEP_PORT             GPIOE
 #define Y_STEP_PIN              0                  // Y
 #define Z_STEP_PORT             GPIOB
@@ -153,24 +153,35 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOE
-#define RESET_PIN               12                          // EXP2 PE12
-#define FEED_HOLD_PORT          GPIOA
-#define FEED_HOLD_PIN           13                          // PW_DET
-#if IS_NUCLEO_DEVKIT
-#define CYCLE_START_PORT        GPIOA
-#define CYCLE_START_PIN         10                          // When debugging with Nucleo-144
-#else
-#define CYCLE_START_PORT        GPIOE
-#define CYCLE_START_PIN         6                           // MT_DET2
-#endif
-#define CONTROL_INMODE GPIO_BITBAND
-
 #define AUXINPUT0_PORT          GPIOA                       // EXP1 PA6
 #define AUXINPUT0_PIN           6
 #define AUXINPUT1_PORT          GPIOA                       // EXP1 PA5
 #define AUXINPUT1_PIN           5
+#define AUXINPUT2_PORT          GPIOE // Reset/EStop
+#define AUXINPUT2_PIN           12
+#define AUXINPUT3_PORT          GPIOA // Feed hold
+#define AUXINPUT3_PIN           13
+#if IS_NUCLEO_DEVKIT
+#define AUXINPUT4_PORT          GPIOA // Cycle start
+#define AUXINPUT4_PIN           10    //  - when debugging with Nucleo-144
+#else
+#define AUXINPUT4_PORT          GPIOE // Cycle start
+#define AUXINPUT4_PIN           6     //  - MT_DET1
+#endif
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT2_PORT
+#define RESET_PIN               AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT3_PORT
+#define FEED_HOLD_PIN           AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT4_PORT
+#define CYCLE_START_PIN         AUXINPUT4_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT1_PORT

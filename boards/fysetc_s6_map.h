@@ -150,17 +150,28 @@
 #define COOLANT_MIST_PIN            AUXOUTPUT4_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT                  GPIOC
-#define RESET_PIN                   1                           // THERM1
-#define FEED_HOLD_PORT              GPIOA
-#define FEED_HOLD_PIN               2                           // Y+ Limit
-#define CYCLE_START_PORT            GPIOA
-#define CYCLE_START_PIN             3                           // Z+ Limit
-#define CONTROL_INMODE GPIO_BITBAND
-
-#define AUXINPUT0_PORT              GPIOA                       // BLTouch PA1
+#define AUXINPUT0_PORT              GPIOA // BLTouch PA1
 #define AUXINPUT0_PIN               1
+#define AUXINPUT1_PORT              GPIOC // Reset/EStop
+#define AUXINPUT1_PIN               1
+#define AUXINPUT2_PORT              GPIOA // Feed hold
+#define AUXINPUT2_PIN               2
+#define AUXINPUT3_PORT              GPIOA // Cycle start
+#define AUXINPUT3_PIN               3
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT                  AUXINPUT1_PORT
+#define RESET_PIN                   AUXINPUT1_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT              AUXINPUT2_PORT
+#define FEED_HOLD_PIN               AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT            AUXINPUT3_PORT
+#define CYCLE_START_PIN             AUXINPUT3_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT                  AUXINPUT0_PORT

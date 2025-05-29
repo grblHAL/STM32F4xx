@@ -31,7 +31,7 @@
 //#define BOARD_BLACKPILL_ALT2      // For use with F411 BlackPill, with optional auto square support for one axis, I2C and spindle sync
 //#define BOARD_DEVTRONIC_CNC       // For use with Devtronic CNC Controller (F411 BlackPill), with I2C and spindle sync
 //#define BOARD_DEVTRONIC_CNC_V2    // For use with Devtronic CNC Controller V2 (F411 BlackPill), with I2C and spindle sync
-//#define BOARD_MINI_BLACKPILL      // For use with F411 BlackPill, https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL
+//#define BOARD_MINI_BLACKPILL      // For use with F411 BlackPill
 //#define BOARD_BTT_SKR_PRO_1_1     // F407 based 3D Printer board
 //#define BOARD_BTT_SKR_PRO_1_2     // F407 based 3D Printer board
 //#define BOARD_BTT_SKR_20          // F407 based 3D Printer board
@@ -101,6 +101,7 @@
 //#define LASER_COOLANT_ENABLE    1 // Laser coolant plugin. To be completed.
 //#define LASER_OVD_ENABLE        1 // Enable M-code for overdrive PWM output during spindle off in RPM controlled mode.
 //#define LB_CLUSTERS_ENABLE      1 // LaserBurn cluster support.
+//#define OPENPNP_ENABLE          1 // OpenPNP plugin. To be completed.
 //#define TRINAMIC_ENABLE      2130 // Trinamic TMC2130 stepper driver support.
 //#define TRINAMIC_ENABLE      5160 // Trinamic TMC5160 stepper driver support.
 //#define TRINAMIC_ENABLE      2209 // Trinamic TMC2209 stepper driver support.
@@ -129,7 +130,9 @@
 // Optional control signals:
 // These will be assigned to aux input pins. Use the $pins command to check which pins are assigned.
 // NOTE: If not enough pins are available assignment will silently fail.
-//#define PROBE_ENABLE            0 // Default enabled, remove comment to disable probe input.
+//#define PROBE_ENABLE            0 // Default enabled, uncomment to disable probe input or uncomment and set to 2 to enable relay switched probes.
+//#define PROBE2_ENABLE           1 // Enable second regular probe input, depending on the board the input assigned may be predefined.
+//#define TOOLSETTER_ENABLE       1 // Enable toolsetter input, depending on the board the input assigned may be predefined.
 //#define SAFETY_DOOR_ENABLE      1
 //#define MOTOR_FAULT_ENABLE      1
 //#define MOTOR_WARNING_ENABLE    1

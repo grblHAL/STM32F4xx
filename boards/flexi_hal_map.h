@@ -174,8 +174,6 @@
 #define AUXOUTPUT8_PORT         GPIOA // Coolant mist
 #define AUXOUTPUT8_PIN          7
 
-
-
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
 #define SPINDLE_ENABLE_PORT     AUXOUTPUT6_PORT
@@ -218,20 +216,30 @@
 #define AUXINPUT4_PIN           7
 #define AUXINPUT5_PORT          GPIOB // I2C strobe input
 #define AUXINPUT5_PIN           10
-
 #if N_ABC_MOTORS != 2
-  #define AUXINPUT6_PORT          GPIOC
-  #define AUXINPUT6_PIN           14
+#define AUXINPUT6_PORT          GPIOC
+#define AUXINPUT6_PIN           14
 #endif
-
+#define AUXINPUT7_PORT          GPIOB // Reset/EStop
+#define AUXINPUT7_PIN           12
+#define AUXINPUT8_PORT          GPIOC // Feed hold
+#define AUXINPUT8_PIN           8
+#define AUXINPUT9_PORT          GPIOC // Cycle start
+#define AUXINPUT9_PIN           11
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOB
-#define RESET_PIN               12
-#define FEED_HOLD_PORT          GPIOC
-#define FEED_HOLD_PIN           8
-#define CYCLE_START_PORT        GPIOC
-#define CYCLE_START_PIN         11
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT7_PORT
+#define RESET_PIN               AUXINPUT7_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT8_PORT
+#define FEED_HOLD_PIN           AUXINPUT8_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT9_PORT
+#define CYCLE_START_PIN         AUXINPUT9_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT4_PORT
@@ -243,8 +251,6 @@
 #define SAFETY_DOOR_PIN         AUXINPUT3_PIN  
 #endif
 
-#define CONTROL_INMODE          GPIO_BITBAND
-
 #if MOTOR_WARNING_ENABLE
 #define MOTOR_WARNING_PORT      AUXINPUT2_PORT
 #define MOTOR_WARNING_PIN       AUXINPUT2_PIN
@@ -253,8 +259,6 @@
 #if I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         AUXINPUT5_PORT
 #define I2C_STROBE_PIN          AUXINPUT5_PIN
-#define I2C_STROBE_BIT (1<<I2C_STROBE_PIN)
-#define I2C_STROBE_AUX_ENABLE
 #endif
 
 #if SDCARD_ENABLE || ETHERNET_ENABLE

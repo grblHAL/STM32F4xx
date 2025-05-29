@@ -90,7 +90,7 @@
 #define AUXOUTPUT0_PIN          5
 #define AUXOUTPUT1_PORT         GPIOA // D12 - spindle enable
 #define AUXOUTPUT1_PIN          6
-#define AUXOUTPUT3_PORT         GPIOB // Coolant flood, A3
+#define AUXOUTPUT3_PORT         GPIOB // A3 - Coolant flood
 #define AUXOUTPUT3_PIN          0
 
 // Spindle PWM and dir signals cannot be assigned to the same pin
@@ -129,12 +129,26 @@
 #endif
 #endif
 
-// Define user-control CONTROLs (cycle start, reset, feed hold) input pins.
-#define CONTROL_PORT            GPIOA // A0
-#define RESET_PIN               0
-#define FEED_HOLD_PIN           1 // A1
-#define CYCLE_START_PIN         4 // A2
-#define CONTROL_INMODE          GPIO_MAP
+#define AUXINPUT0_PORT          GPIOA // A0 - reset/EStop
+#define AUXINPUT0_PIN           0
+#define AUXINPUT1_PORT          GPIOA // A1 - feed hold
+#define AUXINPUT1_PIN           1
+#define AUXINPUT2_PORT          GPIOA // A2 - cycle start
+#define AUXINPUT2_PIN           4
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT0_PORT
+#define RESET_PIN               AUXINPUT0_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT1_PORT
+#define FEED_HOLD_PIN           AUXINPUT1_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT2_PORT
+#define CYCLE_START_PIN         AUXINPUT3_PIN
+#endif
 
 // Spindle PWM & encoder pins.
 // NOTE: these pins are not available on the Protoneer board!

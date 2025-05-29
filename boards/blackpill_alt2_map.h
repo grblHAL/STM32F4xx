@@ -170,10 +170,30 @@
 #define AUXOUTPUT2_PIN          15
 #endif
 
-#define AUXINPUT0_PORT          GPIOA
+#define AUXINPUT0_PORT          GPIOA // Safety door
 #define AUXINPUT0_PIN           1
-#define AUXINPUT1_PORT          GPIOB
+#define AUXINPUT1_PORT          GPIOB // Probe
 #define AUXINPUT1_PIN           5
+#define AUXINPUT2_PORT          GPIOA // Reset/EStop
+#define AUXINPUT2_PIN           0
+#define AUXINPUT3_PORT          GPIOB // Feed hold
+#define AUXINPUT3_PIN           7
+#define AUXINPUT4_PORT          GPIOB // Cycle start
+#define AUXINPUT4_PIN           6
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT2_PORT
+#define RESET_PIN               AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT3_PORT
+#define FEED_HOLD_PIN           AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT4_PORT
+#define CYCLE_START_PIN         AUXINPUT4_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT1_PORT

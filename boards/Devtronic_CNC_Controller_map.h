@@ -164,15 +164,6 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT7_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOA
-#define RESET_PIN               0
-#define FEED_HOLD_PORT          GPIOB
-#define FEED_HOLD_PIN           7
-#define CYCLE_START_PORT        GPIOB
-#define CYCLE_START_PIN         6
-#define CONTROL_INMODE          GPIO_BITBAND
-
 // Spindle encoder pins.
 #if SPINDLE_ENCODER_ENABLE
 #define RPM_COUNTER_N           2
@@ -194,6 +185,26 @@
 #define AUXINPUT0_PIN           1
 #define AUXINPUT5_PORT          GPIOB
 #define AUXINPUT5_PIN           5
+#define AUXINPUT6_PORT          GPIOA // Reset/EStop
+#define AUXINPUT6_PIN           0
+#define AUXINPUT7_PORT          GPIOB // Feed hold
+#define AUXINPUT7_PIN           7
+#define AUXINPUT8_PORT          GPIOB // Cycle start
+#define AUXINPUT8_PIN           6
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT6_PORT
+#define RESET_PIN               AUXINPUT6_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT7_PORT
+#define FEED_HOLD_PIN           AUXINPUT7_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT8_PORT
+#define CYCLE_START_PIN         AUXINPUT8_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT5_PORT
@@ -203,9 +214,7 @@
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT0_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT0_PIN
-#endif
-
-#if I2C_STROBE_ENABLE && !SAFETY_DOOR_ENABLE
+#elif I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         AUXINPUT0_PORT
 #define I2C_STROBE_PIN          AUXINPUT0_PIN
 #endif

@@ -89,6 +89,12 @@
 #endif
 #endif
 
+#if N_ABC_MOTORS == 0
+#define AUXOUTPUT0_PORT         GPIOA
+#define AUXOUTPUT0_PIN          7
+#define AUXOUTPUT1_PORT         GPIOA
+#define AUXOUTPUT1_PIN          6
+#endif
 #define AUXOUTPUT2_PORT         GPIOA // Spindle PWM
 #define AUXOUTPUT2_PIN          8
 #define AUXOUTPUT3_PORT         GPIOB // Spindle direction
@@ -124,13 +130,6 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT6_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define CONTROL_PORT            GPIOB
-#define RESET_PIN               6
-#define FEED_HOLD_PIN           7
-#define CYCLE_START_PIN         8
-#define CONTROL_INMODE          GPIO_SHIFT6
-
 // Spindle encoder pins.
 #if SPINDLE_ENCODER_ENABLE
 
@@ -143,18 +142,31 @@
 
 #endif
 
-#define AUXINPUT0_PORT          GPIOB
+#define AUXINPUT0_PORT          GPIOB // Safety door
 #define AUXINPUT0_PIN           9
 #if !N_AUTO_SQUARED
-#define AUXINPUT1_PORT          GPIOB // Probe input
+#define AUXINPUT1_PORT          GPIOB // Probe
 #define AUXINPUT1_PIN           15
 #endif
+#define AUXINPUT2_PORT          GPIOB // Reset/EStop
+#define AUXINPUT2_PIN           6
+#define AUXINPUT3_PORT          GPIOB // Feed hold
+#define AUXINPUT3_PIN           7
+#define AUXINPUT4_PORT          GPIOB // Cycle start
+#define AUXINPUT4_PIN           8
 
-#if N_ABC_MOTORS == 0
-#define AUXOUTPUT0_PORT         GPIOA
-#define AUXOUTPUT0_PIN          7
-#define AUXOUTPUT1_PORT         GPIOA
-#define AUXOUTPUT1_PIN          6
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT2_PORT
+#define RESET_PIN               AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT3_PORT
+#define FEED_HOLD_PIN           AUXINPUT3_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT4_PORT
+#define CYCLE_START_PIN         AUXINPUT4_PIN
 #endif
 
 #if PROBE_ENABLE && defined(AUXINPUT1_PIN)
@@ -165,9 +177,7 @@
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT0_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT0_PIN
-#endif
-
-#if MOTOR_FAULT_ENABLE
+#elif MOTOR_FAULT_ENABLE
 #define MOTOR_FAULT_PORT        AUXINPUT0_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT0_PIN
 #endif

@@ -19,8 +19,6 @@
   along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define AUX_CONTROLS (AUX_CONTROL_SPINDLE|AUX_CONTROL_COOLANT|AUX_CONTROL_DEVICES)
-
 #if N_ABC_MOTORS > 2
 #error "Axis configuration is not supported!"
 #endif
@@ -53,11 +51,13 @@
 #define I2C1_ALT_PINMAP 1
 #endif
 
+#undef CONTROL_ENABLE
+
 #define SERIAL_PORT     34   // GPIOD: TX = 8, GPIOC: RX = 6
 #define SERIAL1_PORT    21   // GPIOD: TX = 5,        RX = 6
 
 #define HAS_BOARD_INIT
-#define WIZCHIP_SPI_PRESCALER   SPI_BAUDRATEPRESCALER_2
+#define WIZCHIP_SPI_PRESCALER   SPI_BAUDRATEPRESCALER_4
 #define FATFS_SPI_PRESCALER     SPI_BAUDRATEPRESCALER_8
 
 #if defined(BOARD_LONGBOARD32) && !IS_NUCLEO_DEVKIT
@@ -368,6 +368,11 @@
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT11_PORT
 #define PROBE_PIN               AUXINPUT11_PIN
+#endif
+
+#if TOOLSETTER_ENABLE
+#define TOOLSETTER_PORT         AUXINPUT3_PORT
+#define TOOLSETTER_PIN          AUXINPUT3_PIN
 #endif
 
 #if I2C_STROBE_ENABLE

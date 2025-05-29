@@ -242,22 +242,6 @@ PD15 SM4
 #define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-/*
-#define CONTROL_PORT            GPIOC
-#define RESET_PIN               0
-#define FEED_HOLD_PIN           7
-#define CYCLE_START_PIN         13
-#define CONTROL_INMODE          GPIO_BITBAND
-*/
-#define RESET_PORT              GPIOC
-#define RESET_PIN               0
-#define FEED_HOLD_PORT          GPIOB
-#define FEED_HOLD_PIN           1
-#define CYCLE_START_PORT        GPIOB
-#define CYCLE_START_PIN         7
-#define CONTROL_INMODE          GPIO_BITBAND
-
 #ifdef SPI_PORT
 #define SPI_CS_PORT             GPIOE
 #define SPI_CS_PIN              7
@@ -289,6 +273,14 @@ PD15 SM4
 #define AUXINPUT0_PORT          GPIOC
 #define AUXINPUT0_PIN           13
 #endif
+
+#define AUXINPUT1_PORT          GPIOC // Reset/EStop
+#define AUXINPUT1_PIN           0
+#define AUXINPUT2_PORT          GPIOB // Feed hold
+#define AUXINPUT2_PIN           1
+#define AUXINPUT3_PORT          GPIOB // Cycle start
+#define AUXINPUT3_PIN           7
+
 /*
 #if !SPINDLE_ENCODER_ENABLE && !QEI_ENABLE
 #define AUXINPUT1_PORT          GPIOA
@@ -316,6 +308,20 @@ PD15 SM4
 #define AUXINPUT6_PIN           11
 #endif
 */
+
+// Define user-control controls (cycle start, reset, feed hold) input pins.
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT1_PORT
+#define RESET_PIN               AUXINPUT1_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_FEED_HOLD
+#define FEED_HOLD_PORT          AUXINPUT2_PORT
+#define FEED_HOLD_PIN           AUXINPUT2_PIN
+#endif
+#if CONTROL_ENABLE & CONTROL_CYCLE_START
+#define CYCLE_START_PORT        AUXINPUT3_PORT
+#define CYCLE_START_PIN         AUXINPUT3_PIN
+#endif
 
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT5_PORT
