@@ -112,8 +112,6 @@ static network_info_t *get_info (const char *interface)
 
 static void report_options (bool newopt)
 {
-    on_report_options(newopt);
-
     if(newopt) {
         hal.stream.write(",ETH");
 #if FTP_ENABLE
@@ -162,6 +160,8 @@ static void report_options (bool newopt)
 #endif
         }
     }
+
+    on_report_options(newopt);
 }
 
 static void status_event_out (void *data)

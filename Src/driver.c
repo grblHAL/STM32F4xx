@@ -1792,20 +1792,68 @@ static bool aux_claim_explicit (aux_ctrl_t *aux_ctrl)
             default: break;
         }
     } else
-        aux_ctrl->aux_port = 0xFF;
+        aux_ctrl->aux_port = IOPORT_UNASSIGNED;
 
-    return aux_ctrl->aux_port != 0xFF;
+    return aux_ctrl->aux_port != IOPORT_UNASSIGNED;
 }
 
-static void aux_claim_irq (input_signal_t *input)
+static void aux_assign_irq (void)
 {
-    uint_fast8_t i;
+    uint32_t i, j, irq = 0;
+    input_signal_t *input, *input2;
+    aux_ctrl_t *aux;
+    pin_group_pins_t aux_digital_in = {};
+
+    const control_signals_t main_signals = { .reset = On, .e_stop = On, .feed_hold = On, .cycle_start = On };
 
     for(i = 0; i < sizeof(inputpin) / sizeof(input_signal_t); i++) {
-        if(inputpin[i].group == PinGroup_AuxInput && &inputpin[i] != input && inputpin[i].pin == input->pin) {
-            input->cap.irq_mode = inputpin[i].cap.irq_mode;
-            inputpin[i].cap.debounce = false;
-            inputpin[i].cap.irq_mode = IRQ_Mode_None;
+
+        input = &inputpin[i];
+
+        if(input->group == PinGroup_AuxInput) {
+
+            input->bit = 1 << input->pin;
+
+            if(aux_digital_in.pins.inputs == NULL)
+                aux_digital_in.pins.inputs = input;
+
+            input->user_port = aux_digital_in.n_pins++;
+            input->id = (pin_function_t)(Input_Aux0 + input->user_port);
+            input->mode.pull_mode = PullMode_Up;
+            input->cap.pull_mode = PullMode_UpDown;
+            input->cap.irq_mode = (DRIVER_IRQMASK & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
+
+            aux = aux_ctrl_get_fn(input->port, input->pin);
+
+            if(input->cap.irq_mode == IRQ_Mode_None) {
+                if(aux && aux_ctrl_is_probe(aux->function))
+                    input->id = aux->function;
+            } else {
+
+                if(aux)
+                    input->id = aux->function;
+
+                if(irq & input->bit) { // duplicate IRQ
+
+                    if(aux == NULL)
+                        input->cap.irq_mode = IRQ_Mode_None;
+                    else for(j = 0; j < aux_digital_in.n_pins - 1; j++) {
+                        input2 = &aux_digital_in.pins.inputs[j];
+                        if(input->pin == input2->pin) {
+                            if(input->id < input2->id || (aux->cap.bits & main_signals.bits)) {
+                                input2->cap.irq_mode = IRQ_Mode_None;
+                                if(!aux_ctrl_is_probe(input2->id))
+                                    input2->id = (pin_function_t)(Input_Aux0 + input->user_port);
+                            } else {
+                                input->cap.irq_mode = IRQ_Mode_None;
+                                if(!aux_ctrl_is_probe(input->id))
+                                    input->id = (pin_function_t)(Input_Aux0 + input->user_port);
+                            }
+                        }
+                    }
+                } else
+                    irq |= input->bit;
+            }
         }
     }
 }
@@ -2965,7 +3013,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250526";
+    hal.driver_version = "250604";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3116,6 +3164,8 @@ bool driver_init (void)
     uint32_t i;
     input_signal_t *input;
 
+    aux_assign_irq();
+
     for(i = 0; i < sizeof(inputpin) / sizeof(input_signal_t); i++) {
 
         input = &inputpin[i];
@@ -3127,19 +3177,12 @@ bool driver_init (void)
             case PinGroup_AuxInput:
                 if(aux_digital_in.pins.inputs == NULL)
                     aux_digital_in.pins.inputs = input;
-                input->user_port = aux_digital_in.n_pins++;
-                input->id = (pin_function_t)(Input_Aux0 + input->user_port);
-                input->mode.pull_mode = PullMode_Up;
-                input->cap.pull_mode = PullMode_UpDown;
-                input->cap.irq_mode = ((DRIVER_IRQMASK|aux_irq) & input->bit) ? IRQ_Mode_None : IRQ_Mode_Edges;
 
-                aux_ctrl_t *aux_remap;
-                if((aux_remap = aux_ctrl_remap_explicit(input->port, input->pin, input->user_port, input))) {
-                    if(aux_remap->irq_mode == IRQ_Mode_None) {
-                        input->cap.irq_mode = IRQ_Mode_None;
-                        aux_irq &= ~input->bit;
-                    } else if(input->cap.irq_mode == IRQ_Mode_None)
-                        aux_claim_irq(input);
+                aux_digital_in.n_pins++;
+
+                if(input->id < Input_Aux0) {
+                    input->id = Input_Aux0 + input->user_port;
+                    aux_ctrl_remap_explicit(input->port, input->pin, input->user_port, input);
                 }
 
                 if((input->cap.debounce = input->cap.irq_mode != IRQ_Mode_None)) {
