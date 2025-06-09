@@ -3013,7 +3013,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250605";
+    hal.driver_version = "250609";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3180,7 +3180,7 @@ bool driver_init (void)
 
                 aux_digital_in.n_pins++;
 
-                if(input->id < Input_Aux0) {
+                if(!(input->id >= Input_Aux0 && input->id <= Input_AuxMax)) {
                     input->id = Input_Aux0 + input->user_port;
                     aux_ctrl_remap_explicit(input->port, input->pin, input->user_port, input);
                 }
