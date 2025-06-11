@@ -486,6 +486,7 @@
         "trinamic": 2660,
         "trinamic_spi_cs": 1,
         "wiznet": 5500,
+		"control_inputs": 0,
         "pio_board": "genericSTM32F412VG",
         "ldscript": "STM32F412VGTX_FLASH.ld"
       },
@@ -520,6 +521,7 @@
         "spindle_sync": 0,
         "rgb_out": 2,
         "wiznet": 5500,
+		"control_inputs": 0,
         "pio_board": "genericSTM32F412VG",
         "ldscript": "STM32F412VGTX_FLASH.ld"
       },
