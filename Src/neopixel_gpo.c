@@ -25,6 +25,8 @@
 
 #ifdef NEOPIXEL_GPO
 
+#include "grbl/modbus.h"
+
 typedef struct {
     int zeroHigh;
     int zeroLow;
@@ -45,42 +47,44 @@ static neopixel_cfg_t neopixel = { .intensity = 255 };
 static neopixel_cfg_t neopixel1 = { .intensity = 255 };
 #endif
 
-
 static inline void _write (void)
 {
     volatile uint32_t t;
     uint32_t i = neopixel.num_bytes;
     uint8_t *led = neopixel.leds, v, mask;
 
-    __disable_irq();
+    if(led && !modbus_isbusy()) {
 
-    if(led) do {
-        v = *led++;
-        mask = 0b10000000;
+        __disable_irq();
+
         do {
-            if(v & mask) {
-                DIGITAL_OUT(LED_PORT, LED_PIN, 1);
-                t = ws2812.oneHigh;
-                while(--t)
-                    __ASM volatile ("nop");
-                DIGITAL_OUT(LED_PORT, LED_PIN, 0);
-                t = ws2812.oneLow;
-                while(--t)
-                    __ASM volatile ("nop");
-            } else {
-                DIGITAL_OUT(LED_PORT, LED_PIN, 1);
-                t = ws2812.zeroHigh;
-                while(--t)
-                    __ASM volatile ("nop");
-                DIGITAL_OUT(LED_PORT, LED_PIN, 0);
-                t = ws2812.zeroLow;
-                while(--t)
-                    __ASM volatile ("nop");
-            }
-        } while((mask >>= 1));
-    } while(--i);
+            v = *led++;
+            mask = 0b10000000;
+            do {
+                if(v & mask) {
+                    DIGITAL_OUT(LED_PORT, LED_PIN, 1);
+                    t = ws2812.oneHigh;
+                    while(--t)
+                        __ASM volatile ("nop");
+                    DIGITAL_OUT(LED_PORT, LED_PIN, 0);
+                    t = ws2812.oneLow;
+                    while(--t)
+                        __ASM volatile ("nop");
+                } else {
+                    DIGITAL_OUT(LED_PORT, LED_PIN, 1);
+                    t = ws2812.zeroHigh;
+                    while(--t)
+                        __ASM volatile ("nop");
+                    DIGITAL_OUT(LED_PORT, LED_PIN, 0);
+                    t = ws2812.zeroLow;
+                    while(--t)
+                        __ASM volatile ("nop");
+                }
+            } while((mask >>= 1));
+        } while(--i);
 
-    __enable_irq();
+        __enable_irq();
+    }
 }
 
 void neopixels_write (void)
@@ -138,37 +142,39 @@ static void _write1 (void)
     uint32_t i = neopixel1.num_bytes;
     uint8_t *led = neopixel1.leds, v, mask;
 
-    __disable_irq();
+    if(led && !modbus_isbusy()) {
 
-    if(led) do {
-        v = *led++;
-        mask = 0b10000000;
+        __disable_irq();
+
         do {
-            if(v & mask) {
-                DIGITAL_OUT(LED1_PORT, LED1_PIN, 1);
-                t = ws2812.oneHigh;
-                while(--t)
-                    __ASM volatile ("nop");
-                DIGITAL_OUT(LED1_PORT, LED1_PIN, 0);
-                t = ws2812.oneLow;
-                while(--t)
-                    __ASM volatile ("nop");
-            } else {
-                DIGITAL_OUT(LED1_PORT, LED1_PIN, 1);
-                t = ws2812.zeroHigh;
-                while(--t)
-                    __ASM volatile ("nop");
-                DIGITAL_OUT(LED1_PORT, LED1_PIN, 0);
-                t = ws2812.zeroLow;
-                while(--t)
-                    __ASM volatile ("nop");
-            }
-        } while((mask >>= 1));
-    } while(--i);
+            v = *led++;
+            mask = 0b10000000;
+            do {
+                if(v & mask) {
+                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 1);
+                    t = ws2812.oneHigh;
+                    while(--t)
+                        __ASM volatile ("nop");
+                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 0);
+                    t = ws2812.oneLow;
+                    while(--t)
+                        __ASM volatile ("nop");
+                } else {
+                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 1);
+                    t = ws2812.zeroHigh;
+                    while(--t)
+                        __ASM volatile ("nop");
+                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 0);
+                    t = ws2812.zeroLow;
+                    while(--t)
+                        __ASM volatile ("nop");
+                }
+            } while((mask >>= 1));
+        } while(--i);
 
-    __enable_irq();
+        __enable_irq();
+    }
 }
-
 
 void neopixels1_write (void)
 {
@@ -223,10 +229,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 {
     if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0) {
 
-        if(settings->rgb_strip.length0 == 0)
-            settings->rgb_strip.length0 = hal.rgb0.num_devices;
-        else
-            hal.rgb0.num_devices = settings->rgb_strip.length0;
+        hal.rgb0.num_devices = settings->rgb_strip.length0;
 
         if(neopixel.leds) {
             free(neopixel.leds);
@@ -246,10 +249,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 
     if(neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip.length1) {
 
-        if(settings->rgb_strip.length1 == 0)
-            settings->rgb_strip.length1 = hal.rgb1.num_devices;
-        else
-            hal.rgb1.num_devices = settings->rgb_strip.length1;
+        hal.rgb1.num_devices = settings->rgb_strip.length1;
 
         if(neopixel1.leds) {
             free(neopixel1.leds);
