@@ -51,8 +51,6 @@
 #define I2C1_ALT_PINMAP 1
 #endif
 
-#undef CONTROL_ENABLE
-
 #define SERIAL_PORT     34   // GPIOD: TX = 8, GPIOC: RX = 6
 #define SERIAL1_PORT    21   // GPIOD: TX = 5,        RX = 6
 
@@ -355,9 +353,13 @@
 #define AUXINPUT11_PORT         GPIOC // Probe
 #define AUXINPUT11_PIN          4
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOB
-#define RESET_PIN               12
+#define AUXINPUT13_PORT         GPIOB //  // Reset/EStop
+#define AUXINPUT13_PIN          12
+
+#if CONTROL_ENABLE & CONTROL_HALT
+#define RESET_PORT              AUXINPUT13_PORT
+#define RESET_PIN               AUXINPUT13_PIN
+#endif
 
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT9_PORT
