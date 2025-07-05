@@ -605,9 +605,19 @@ static bool serialSuspendInput (bool suspend)
 
 static bool serialSetBaudRate (uint32_t baud_rate)
 {
-    UART0->CR1 = USART_CR1_RE|USART_CR1_TE;
-    UART0->BRR = UART_BRR_SAMPLING16(UART0_CLK, baud_rate);
-    UART0->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
+    UART0->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
+    UART0->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
+    UART0->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
+
+    return true;
+}
+
+static bool serialSetFormat (serial_format_t format)
+{
+    UART0->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
+
+    if(format.parity != Serial_ParityNone)
+        UART0->CR1 |= (format.parity == Serial_ParityEven ? (USART_CR1_M|USART_CR1_PCE) : (USART_CR1_M|USART_CR1_PCE|USART_CR1_PS));
 
     return true;
 }
@@ -656,6 +666,7 @@ static const io_stream_t *serialInit (uint32_t baud_rate)
         .suspend_read = serialSuspendInput,
         .disable_rx = serialDisable,
         .set_baud_rate = serialSetBaudRate,
+        .set_format = serialSetFormat,
         .set_enqueue_rt_handler = serialSetRtHandler
     };
 
@@ -849,9 +860,19 @@ static bool serial1SuspendInput (bool suspend)
 
 static bool serial1SetBaudRate (uint32_t baud_rate)
 {
-    UART1->CR1 = USART_CR1_RE|USART_CR1_TE;
+    UART1->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
     UART1->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
-    UART1->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
+    UART1->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
+
+    return true;
+}
+
+static bool serial1SetFormat (serial_format_t format)
+{
+    UART1->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
+
+    if(format.parity != Serial_ParityNone)
+        UART1->CR1 |= (format.parity == Serial_ParityEven ? (USART_CR1_M|USART_CR1_PCE) : (USART_CR1_M|USART_CR1_PCE|USART_CR1_PS));
 
     return true;
 }
@@ -901,6 +922,7 @@ static const io_stream_t *serial1Init (uint32_t baud_rate)
         .suspend_read = serial1SuspendInput,
         .disable_rx = serial1Disable,
         .set_baud_rate = serial1SetBaudRate,
+        .set_format = serial1SetFormat,
         .set_enqueue_rt_handler = serial1SetRtHandler
     };
 
@@ -1095,9 +1117,19 @@ static bool serial2SuspendInput (bool suspend)
 
 static bool serial2SetBaudRate (uint32_t baud_rate)
 {
-    UART2->CR1 = USART_CR1_RE|USART_CR1_TE;
-    UART2->BRR = UART_BRR_SAMPLING16(UART2_CLK, baud_rate);
-    UART2->CR1 |= (USART_CR1_UE|USART_CR1_RXNEIE);
+    UART2->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
+    UART2->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
+    UART2->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
+
+    return true;
+}
+
+static bool serial2SetFormat (serial_format_t format)
+{
+    UART2->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
+
+    if(format.parity != Serial_ParityNone)
+        UART2->CR1 |= (format.parity == Serial_ParityEven ? (USART_CR1_M|USART_CR1_PCE) : (USART_CR1_M|USART_CR1_PCE|USART_CR1_PS));
 
     return true;
 }
@@ -1147,6 +1179,7 @@ static const io_stream_t *serial2Init (uint32_t baud_rate)
         .suspend_read = serial2SuspendInput,
         .disable_rx = serial2Disable,
         .set_baud_rate = serial2SetBaudRate,
+        .set_format = serial2SetFormat,
         .set_enqueue_rt_handler = serial2SetRtHandler
     };
 
