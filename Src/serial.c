@@ -606,7 +606,7 @@ static bool serialSuspendInput (bool suspend)
 static bool serialSetBaudRate (uint32_t baud_rate)
 {
     UART0->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
-    UART0->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
+    UART0->BRR = UART_BRR_SAMPLING16(UART0_CLK, baud_rate);
     UART0->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
 
     return true;
@@ -1118,7 +1118,7 @@ static bool serial2SuspendInput (bool suspend)
 static bool serial2SetBaudRate (uint32_t baud_rate)
 {
     UART2->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
-    UART2->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
+    UART2->BRR = UART_BRR_SAMPLING16(UART2_CLK, baud_rate);
     UART2->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
 
     return true;
