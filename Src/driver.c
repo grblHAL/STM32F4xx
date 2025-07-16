@@ -2705,6 +2705,7 @@ static bool driver_setup (settings_t *settings)
      *************************/
 
     uint32_t i;
+    axes_signals_t st_enable = st_get_enable_out();
 
     // Switch on stepper driver power before enabling other output pins
     for(i = 0; i < sizeof(outputpin) / sizeof(output_signal_t); i++) {
@@ -2732,8 +2733,8 @@ static bool driver_setup (settings_t *settings)
                  outputpin[i].id == Output_SPICS ||
                   outputpin[i].id == Output_FlashCS ||
                    outputpin[i].id == Output_SdCardCS ||
-                    outputpin[i].group == PinGroup_StepperEnable)
-                outputpin[i].port->ODR |= GPIO_Init.Pin;
+                    (outputpin[i].group == PinGroup_StepperEnable && (st_enable.mask & xbar_fn_to_axismask(outputpin[i].id).mask)))
+                outputpin[i].port->BSRR = GPIO_Init.Pin;
 
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
         }
@@ -3022,7 +3023,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250705";
+    hal.driver_version = "250716";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
