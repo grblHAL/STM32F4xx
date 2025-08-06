@@ -66,7 +66,7 @@ static DMA_HandleTypeDef i2c_dma_tx = {
 #else
 
 #ifndef I2C_KHZ
-#define I2C_KHZ 100
+#define I2C_KHZ 400
 #endif
 
 #define I2C_GPIO            GPIOB
@@ -260,9 +260,9 @@ i2c_cap_t i2c_start (void)
 static inline __attribute__((always_inline)) bool wait_ready (void)
 {
 #ifdef I2C_FASTMODE
-    while(await_rx && i2c_port.State != I2C_STATE_READY && __HAL_FMPI2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET) {
+    while(await_rx || (i2c_port.State != I2C_STATE_READY && __HAL_FMPI2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET)) {
 #else
-    while(await_rx && i2c_port.State != I2C_STATE_READY && __HAL_I2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET) {
+    while(await_rx || (i2c_port.State != I2C_STATE_READY && __HAL_I2C_GET_FLAG(&i2c_port, I2C_FLAG_BUSY) != RESET)) {
 #endif
         if(!hal.stream_blocking_callback())
             return false;
