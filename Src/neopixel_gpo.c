@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2024 Terje Io
+  Copyright (c) 2024-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ static inline void _write (void)
     }
 }
 
-void neopixels_write (void)
+static void neopixels_write (void)
 {
     if(neopixel.num_leds > 1)
         _write();
@@ -227,7 +227,7 @@ static uint8_t neopixels1_set_intensity (uint8_t intensity)
 
 static void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
 {
-    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0) {
+    if(hal.rgb0.out == neopixel_out && (neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0)) {
 
         hal.rgb0.num_devices = settings->rgb_strip.length0;
 
@@ -247,7 +247,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 
 #ifdef LED1_PIN
 
-    if(neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip.length1) {
+    if(hal.rgb1.out == neopixel1_out && (neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip.length1)) {
 
         hal.rgb1.num_devices = settings->rgb_strip.length1;
 
@@ -271,34 +271,78 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
         settings_changed(settings, changed);
 }
 
-void neopixel_init (void)
+void neopixel_gpo_init (void)
 {
     static bool init = false;
+    static const periph_pin_t leds0 = {
+        .function = Output_LED_Adressable,
+        .group = PinGroup_LED,
+        .port = LED_PORT,
+        .pin = LED_PIN,
+        .mode = { .mask = PINMODE_NONE },
+        .description = "Neopixels"
+    };
+
+    GPIO_InitTypeDef GPIO_InitStruct = {
+        .Pin = 1 << LED_PIN,
+        .Mode = GPIO_MODE_OUTPUT_PP,
+        .Pull = GPIO_NOPULL,
+        .Speed = GPIO_SPEED_FREQ_VERY_HIGH
+    };
 
     if(!init) {
 
         init = true;
 
-        hal.rgb0.out = neopixel_out;
-        hal.rgb0.out_masked = neopixel_out_masked;
-        hal.rgb0.set_intensity = neopixels_set_intensity;
-        hal.rgb0.write = neopixels_write;
-        hal.rgb0.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
-        hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
+        if(hal.rgb0.out == NULL) {
+
+            hal.rgb0.out = neopixel_out;
+            hal.rgb0.out_masked = neopixel_out_masked;
+            hal.rgb0.set_intensity = neopixels_set_intensity;
+            hal.rgb0.write = neopixels_write;
+            hal.rgb0.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
+            hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
+
+            HAL_GPIO_Init(LED_PORT, &GPIO_InitStruct);
+
+            hal.periph_port.register_pin(&leds0);
+        }
 
 #ifdef LED1_PIN
 
-        hal.rgb1.out = neopixel1_out;
-        hal.rgb1.out_masked = neopixel1_out_masked;
-        hal.rgb1.set_intensity = neopixels1_set_intensity;
-        hal.rgb1.write = neopixels1_write;
-        hal.rgb1.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
-        hal.rgb1.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
+        static const periph_pin_t leds1 = {
+            .function = Output_LED1_Adressable,
+            .group = PinGroup_LED,
+            .port = LED1_PORT,
+            .pin = LED1_PIN,
+            .mode = { .mask = PINMODE_NONE },
+            .description = "Neopixels"
+        };
 
+        if(hal.rgb1.out == NULL) {
+
+            hal.rgb1.out = neopixel1_out;
+            hal.rgb1.out_masked = neopixel1_out_masked;
+            hal.rgb1.set_intensity = neopixels1_set_intensity;
+            hal.rgb1.write = neopixels1_write;
+            hal.rgb1.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
+            hal.rgb1.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
+
+            GPIO_InitStruct.Pin = 1 << LED1_PIN;
+            HAL_GPIO_Init(LED1_PORT, &GPIO_InitStruct);
+
+            hal.periph_port.register_pin(&leds1);
+        }
 #endif
 
-        settings_changed = hal.settings_changed;
-        hal.settings_changed = onSettingsChanged;
+        if(hal.rgb0.out == neopixel_out
+#ifdef LED1_PIN
+                || hal.rgb1.out == neopixel1_out
+#endif
+            ) {
+            settings_changed = hal.settings_changed;
+            hal.settings_changed = onSettingsChanged;
+        }
     }
 }
 

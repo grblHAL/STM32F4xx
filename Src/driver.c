@@ -441,12 +441,6 @@ static output_signal_t outputpin[] = {
 #ifdef SPI_RST_PORT
     { .id = Output_SPIRST,          .port = SPI_RST_PORT,           .pin = SPI_RST_PIN,             .group = PinGroup_SPI },
 #endif
-#if defined(LED_PORT) && defined(NEOPIXEL_GPO)
-    { .id = Output_LED0_Adressable, .port = LED_PORT,               .pin = LED_PIN,                 .group = PinGroup_LED },
-#endif
-#if defined(LED1_PORT) && defined(NEOPIXEL_GPO)
-    { .id = Output_LED1_Adressable, .port = LED1_PORT,              .pin = LED1_PIN,                .group = PinGroup_LED },
-#endif
 #ifdef LED_R_PORT
     { .id = Output_LED_R,           .port = LED_R_PORT,             .pin = LED_R_PIN,               .group = PinGroup_LED },
 #endif
@@ -3023,7 +3017,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250716";
+    hal.driver_version = "250825";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3351,9 +3345,19 @@ bool driver_init (void)
     qei_enable = encoder_init(QEI_ENABLE);
 #endif
 
-#if defined(NEOPIXEL_SPI) || defined(NEOPIXEL_PWM) || defined(NEOPIXEL_GPO)
-    extern void neopixel_init (void);
+#if defined(NEOPIXEL_SPI)
+    extern void neopixel_spi_init (void);
     neopixel_init();
+#endif
+
+#if defined(NEOPIXEL_PWM)
+    extern void neopixel_pwm_init (void);
+    neopixel_pwm_init();
+#endif
+
+#if defined(NEOPIXEL_GPO)
+    extern void neopixel_gpo_init (void);
+    neopixel_gpo_init();
 #endif
 
 #include "grbl/plugins_init.h"

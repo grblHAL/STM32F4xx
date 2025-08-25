@@ -19,7 +19,7 @@
   along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
-// *** EXPERIMENTAL - incomplete ***
+// *** EXPERIMENTAL - incomplete, only usable with PC9/TIM8 ***
 
 #include "main.h"
 #include "driver.h"
@@ -83,17 +83,13 @@ static DMA_HandleTypeDef pwm_dma = {
     .Init.FIFOMode = DMA_FIFOMODE_DISABLE
 };
 
-typedef struct {
-    uint16_t t_low;
-    uint16_t t_high;
-} rgb_timing_t;
-
+static uint16_t t_high;
 static volatile bool busy = false;
 static neopixel_cfg_t neopixel = { .intensity = 255 };
 static settings_changed_ptr settings_changed;
-static rgb_timing_t timing;
+static rgb_ptr_t *strip;
 
-static inline void rgb_24bpp_pack (uint16_t *led, rgb_color_t color, rgb_color_mask_t mask, uint8_t intensity, rgb_timing_t timing)
+static inline void rgb_24bpp_pack (uint16_t *led, rgb_color_t color, rgb_color_mask_t mask, uint8_t intensity, uint16_t t_high)
 {
     uint8_t bitmask = 0b10000000;
 
@@ -101,7 +97,7 @@ static inline void rgb_24bpp_pack (uint16_t *led, rgb_color_t color, rgb_color_m
 
     if(mask.G) {
         do {
-            *led++ = (color.G & bitmask) ? timing.t_high : timing.t_low;
+            *led++ = (color.G & bitmask) ? t_high : (t_high >> 1);
         } while(bitmask >>= 1);
     } else
         led += 8;
@@ -109,7 +105,7 @@ static inline void rgb_24bpp_pack (uint16_t *led, rgb_color_t color, rgb_color_m
     if(mask.R) {
         bitmask = 0b10000000;
         do {
-            *led++ = (color.R & bitmask) ? timing.t_high : timing.t_low;
+            *led++ = (color.R & bitmask) ? t_high : (t_high >> 1);
         } while(bitmask >>= 1);
     } else
         led += 8;
@@ -117,12 +113,12 @@ static inline void rgb_24bpp_pack (uint16_t *led, rgb_color_t color, rgb_color_m
     if(mask.B) {
         bitmask = 0b10000000;
         do {
-            *led++ = (color.B & bitmask) ? timing.t_high : timing.t_low;
+            *led++ = (color.B & bitmask) ? t_high : (t_high >> 1);
         } while(bitmask >>= 1);
     }
 }
 
-static inline rgb_color_t rgb_24bpp_unpack (uint16_t *led, uint8_t intensity, rgb_timing_t timing)
+static inline rgb_color_t rgb_24bpp_unpack (uint16_t *led, uint8_t intensity, uint16_t t_high)
 {
     rgb_color_t color = {0};
 
@@ -131,21 +127,21 @@ static inline rgb_color_t rgb_24bpp_unpack (uint16_t *led, uint8_t intensity, rg
         uint8_t bitmask = 0b10000000;
 
         do {
-            if(*led++ == timing.t_high)
+            if(*led++ == t_high)
                 color.G |= bitmask;
         } while(bitmask >>= 1);
 
         bitmask = 0b10000000;
 
         do {
-            if(*led++ == timing.t_high)
+            if(*led++ == t_high)
                 color.R |= bitmask;
         } while(bitmask >>= 1);
 
         bitmask = 0b10000000;
 
         do {
-            if(*led++ == timing.t_high)
+            if(*led++ == t_high)
                 color.B |= bitmask;
         } while(bitmask >>= 1);
 
@@ -157,13 +153,11 @@ static inline rgb_color_t rgb_24bpp_unpack (uint16_t *led, uint8_t intensity, rg
 
 static inline void _write (void)
 {
-//    while(busy);
-
     if(!busy)
         busy = HAL_TIM_PWM_Start_DMA(&pwm_timer, PWM_CHANNEL, (uint32_t *)neopixel.leds, neopixel.num_bytes >> 1) == HAL_OK;
 }
 
-void neopixels_write (void)
+static void neopixels_write (void)
 {
     if(neopixel.num_leds > 1)
         _write();
@@ -173,7 +167,7 @@ static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_m
 {
     if(neopixel.num_leds && device < neopixel.num_leds) {
 
-        rgb_24bpp_pack((uint16_t *)&neopixel.leds[device * 24 * 2], color, mask, neopixel.intensity, timing);
+        rgb_24bpp_pack((uint16_t *)&neopixel.leds[device * 24 * 2], color, mask, neopixel.intensity, t_high);
 
         if(neopixel.num_leds == 1)
             _write();
@@ -198,7 +192,7 @@ uint8_t neopixels_set_intensity (uint8_t intensity)
             uint_fast16_t device = neopixel.num_leds;
             do {
                 device--;
-                rgb_color_t color = rgb_24bpp_unpack((uint16_t *)&neopixel.leds[device * 24 * 2], prev, timing);
+                rgb_color_t color = rgb_24bpp_unpack((uint16_t *)&neopixel.leds[device * 24 * 2], prev, t_high);
                 neopixel_out(device, color);
             } while(device);
 
@@ -212,33 +206,35 @@ uint8_t neopixels_set_intensity (uint8_t intensity)
 
 void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
 {
-    if(neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0) {
+    if(neopixel.leds == NULL || strip->num_devices != settings->rgb_strip.length0) {
 
-        hal.rgb0.num_devices = settings->rgb_strip.length0;
+        strip->num_devices = settings->rgb_strip.length0;
 
         if(neopixel.leds) {
             free(neopixel.leds);
             neopixel.leds = NULL;
         }
 
-        if(hal.rgb0.num_devices) {
-            neopixel.num_bytes = hal.rgb0.num_devices * 24 * 2 + 40; // 40 -> 80?
+        if(strip->num_devices) {
+            neopixel.num_bytes = strip->num_devices * 24 * 2 + 40; // 40 -> 80?
             if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
-                hal.rgb0.num_devices = 0;
+                strip->num_devices = 0;
         }
+        neopixel.num_leds = strip->num_devices;
 
-        neopixel.num_leds = hal.rgb0.num_devices;
+        rgb_clear(strip);
     }
 
     if(settings_changed)
         settings_changed(settings, changed);
 }
 
+extern bool timer_claim (TIM_TypeDef *timer);
 extern uint32_t timer_clk_enable (TIM_TypeDef *timer);
 
-void neopixel_init (void)
+void neopixel_pwm_init (void)
 {
-    static const periph_pin_t sdi = {
+    static const periph_pin_t leds0 = {
         .function = Output_LED_Adressable,
         .group = PinGroup_LED,
         .port = LED_PORT,
@@ -249,9 +245,11 @@ void neopixel_init (void)
 
     static bool init = false;
 
-    if(!init) {
+    if(!init)
+        strip = hal.rgb0.out == NULL ? &hal.rgb0 : (/*hal.rgb1.out == NULL ? &hal.rgb1 :*/ NULL);
 
-   //     PWM_TIMER_CLKEN();
+    if(!init && strip && timer_claim(pwm_timer.Instance)) {
+
         DMA_INSTANCE_CLKEN();
 
         TIM_ClockConfigTypeDef sClockSourceConfig = {
@@ -269,7 +267,7 @@ void neopixel_init (void)
         };
 
         GPIO_InitTypeDef GPIO_InitStruct = {
-            .Pin = 11 << LED_PIN,
+            .Pin = 1 << LED_PIN,
             .Mode = GPIO_MODE_AF_PP,
             .Pull = GPIO_NOPULL,
             .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
@@ -278,8 +276,7 @@ void neopixel_init (void)
 
         pwm_timer.Init.Period = timer_clk_enable(pwm_timer.Instance) / 800000 - 1;
 
-        timing.t_low = pwm_timer.Init.Period / 3;
-        timing.t_high = timing.t_low * 2;
+        t_high = (pwm_timer.Init.Period / 3) * 2;
 
         if(HAL_TIM_Base_Init(&pwm_timer) == HAL_OK &&
             HAL_TIM_ConfigClockSource(&pwm_timer, &sClockSourceConfig) == HAL_OK &&
@@ -294,21 +291,21 @@ void neopixel_init (void)
             HAL_NVIC_SetPriority(DMA_TX_IRQ, 3, 0);
             HAL_NVIC_EnableIRQ(DMA_TX_IRQ);
 
-            hal.periph_port.register_pin(&sdi);
+            hal.periph_port.register_pin(&leds0);
 
-            hal.rgb0.out = neopixel_out;
-            hal.rgb0.out_masked = neopixel_out_masked;
-            hal.rgb0.set_intensity = neopixels_set_intensity;
-            hal.rgb0.write = neopixels_write;
-            hal.rgb0.flags = (rgb_properties_t){ .is_strip = On };
-            hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
+            strip->out = neopixel_out;
+            strip->out_masked = neopixel_out_masked;
+            strip->set_intensity = neopixels_set_intensity;
+            strip->write = neopixels_write;
+            strip->flags = (rgb_properties_t){ .is_strip = On };
+            strip->cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
             settings_changed = hal.settings_changed;
             hal.settings_changed = onSettingsChanged;
         }
-
-        init = true;
     }
+
+    init = true;
 }
 
 void HAL_TIM_PWM_PulseFinishedCallback (TIM_HandleTypeDef *htim)

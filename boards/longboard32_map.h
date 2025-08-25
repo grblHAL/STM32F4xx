@@ -308,11 +308,12 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT13_PIN
 #endif
 
-#define NEOPIXEL_GPO
-#define LED_PORT                GPIOC // rail LED strip
+#define NEOPIXEL_PWM
+#define LED_PORT                GPIOC // rail LED strip (PWM), does not work when debugging due to U14/R96 chopping output
 #define LED_PIN                 9
 #if !defined(DEBUG) && RGB_LED_ENABLE
-#define LED1_PORT               GPIOA // ring LED strip, when enabled SWD debugging is blocked (use $DFU to reenable)
+#define NEOPIXEL_GPO
+#define LED1_PORT               GPIOA // ring LED strip (GPO), when enabled SWD debugging is blocked (use $DFU to reenable)
 #define LED1_PIN                13
 #endif
 

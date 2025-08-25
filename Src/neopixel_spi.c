@@ -191,7 +191,7 @@ void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
         settings_changed(settings, changed);
 }
 
-void neopixel_init (void)
+void neopixel_spi_init (void)
 {
     static bool init = false;
 
