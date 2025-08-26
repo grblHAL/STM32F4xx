@@ -21,20 +21,20 @@
 */
 
 /* Pin Assignments:
- * A0  Spindle En. (EXP 1-07)   | B0  Z Probe                     | C0  (N/A)
- * A1  Spindle Dir. (EXP 1-05)  | B1  E Limit                     | C1  (N/A)
+ * A0  (EXP 1-07) Spindle En.   | B0  Z Probe                     | C0  (N/A)
+ * A1  (EXP 1-05) Spindle Dir.  | B1  E Limit                     | C1  (N/A)
  * A2  (EXP 1-03)               | B2  X Limit                     | C2  (N/A)
- * A3  RESET (EXP 1-04)         | B3  Spindle PWM MOSFET          | C3  (N/A)
+ * A3  (EXP 1-04) RESET         | B3  Spindle PWM MOSFET          | C3  (N/A)
  * A4  (EXP 2-07) SS            | B4  Y Direction                 | C4  (N/A)
  * A5  (EXP 2-09) SCK           | B5  Y Step                      | C5  (N/A)
- * A6  AUX0 (EXP 2-10) MISO     | B6  STOP (EXP 1- 8) SCL         | C6  (N/A)
- * A7  AUX1 (EXP 2-05) MOSI     | B7  START (EXP 1- 6) SCK        | C7  (N/A)
+ * A6  (EXP 2-10) MISO          | B6  (EXP 1- 8) SCL/STOP         | C6  (N/A)
+ * A7  (EXP 2-05) MOSI          | B7  (EXP 1- 6) SCK/START        | C7  (N/A)
  * A8  Step En/Dis              | B8  X Direction                 | C8  (N/A)
  * A9  FLOOD MOSFET             | B9  X Step                      | C9  (N/A)
  * A10 MOSFET                   | B10 Y Limit                     | C10 (N/A)
  * A11 USB D-                   | B11 (N/A)                       | C11 (N/A)
  * A12 USB D+                   | B12 E Direction                 | C12 (N/A)
- * A13 DOOR (EXP 1-10)          | B13 E Step                      | C13 (EXP 1-9)
+ * A13 (EXP 1-10) DOOR          | B13 E Step                      | C13 (EXP 1-9)
  * A14 Z Limit                  | B14 Z Direction                 | C14 (EXP 2-6)
  * A15 MIST MOSFET              | B15 Z Step                      | C15 (EXP 2-8)
  */
@@ -87,23 +87,21 @@
 #define M3_ENABLE_PIN           STEPPERS_ENABLE_PIN
 #endif
 
-#define AUXOUTPUT0_PORT         GPIOA
-#define AUXOUTPUT0_PIN          7
-#define AUXOUTPUT1_PORT         GPIOB // Spindle PWM
-#define AUXOUTPUT1_PIN          3
-#define AUXOUTPUT2_PORT         GPIOA // Spindle direction
-#define AUXOUTPUT2_PIN          1
-#define AUXOUTPUT3_PORT         GPIOA // Spindle enable
-#define AUXOUTPUT3_PIN          0
-#define AUXOUTPUT4_PORT         GPIOA // Coolant flood
-#define AUXOUTPUT4_PIN          9
-#define AUXOUTPUT5_PORT         GPIOA // Coolant mist
-#define AUXOUTPUT5_PIN          15
+#define AUXOUTPUT0_PORT          GPIOA  // Spindle enable
+#define AUXOUTPUT0_PIN           0
+#define AUXOUTPUT1_PORT          GPIOB  // Spindle PWM
+#define AUXOUTPUT1_PIN           3
+#define AUXOUTPUT2_PORT          GPIOA  // Spindle direction
+#define AUXOUTPUT2_PIN           1
+#define AUXOUTPUT3_PORT          GPIOA  // Coolant flood
+#define AUXOUTPUT3_PIN           9
+#define AUXOUTPUT4_PORT          GPIOA  // Coolant mist
+#define AUXOUTPUT4_PIN           15
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
-#define SPINDLE_ENABLE_PORT     AUXOUTPUT3_PORT
-#define SPINDLE_ENABLE_PIN      AUXOUTPUT3_PIN
+#define SPINDLE_ENABLE_PORT     AUXOUTPUT0_PORT
+#define SPINDLE_ENABLE_PIN      AUXOUTPUT0_PIN
 #endif
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
 #define SPINDLE_PWM_PORT        AUXOUTPUT1_PORT
@@ -116,69 +114,57 @@
 
 // Define flood and mist coolant enable output pins.
 #if COOLANT_ENABLE & COOLANT_FLOOD
-#define COOLANT_FLOOD_PORT      AUXOUTPUT4_PORT
-#define COOLANT_FLOOD_PIN       AUXOUTPUT4_PIN
+#define COOLANT_FLOOD_PORT      AUXOUTPUT3_PORT
+#define COOLANT_FLOOD_PIN       AUXOUTPUT3_PIN
 #endif
 #if COOLANT_ENABLE & COOLANT_MIST
-#define COOLANT_MIST_PORT       AUXOUTPUT5_PORT
-#define COOLANT_MIST_PIN        AUXOUTPUT5_PIN
+#define COOLANT_MIST_PORT       AUXOUTPUT4_PORT
+#define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
 #endif
 
-#define AUXINPUT0_PORT          GPIOA
-#define AUXINPUT0_PIN           6
-#define AUXINPUT1_PORT          GPIOA // Reset/EStop
-#define AUXINPUT1_PIN           13
-#define AUXINPUT2_PORT          GPIOB // Probe
-#define AUXINPUT2_PIN           0
-#define AUXINPUT3_PORT          GPIOA // Reset/EStop
-#define AUXINPUT3_PIN           3
-#define AUXINPUT4_PORT          GPIOB // Feed hold
-#define AUXINPUT4_PIN           6
-#define AUXINPUT5_PORT          GPIOB // Cycle start
-#define AUXINPUT5_PIN           7
+#define AUXINPUT0_PORT          GPIOA  // Reset/EStop
+#define AUXINPUT0_PIN           3
+#define AUXINPUT1_PORT          GPIOB  // Feed hold
+#define AUXINPUT1_PIN           6
+#define AUXINPUT2_PORT          GPIOB  // Cycle start
+#define AUXINPUT2_PIN           7
+#define AUXINPUT3_PORT          GPIOB  // Probe
+#define AUXINPUT3_PIN           0
+#define AUXINPUT4_PORT          GPIOA  // Door
+#define AUXINPUT4_PIN           13
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #if CONTROL_ENABLE & CONTROL_HALT
-#define RESET_PORT              AUXINPUT3_PORT
-#define RESET_PIN               AUXINPUT3_PIN
+#define RESET_PORT              AUXINPUT0_PORT
+#define RESET_PIN               AUXINPUT0_PIN
 #endif
 #if CONTROL_ENABLE & CONTROL_FEED_HOLD
-#define FEED_HOLD_PORT          AUXINPUT4_PORT
-#define FEED_HOLD_PIN           AUXINPUT4_PIN
+#define FEED_HOLD_PORT          AUXINPUT1_PORT
+#define FEED_HOLD_PIN           AUXINPUT1_PIN
 #endif
 #if CONTROL_ENABLE & CONTROL_CYCLE_START
-#define CYCLE_START_PORT        AUXINPUT5_PORT
-#define CYCLE_START_PIN         AUXINPUT5_PIN
+#define CYCLE_START_PORT        AUXINPUT2_PORT
+#define CYCLE_START_PIN         AUXINPUT2_PIN
 #endif
 
 #if PROBE_ENABLE
-#define PROBE_PORT              AUXINPUT2_PORT
-#define PROBE_PIN               AUXINPUT2_PIN
+#define PROBE_PORT              AUXINPUT3_PORT
+#define PROBE_PIN               AUXINPUT3_PIN
 #endif
 
 #if SAFETY_DOOR_ENABLE
-#define SAFETY_DOOR_PORT        AUXINPUT1_PORT
-#define SAFETY_DOOR_PIN         AUXINPUT1_PIN
+#define SAFETY_DOOR_PORT        AUXINPUT4_PORT
+#define SAFETY_DOOR_PIN         AUXINPUT4_PIN
 #elif MOTOR_FAULT_ENABLE
-#define MOTOR_FAULT_PORT        AUXINPUT1_PORT
-#define MOTOR_FAULT_PIN         AUXINPUT1_PIN
+#define MOTOR_FAULT_PORT        AUXINPUT4_PORT
+#define MOTOR_FAULT_PIN         AUXINPUT4_PIN
 #endif
 
-// Spindle encoder pins.
-#if SPINDLE_ENCODER_ENABLE
-
-#define RPM_COUNTER_N           2
-#define RPM_TIMER_N             3
-#define SPINDLE_INDEX_PORT      GPIOB
-#define SPINDLE_INDEX_PIN       3
-#define SPINDLE_PULSE_PORT      GPIOA
-#define SPINDLE_PULSE_PIN       15
-
-#endif
-
-// NOT SUPPORTED
 #if SDCARD_ENABLE
-//#error SDcard not supported
+  #define SDCARD_SDIO           0
+  #define SPI_PORT              1                                  // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
+  #define SD_CS_PORT            GPIOA
+  #define SD_CS_PIN             4
 #endif
 
 /* EOF */
