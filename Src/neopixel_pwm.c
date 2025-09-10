@@ -269,7 +269,7 @@ void neopixel_pwm_init (void)
         GPIO_InitTypeDef GPIO_InitStruct = {
             .Pin = 1 << LED_PIN,
             .Mode = GPIO_MODE_AF_PP,
-            .Pull = GPIO_NOPULL,
+            .Pull = GPIO_PULLDOWN,
             .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
             .Alternate = PWM_GPIO_AF
         };
