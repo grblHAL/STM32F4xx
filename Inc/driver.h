@@ -80,6 +80,17 @@
 #define timerAF(t, f) timeraf(t, f)
 #define timeraf(t, f) GPIO_AF ## f ## _TIM ## t
 #define timerAPB2(t) (t == 1 || t == 8 || t == 9 || t == 10 || t == 11)
+#define timerCH(c) timerch(c)
+#define timerch(c) TIM_CHANNEL_ ## c
+
+#define DMAinstance(d) DMAinstanceI(d)
+#define DMAinstanceI(d) DMA ## d
+#define DMAstream(d, p) DMAstreamI(d, p)
+#define DMAstreamI(d, p) DMA ## d ## _Stream ## p
+#define DMAchannel(c) DMAchannelI(c)
+#define DMAchannelI(c) DMA_CHANNEL_ ## c
+#define DMA_CLKEN(d) dmaclken(d)
+#define dmaclken(d) __HAL_RCC_DMA ## d ## _CLK_ENABLE
 
 #define usart(t) usartN(t)
 #define usartN(t) USART ## t

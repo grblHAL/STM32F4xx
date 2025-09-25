@@ -26,18 +26,6 @@
 
 #ifdef NEOPIXEL_PWM
 
-#define timerCH(c) timerch(c)
-#define timerch(c) TIM_CHANNEL_ ## c
-
-#define DMAinstance(d) DMAinstanceI(d)
-#define DMAinstanceI(d) DMA ## d
-#define DMAstream(d, p) DMAstreamI(d, p)
-#define DMAstreamI(d, p) DMA ## d ## _Stream ## p
-#define DMAchannel(c) DMAchannelI(c)
-#define DMAchannelI(c) DMA_CHANNEL_ ## c
-#define DMA_CLKEN(d) dmaclken(d)
-#define dmaclken(d) __HAL_RCC_DMA ## d ## _CLK_ENABLE
-
 //---
 
 // PC7
@@ -49,17 +37,17 @@
 
 //---
 
-#define PWM_TIMER timer(PWM_TIMER_N)
-#define PWM_CHANNEL timerCH(PWM_CHANNEL_N)
-#define PWM_GPIO_AF timerAF(PWM_TIMER_N, 3)
-#define PWM_TIMER_CLKEN timerCLKEN(PWM_TIMER_N)
+#define PWM_TIMER           timer(PWM_TIMER_N)
+#define PWM_CHANNEL         timerCH(PWM_CHANNEL_N)
+#define PWM_GPIO_AF         timerAF(PWM_TIMER_N, 3)
+#define PWM_TIMER_CLKEN     timerCLKEN(PWM_TIMER_N)
 
-#define DMA_INSTANCE DMAinstance(DMA_INSTANCE_N)
-#define DMA_STREAM DMAstream(DMA_INSTANCE_N, DMA_STREAM_N)
-#define DMA_CHANNEL DMAchannel(DMA_CHANNEL_N)
-#define DMA_INSTANCE_CLKEN DMA_CLKEN(DMA_INSTANCE_N)
-#define DMA_TX_IRQ DMAirq(DMA_INSTANCE_N, DMA_CHANNEL_N)
-#define DMA_TX_IRQ_HANDLER DMAhandler(DMA_INSTANCE_N, DMA_CHANNEL_N)
+#define DMA_INSTANCE        DMAinstance(DMA_INSTANCE_N)
+#define DMA_STREAM          DMAstream(DMA_INSTANCE_N, DMA_STREAM_N)
+#define DMA_CHANNEL         DMAchannel(DMA_CHANNEL_N)
+#define DMA_INSTANCE_CLKEN  DMA_CLKEN(DMA_INSTANCE_N)
+#define DMA_TX_IRQ          DMAirq(DMA_INSTANCE_N, DMA_STREAM_N)
+#define DMA_TX_IRQ_HANDLER  DMAhandler(DMA_INSTANCE_N, DMA_STREAM_N)
 
 static TIM_HandleTypeDef pwm_timer = {
     .Instance = PWM_TIMER,

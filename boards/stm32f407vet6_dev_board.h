@@ -25,10 +25,6 @@
 #error "Axis configuration is not supported!"
 #endif
 
-#if HTTP_ENABLE
-#error "Not enough RAM to run HTTP daemon!"
-#endif
-
 #if !defined(STM32F407xx) || HSE_VALUE != 25000000
 #error "This board has STM32F407 processor with a 25MHz crystal, select a corresponding build!"
 #endif
@@ -240,6 +236,10 @@ PD15 SM4
 #if COOLANT_ENABLE & COOLANT_MIST
 #define COOLANT_MIST_PORT       AUXOUTPUT4_PORT
 #define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
+#endif
+
+#if ETHERNET_ENABLE && defined(_WIZCHIP_)
+
 #endif
 
 #ifdef SPI_PORT
