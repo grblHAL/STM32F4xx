@@ -191,6 +191,8 @@
 #endif
 #endif // SPI_PORT
 
+#if RGB_LED_ENABLE
+
 /*
 #define LED_R_PORT              GPIOA
 #define LED_R_PIN               7
@@ -199,6 +201,12 @@
 #define LED_B_PORT              GPIOC
 #define LED_B_PIN               8
 */
+#define NEOPIXEL_PWM
+#define LED_PORT                GPIOC // rail LED strip
+#define LED_PIN                 9
+#define NEOPIXEL_GPO
+#define LED1_PORT               GPIOB // ring LED strip (GPO), when enabled SWD debugging is blocked (use $DFU to reenable)
+#define LED1_PIN                2
 
 //#define NEOPIXEL_GPO
 #define LED_PORT                GPIOA
@@ -207,34 +215,40 @@
 //#define NEOPIXEL_SPI            1 // PA7
 //#define NEOPIXELS_NUM           6
 
-#if !SPINDLE_SYNC_ENABLE && !QEI_ENABLE
-#define AUXINPUT0_PORT          GPIOB
-#define AUXINPUT0_PIN           14
 #endif
 
-#if !SPINDLE_ENCODER_ENABLE && !QEI_ENABLE
+#if SPINDLE_ENCODER_ENABLE
+#define SPINDLE_PULSE_PORT      GPIOD  // NOTE: this pin is connected to PA15
+#define SPINDLE_PULSE_PIN       2
+#define SPINDLE_INDEX_PORT      GPIOB
+#define SPINDLE_INDEX_PIN       14
+#elif QEI_ENABLE
+#define QEI_A_PORT              GPIOA
+#define QEI_A_PIN               15
+#define QEI_B_PORT              GPIOB
+#define QEI_B_PIN               14
+#else
+#define AUXINPUT0_PORT          GPIOB
+#define AUXINPUT0_PIN           14
 #define AUXINPUT1_PORT          GPIOA
 #define AUXINPUT1_PIN           15
 #endif
 
-#ifndef M3_LIMIT_PIN
+#ifndef M3_LIMIT_PIN //  N_ABC_MOTORS == 0
 #define AUXINPUT2_PORT          GPIOC
 #define AUXINPUT2_PIN           11
 #endif
 
 #define AUXINPUT3_PORT          GPIOB
 #define AUXINPUT3_PIN           0
-#define AUXINPUT4_PORT          GPIOC
+#define AUXINPUT4_PORT          GPIOC // Safety door or toolsetter
 #define AUXINPUT4_PIN           1
-#define AUXINPUT5_PORT          GPIOC
+#define AUXINPUT5_PORT          GPIOC // Probe
 #define AUXINPUT5_PIN           7
 
 #ifndef SPI_PORT
 #define AUXINPUT6_PORT          GPIOC
 #define AUXINPUT6_PIN           8
-#elif N_ABC_MOTORS == 0
-#define AUXINPUT6_PORT          GPIOC
-#define AUXINPUT6_PIN           11
 #endif
 
 #define AUXINPUT7_PORT          GPIOC // Reset/EStop
@@ -267,6 +281,9 @@
 #if SAFETY_DOOR_ENABLE
 #define SAFETY_DOOR_PORT        AUXINPUT4_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT4_PIN
+#elif TOLSETTER_ENABLE
+#define TOLSETTER_PORT        	AUXINPUT4_PORT
+#define TOLSETTER_PIN         	AUXINPUT4_PIN
 #endif
 
 #if MOTOR_FAULT_ENABLE && defined(AUXINPUT1_PORT)
@@ -274,14 +291,12 @@
 #define MOTOR_FAULT_PIN         AUXINPUT1_PIN
 #endif
 
-#if MOTOR_WARNING_ENABLE && !I2C_STROBE_ENABLE
-#define MOTOR_WARNING_PORT      AUXINPUT3_PORT
-#define MOTOR_WARNING_PIN       AUXINPUT3_PIN
-#endif
-
 #if I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         AUXINPUT3_PORT
 #define I2C_STROBE_PIN          AUXINPUT3_PIN
+#elif MOTOR_WARNING_ENABLE
+#define MOTOR_WARNING_PORT      AUXINPUT3_PORT
+#define MOTOR_WARNING_PIN       AUXINPUT3_PIN
 #endif
 
 #if MPG_ENABLE == 1
@@ -289,22 +304,6 @@
 #define MPG_MODE_PORT           AUXINPUT6_PORT
 #define MPG_MODE_PIN            AUXINPUT6_PIN
 #endif
-
-#if SPINDLE_ENCODER_ENABLE
-#define SPINDLE_PULSE_PORT      GPIOD  // NOTE: this pin is connected to PA15
-#define SPINDLE_PULSE_PIN       2
-#if SPINDLE_SYNC_ENABLE
-#define SPINDLE_INDEX_PORT      GPIOB
-#define SPINDLE_INDEX_PIN       14
-#endif
-#endif
-
-#if QEI_ENABLE && !SPINDLE_SYNC_ENABLE
-#define QEI_A_PORT              GPIOA
-#define QEI_A_PIN               15
-#define QEI_B_PORT              GPIOB
-#define QEI_B_PIN               14
-#endif // QEI_ENABLE
 
 #if QEI_SELECT_ENABLE
 #if !I2C_STROBE_ENABLE
