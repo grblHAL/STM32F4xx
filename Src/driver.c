@@ -2134,6 +2134,9 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
         static bool event_claimed = false;
 
         if((hal.spindle_data.get = settings->spindle.ppr > 0 ? spindleGetData : NULL)) {
+
+            hal.driver_cap.spindle_encoder_index_event = On;
+
             if(spindle_encoder.ppr != settings->spindle.ppr) {
 
                 spindle_ptrs_t *spindle;
@@ -2158,6 +2161,7 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
         } else {
             spindle_encoder.ppr = 0;
             hal.spindle_data.reset = NULL;
+            hal.driver_cap.spindle_encoder_index_event = Off;
         }
 
         spindle_bind_encoder(spindle_encoder.ppr ? &encoder_data : NULL);
@@ -2789,9 +2793,12 @@ static bool driver_setup (settings_t *settings)
 #endif
     RPM_TIMER->CR1 |= TIM_CR1_CEN;
 
-//    RPM_COUNTER->SMCR = TIM_SMCR_SMS_0|TIM_SMCR_SMS_1|TIM_SMCR_SMS_2|TIM_SMCR_ETF_2|TIM_SMCR_ETF_3|TIM_SMCR_TS_0|TIM_SMCR_TS_1|TIM_SMCR_TS_2;
     RPM_COUNTER_CLKEN();
+#if SPINDLE_ENCODER_CLK == 1
+    RPM_COUNTER->SMCR = TIM_SMCR_SMS_0|TIM_SMCR_SMS_1|TIM_SMCR_SMS_2|TIM_SMCR_ETF_2|TIM_SMCR_ETF_3|TIM_SMCR_TS_0|TIM_SMCR_TS_2;
+#else
     RPM_COUNTER->SMCR = TIM_SMCR_ECE;
+#endif
     RPM_COUNTER->PSC = 0;
     RPM_COUNTER->ARR = 65535;
     RPM_COUNTER->DIER = TIM_DIER_CC1IE;
@@ -3026,7 +3033,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "250825";
+    hal.driver_version = "251003";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3461,6 +3468,21 @@ ISR_CODE void RPM_TIMER_IRQHandler (void)
 
 #endif
 
+static void inline spindle_encoder_index_event (void)
+{
+    uint32_t rpm_count = RPM_COUNTER->CNT;
+    spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
+
+    if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
+        spindle_encoder.error_count++;
+
+    spindle_encoder.counter.last_index = rpm_count;
+    spindle_encoder.counter.index_count++;
+
+    if(hal.spindle_encoder_on_index)
+        hal.spindle_encoder_on_index(spindle_encoder.counter.index_count);
+}
+
 #endif // SPINDLE_ENCODER_ENABLE
 
 void core_pin_debounce (void *pin)
@@ -3550,14 +3572,7 @@ void EXTI0_IRQHandler(void)
 #elif AUXINPUT_MASK & (1<<0)
         aux_pin_irq(ifg);
 #elif SPINDLE_INDEX_BIT & (1<<0)
-        uint32_t rpm_count = RPM_COUNTER->CNT;
-        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-            spindle_encoder.error_count++;
-
-        spindle_encoder.counter.last_index = rpm_count;
-        spindle_encoder.counter.index_count++;
+        spindle_encoder_index_event();
 #endif
     }
 }
@@ -3566,7 +3581,7 @@ void EXTI0_IRQHandler(void)
 
 #if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<1)
 
-void EXTI1_IRQHandler(void)
+ISR_CODE void EXTI1_IRQHandler(void)
 {
     uint32_t ifg = __HAL_GPIO_EXTI_GET_IT(1<<1);
 
@@ -3580,14 +3595,7 @@ void EXTI1_IRQHandler(void)
 #elif AUXINPUT_MASK & (1<<1)
         aux_pin_irq(ifg);
 #elif SPINDLE_INDEX_BIT & (1<<1)
-        uint32_t rpm_count = RPM_COUNTER->CNT;
-        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-            spindle_encoder.error_count++;
-
-        spindle_encoder.counter.last_index = rpm_count;
-        spindle_encoder.counter.index_count++;
+        spindle_encoder_index_event();
 #endif
     }
 }
@@ -3596,7 +3604,7 @@ void EXTI1_IRQHandler(void)
 
 #if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<2)
 
-void EXTI2_IRQHandler(void)
+ISR_CODE void EXTI2_IRQHandler(void)
 {
     uint32_t ifg = __HAL_GPIO_EXTI_GET_IT(1<<2);
 
@@ -3610,14 +3618,7 @@ void EXTI2_IRQHandler(void)
 #elif AUXINPUT_MASK & (1<<2)
         aux_pin_irq(ifg);
 #elif SPINDLE_INDEX_BIT & (1<<2)
-        uint32_t rpm_count = RPM_COUNTER->CNT;
-        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-            spindle_encoder.error_count++;
-
-        spindle_encoder.counter.last_index = rpm_count;
-        spindle_encoder.counter.index_count++;
+        spindle_encoder_index_event();
 #endif
     }
 }
@@ -3626,7 +3627,7 @@ void EXTI2_IRQHandler(void)
 
 #if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<3)
 
-void EXTI3_IRQHandler(void)
+ISR_CODE void EXTI3_IRQHandler(void)
 {
     uint32_t ifg = __HAL_GPIO_EXTI_GET_IT(1<<3);
 
@@ -3640,14 +3641,7 @@ void EXTI3_IRQHandler(void)
 #elif AUXINPUT_MASK & (1<<3)
         aux_pin_irq(ifg);
 #elif SPINDLE_INDEX_BIT & (1<<3)
-        uint32_t rpm_count = RPM_COUNTER->CNT;
-        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-            spindle_encoder.error_count++;
-
-        spindle_encoder.counter.last_index = rpm_count;
-        spindle_encoder.counter.index_count++;
+        spindle_encoder_index_event();
 #endif
     }
 }
@@ -3656,7 +3650,7 @@ void EXTI3_IRQHandler(void)
 
 #if (DRIVER_IRQMASK|AUXINPUT_MASK) & (1<<4)
 
-void EXTI4_IRQHandler(void)
+ISR_CODE void EXTI4_IRQHandler(void)
 {
     uint32_t ifg = __HAL_GPIO_EXTI_GET_IT(1<<4);
 
@@ -3670,14 +3664,7 @@ void EXTI4_IRQHandler(void)
 #elif AUXINPUT_MASK & (1<<4)
         aux_pin_irq(ifg);
 #elif SPINDLE_INDEX_BIT & (1<<4)
-        uint32_t rpm_count = RPM_COUNTER->CNT;
-        spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-        if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-            spindle_encoder.error_count++;
-
-        spindle_encoder.counter.last_index = rpm_count;
-        spindle_encoder.counter.index_count++;
+        spindle_encoder_index_event();
 #endif
     }
 }
@@ -3686,7 +3673,7 @@ void EXTI4_IRQHandler(void)
 
 #if ((DRIVER_IRQMASK|AUXINPUT_MASK) & 0x03E0)
 
-void EXTI9_5_IRQHandler(void)
+ISR_CODE void EXTI9_5_IRQHandler(void)
 {
     uint32_t ifg = __HAL_GPIO_EXTI_GET_IT(0x03E0);
 
@@ -3698,16 +3685,8 @@ void EXTI9_5_IRQHandler(void)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #endif
 #if SPINDLE_INDEX_BIT & 0x03E0
-        if(ifg & SPINDLE_INDEX_BIT) {
-            uint32_t rpm_count = RPM_COUNTER->CNT;
-            spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-            if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-                spindle_encoder.error_count++;
-
-            spindle_encoder.counter.last_index = rpm_count;
-            spindle_encoder.counter.index_count++;
-        }
+        if(ifg & SPINDLE_INDEX_BIT)
+            spindle_encoder_index_event();
 #endif
 #if QEI_SELECT_BIT & 0x03E0
         if(ifg & QEI_SELECT_BIT) {
@@ -3730,7 +3709,7 @@ void EXTI9_5_IRQHandler(void)
 
 #if (DRIVER_IRQMASK|AUXINPUT_MASK) & (0xFC00)
 
-void EXTI15_10_IRQHandler(void)
+ISR_CODE void EXTI15_10_IRQHandler(void)
 {
     uint32_t ifg = __HAL_GPIO_EXTI_GET_IT(0xFC00);
 
@@ -3742,16 +3721,8 @@ void EXTI15_10_IRQHandler(void)
             spi_irq.callback(0, DIGITAL_IN(SPI_IRQ_PORT, SPI_IRQ_PIN) == 0);
 #endif
 #if SPINDLE_INDEX_BIT & 0xFC00
-        if(ifg & SPINDLE_INDEX_BIT) {
-            uint32_t rpm_count = RPM_COUNTER->CNT;
-            spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-            if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-                spindle_encoder.error_count++;
-
-            spindle_encoder.counter.last_index = rpm_count;
-            spindle_encoder.counter.index_count++;
-        }
+        if(ifg & SPINDLE_INDEX_BIT) 
+			spindle_encoder_index_event();
 #endif
 #if QEI_ENABLE && ((QEI_A_BIT|QEI_B_BIT) & 0xFC00)
         if(ifg & (QEI_A_BIT|QEI_B_BIT))

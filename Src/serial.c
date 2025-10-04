@@ -29,7 +29,15 @@
 #include "grbl/hal.h"
 #include "grbl/protocol.h"
 
+#define LAST_UINSTANCE -1
+
 #ifdef SERIAL_PORT
+enum {
+  SERIAL0_UINSTANCE = LAST_UINSTANCE,
+  SERIAL0_INSTANCE
+};
+#undef LAST_UINSTANCE
+#define LAST_UINSTANCE SERIAL0_INSTANCE
 static stream_rx_buffer_t rxbuf = {0};
 static stream_tx_buffer_t txbuf = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command = protocol_enqueue_realtime_command;
@@ -39,6 +47,12 @@ static const io_stream_t *serialInit (uint32_t baud_rate);
 #endif
 
 #ifdef SERIAL1_PORT
+enum {
+  SERIAL1_UINSTANCE = LAST_UINSTANCE,
+  SERIAL1_INSTANCE
+};
+#undef LAST_UINSTANCE
+#define LAST_UINSTANCE SERIAL1_INSTANCE
 static stream_rx_buffer_t rxbuf1 = {0};
 static stream_tx_buffer_t txbuf1 = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command1 = protocol_enqueue_realtime_command;
@@ -48,6 +62,12 @@ static const io_stream_t *serial1Init(uint32_t baud_rate);
 #endif
 
 #ifdef SERIAL2_PORT
+enum {
+  SERIAL2_UINSTANCE = LAST_UINSTANCE,
+  SERIAL2_INSTANCE
+};
+#undef LAST_UINSTANCE
+#define LAST_UINSTANCE SERIAL1_INSTANCE
 static stream_rx_buffer_t rxbuf2 = {0};
 static stream_tx_buffer_t txbuf2 = {0};
 static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue_realtime_command;
@@ -341,44 +361,84 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 
 #endif // SERIAL2_PORT
 
+static const io_stream_status_t *get_uart_status (uint8_t instance);
+
+io_stream_status_t stream_status[] = {
+#if SERIAL_PORT
+    {
+        .baud_rate = 115200,
+        .format = {
+            .width = Serial_8bit,
+            .stopbits = Serial_StopBits1,
+            .parity = Serial_ParityNone,
+        }
+    },
+#endif
+#if SERIAL1_PORT
+    {
+        .baud_rate = 115200,
+        .format = {
+            .width = Serial_8bit,
+            .stopbits = Serial_StopBits1,
+            .parity = Serial_ParityNone,
+        }
+    },
+#endif
+#if SERIAL2_PORT
+    {
+        .baud_rate = 115200,
+        .format = {
+            .width = Serial_8bit,
+            .stopbits = Serial_StopBits1,
+            .parity = Serial_ParityNone,
+        }
+    },
+#endif
+};
+
 static io_stream_properties_t serial[] = {
 #if SERIAL_PORT
     {
       .type = StreamType_Serial,
-      .instance = 0,
+      .instance = SERIAL0_INSTANCE,
       .flags.claimable = On,
       .flags.claimed = Off,
       .flags.can_set_baud = On,
       .flags.modbus_ready = On,
-      .claim = serialInit
+      .claim = serialInit,
+      .get_status = get_uart_status
     },
 #endif
 #if SERIAL1_PORT
     {
       .type = StreamType_Serial,
-      .instance = 1,
+      .instance = SERIAL1_INSTANCE,
       .flags.claimable = On,
       .flags.claimed = Off,
       .flags.can_set_baud = On,
       .flags.modbus_ready = On,
-      .claim = serial1Init
+      .claim = serial1Init,
+      .get_status = get_uart_status
     },
 #endif
 #if SERIAL2_PORT
     {
       .type = StreamType_Serial,
-      .instance = 2,
+      .instance = SERIAL2_INSTANCE,
       .flags.claimable = On,
       .flags.claimed = Off,
       .flags.can_set_baud = On,
       .flags.modbus_ready = On,
-      .claim = serial2Init
+      .claim = serial2Init,
+      .get_status = get_uart_status
     }
 #endif
 };
 
 void serialRegisterStreams (void)
 {
+    static const char *const description[] = { "UART1", "UART2", "UART3" };
+
     static io_stream_details_t streams = {
         .n_streams = sizeof(serial) / sizeof(io_stream_properties_t),
         .streams = serial,
@@ -388,20 +448,20 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t tx0 = {
         .function = Output_TX,
-        .group = PinGroup_UART1,
+        .group = PinGroup_UART + SERIAL0_INSTANCE,
         .port  = UART0_TX_PORT,
         .pin   = UART0_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART1"
+        .description = description[SERIAL0_INSTANCE]
     };
 
     static const periph_pin_t rx0 = {
         .function = Input_RX,
-        .group = PinGroup_UART1,
+        .group = PinGroup_UART + SERIAL0_INSTANCE,
         .port = UART0_RX_PORT,
         .pin = UART0_RX_PIN,
         .mode = { .mask = PINMODE_NONE },
-        .description = "UART1"
+        .description = description[SERIAL0_INSTANCE]
     };
 
     hal.periph_port.register_pin(&rx0);
@@ -413,20 +473,20 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t tx1 = {
         .function = Output_TX,
-        .group = PinGroup_UART2,
+        .group = PinGroup_UART + SERIAL1_INSTANCE,
         .port  = UART1_TX_PORT,
         .pin   = UART1_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART2"
+        .description = description[SERIAL1_INSTANCE]
     };
 
     static const periph_pin_t rx1 = {
         .function = Input_RX,
-        .group = PinGroup_UART2,
+        .group = PinGroup_UART + SERIAL1_INSTANCE,
         .port = UART1_RX_PORT,
         .pin = UART1_RX_PIN,
         .mode = { .mask = PINMODE_NONE },
-        .description = "UART2"
+        .description = description[SERIAL1_INSTANCE]
     };
 
     hal.periph_port.register_pin(&rx1);
@@ -438,20 +498,20 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t tx2 = {
         .function = Output_TX,
-        .group = PinGroup_UART3,
+        .group = PinGroup_UART + SERIAL2_INSTANCE,
         .port  = UART2_TX_PORT,
         .pin   = UART2_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT },
-        .description = "UART3"
+        .description = description[SERIAL2_INSTANCE]
     };
 
     static const periph_pin_t rx2 = {
         .function = Input_RX,
-        .group = PinGroup_UART3,
+        .group = PinGroup_UART + SERIAL2_INSTANCE,
         .port = UART2_RX_PORT,
         .pin = UART2_RX_PIN,
         .mode = { .mask = PINMODE_NONE },
-        .description = "UART3"
+        .description = description[SERIAL2_INSTANCE]
     };
 
     hal.periph_port.register_pin(&rx2);
@@ -462,23 +522,13 @@ void serialRegisterStreams (void)
     stream_register_streams(&streams);
 }
 
-#if SERIAL_PORT || SERIAL1_PORT || SERIAL2_PORT
+#if LAST_UINSTANCE != -1
 
-static bool serialClaimPort (uint8_t instance)
+static const io_stream_status_t *get_uart_status (uint8_t instance)
 {
-    bool ok = false;
-    uint_fast8_t idx = sizeof(serial) / sizeof(io_stream_properties_t);
+    stream_status[instance].flags = serial[instance].flags;
 
-    do {
-        if(serial[--idx].instance == instance) {
-            if((ok = serial[idx].flags.claimable && !serial[idx].flags.claimed))
-                serial[idx].flags.claimed = On;
-            break;
-        }
-
-    } while(idx);
-
-    return ok;
+    return &stream_status[instance];
 }
 
 #endif
@@ -605,6 +655,8 @@ static bool serialSuspendInput (bool suspend)
 
 static bool serialSetBaudRate (uint32_t baud_rate)
 {
+    stream_status[SERIAL0_INSTANCE].baud_rate = baud_rate;
+
     UART0->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
     UART0->BRR = UART_BRR_SAMPLING16(UART0_CLK, baud_rate);
     UART0->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
@@ -614,6 +666,8 @@ static bool serialSetBaudRate (uint32_t baud_rate)
 
 static bool serialSetFormat (serial_format_t format)
 {
+    stream_status[SERIAL0_INSTANCE].format = format;
+
     UART0->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
 
     if(format.parity != Serial_ParityNone)
@@ -651,6 +705,7 @@ static const io_stream_t *serialInit (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
+        .instance = SERIAL0_INSTANCE,
         .is_connected = stream_connected,
         .read = serialGetC,
         .write = serialWriteS,
@@ -670,8 +725,10 @@ static const io_stream_t *serialInit (uint32_t baud_rate)
         .set_enqueue_rt_handler = serialSetRtHandler
     };
 
-    if(!serialClaimPort(stream.instance))
+    if(!serial[SERIAL0_INSTANCE].flags.claimable || serial[SERIAL0_INSTANCE].flags.claimed)
         return NULL;
+
+    serial[SERIAL0_INSTANCE].flags.claimed = On;
 
     UART0_CLK_En();
 
@@ -860,6 +917,8 @@ static bool serial1SuspendInput (bool suspend)
 
 static bool serial1SetBaudRate (uint32_t baud_rate)
 {
+    stream_status[SERIAL1_INSTANCE].baud_rate = baud_rate;
+
     UART1->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
     UART1->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
     UART1->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
@@ -869,6 +928,8 @@ static bool serial1SetBaudRate (uint32_t baud_rate)
 
 static bool serial1SetFormat (serial_format_t format)
 {
+    stream_status[SERIAL1_INSTANCE].format = format;
+
     UART1->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
 
     if(format.parity != Serial_ParityNone)
@@ -906,7 +967,7 @@ static const io_stream_t *serial1Init (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .instance = 1,
+        .instance = SERIAL1_INSTANCE,
         .is_connected = stream_connected,
         .read = serial1GetC,
         .write = serial1WriteS,
@@ -926,8 +987,10 @@ static const io_stream_t *serial1Init (uint32_t baud_rate)
         .set_enqueue_rt_handler = serial1SetRtHandler
     };
 
-    if(!serialClaimPort(stream.instance))
+    if(!serial[SERIAL1_INSTANCE].flags.claimable || serial[SERIAL1_INSTANCE].flags.claimed)
         return NULL;
+
+    serial[SERIAL1_INSTANCE].flags.claimed = On;
 
     UART1_CLK_En();
 
@@ -1117,6 +1180,8 @@ static bool serial2SuspendInput (bool suspend)
 
 static bool serial2SetBaudRate (uint32_t baud_rate)
 {
+    stream_status[SERIAL2_INSTANCE].baud_rate = baud_rate;
+
     UART2->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
     UART2->BRR = UART_BRR_SAMPLING16(UART2_CLK, baud_rate);
     UART2->CR1 |= (USART_CR1_RE|USART_CR1_TE|USART_CR1_UE|USART_CR1_RXNEIE);
@@ -1126,6 +1191,8 @@ static bool serial2SetBaudRate (uint32_t baud_rate)
 
 static bool serial2SetFormat (serial_format_t format)
 {
+    stream_status[SERIAL2_INSTANCE].format = format;
+
     UART2->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
 
     if(format.parity != Serial_ParityNone)
@@ -1163,7 +1230,7 @@ static const io_stream_t *serial2Init (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .instance = 2,
+        .instance = SERIAL2_INSTANCE,
         .is_connected = stream_connected,
         .read = serial2GetC,
         .write = serial2WriteS,
@@ -1183,8 +1250,11 @@ static const io_stream_t *serial2Init (uint32_t baud_rate)
         .set_enqueue_rt_handler = serial2SetRtHandler
     };
 
-    if(!serialClaimPort(stream.instance))
+    if(!serial[SERIAL2_INSTANCE].flags.claimable || serial[SERIAL2_INSTANCE].flags.claimed)
         return NULL;
+
+    serial[SERIAL2_INSTANCE].flags.claimed = On;
+
 
     UART2_CLK_En();
 
