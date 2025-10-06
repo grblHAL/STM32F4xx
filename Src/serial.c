@@ -23,6 +23,9 @@
 
 #include <string.h>
 
+#define LAST_UINSTANCE -1
+#include "grbl/stream.h"
+
 #include "main.h"
 #include "driver.h"
 
@@ -363,7 +366,7 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 
 static const io_stream_status_t *get_uart_status (uint8_t instance);
 
-io_stream_status_t stream_status[] = {
+static io_stream_status_t stream_status[] = {
 #if SERIAL_PORT
     {
         .baud_rate = 115200,
@@ -392,7 +395,7 @@ io_stream_status_t stream_status[] = {
             .stopbits = Serial_StopBits1,
             .parity = Serial_ParityNone,
         }
-    },
+    }
 #endif
 };
 
@@ -437,8 +440,6 @@ static io_stream_properties_t serial[] = {
 
 void serialRegisterStreams (void)
 {
-    static const char *const description[] = { "UART1", "UART2", "UART3" };
-
     static io_stream_details_t streams = {
         .n_streams = sizeof(serial) / sizeof(io_stream_properties_t),
         .streams = serial,
@@ -451,8 +452,7 @@ void serialRegisterStreams (void)
         .group = PinGroup_UART + SERIAL0_INSTANCE,
         .port  = UART0_TX_PORT,
         .pin   = UART0_TX_PIN,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = description[SERIAL0_INSTANCE]
+        .mode  = { .mask = PINMODE_OUTPUT }
     };
 
     static const periph_pin_t rx0 = {
@@ -460,8 +460,7 @@ void serialRegisterStreams (void)
         .group = PinGroup_UART + SERIAL0_INSTANCE,
         .port = UART0_RX_PORT,
         .pin = UART0_RX_PIN,
-        .mode = { .mask = PINMODE_NONE },
-        .description = description[SERIAL0_INSTANCE]
+        .mode = { .mask = PINMODE_NONE }
     };
 
     hal.periph_port.register_pin(&rx0);
@@ -476,8 +475,7 @@ void serialRegisterStreams (void)
         .group = PinGroup_UART + SERIAL1_INSTANCE,
         .port  = UART1_TX_PORT,
         .pin   = UART1_TX_PIN,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = description[SERIAL1_INSTANCE]
+        .mode  = { .mask = PINMODE_OUTPUT }
     };
 
     static const periph_pin_t rx1 = {
@@ -485,8 +483,7 @@ void serialRegisterStreams (void)
         .group = PinGroup_UART + SERIAL1_INSTANCE,
         .port = UART1_RX_PORT,
         .pin = UART1_RX_PIN,
-        .mode = { .mask = PINMODE_NONE },
-        .description = description[SERIAL1_INSTANCE]
+        .mode = { .mask = PINMODE_NONE }
     };
 
     hal.periph_port.register_pin(&rx1);
@@ -501,8 +498,7 @@ void serialRegisterStreams (void)
         .group = PinGroup_UART + SERIAL2_INSTANCE,
         .port  = UART2_TX_PORT,
         .pin   = UART2_TX_PIN,
-        .mode  = { .mask = PINMODE_OUTPUT },
-        .description = description[SERIAL2_INSTANCE]
+        .mode  = { .mask = PINMODE_OUTPUT }
     };
 
     static const periph_pin_t rx2 = {
@@ -510,8 +506,7 @@ void serialRegisterStreams (void)
         .group = PinGroup_UART + SERIAL2_INSTANCE,
         .port = UART2_RX_PORT,
         .pin = UART2_RX_PIN,
-        .mode = { .mask = PINMODE_NONE },
-        .description = description[SERIAL2_INSTANCE]
+        .mode = { .mask = PINMODE_NONE }
     };
 
     hal.periph_port.register_pin(&rx2);

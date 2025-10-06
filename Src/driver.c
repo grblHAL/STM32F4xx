@@ -2483,7 +2483,7 @@ static void enumeratePins (bool low_level, pin_info_ptr pin_info, void *data)
         pin.group = ppin->pin.group;
         pin.port = low_level ? ppin->pin.port : (void *)port2char(ppin->pin.port);
         pin.mode = ppin->pin.mode;
-        pin.description = ppin->pin.description;
+        pin.description = ppin->pin.description == NULL ? xbar_group_to_description(ppin->pin.group) : ppin->pin.description;
 
         pin_info(&pin, data);
     } while((ppin = ppin->next));

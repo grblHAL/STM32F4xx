@@ -144,15 +144,6 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT7_PIN
 #endif
 
-// Define user-control controls (cycle start, reset, feed hold) input pins.
-#define RESET_PORT              GPIOA
-#define RESET_PIN               0
-#define FEED_HOLD_PORT          GPIOB
-#define FEED_HOLD_PIN           7
-#define CYCLE_START_PORT        GPIOB
-#define CYCLE_START_PIN         6
-#define CONTROL_INMODE          GPIO_BITBAND
-
 // Spindle encoder pins.
 #if SPINDLE_ENCODER_ENABLE
 #define RPM_COUNTER_N           2
