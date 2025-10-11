@@ -207,10 +207,12 @@ void board_init (void)
 
 #if defined(MODBUS_DIR_AUX) && !(MODBUS_ENABLE & MODBUS_RTU_DIR_ENABLED)
 
-    if((port = ioport_get_info(Port_Digital, Port_Output, MODBUS_DIR_AUX)) && !port->mode.claimed) {
-        uint8_t modbus_dir = MODBUS_DIR_AUX;
-        ioport_claim(Port_Digital, Port_Output, &modbus_dir, "N/A");
-    }
+    io_port_cfg_t d_out;
+
+    uint8_t modbus_dir = MODBUS_DIR_AUX;
+
+    if(ioports_cfg(&d_out, Port_Digital, Port_Input)->n_ports)
+        d_out.claim(&d_out, &modbus_dir, "N/A", (pin_cap_t){});
 
 #endif
 
@@ -220,11 +222,16 @@ void board_init (void)
 
     uint8_t tool_probe_port = SLB_TLS_AUX_INPUT;
 
-    if((port = ioport_get_info(Port_Digital, Port_Input, tool_probe_port)) && !port->mode.claimed) {
+    io_port_cfg_t d_in;
+
+    if(ioports_cfg(&d_in, Port_Digital, Port_Input)->n_ports && (port = d_in.claim(&d_in, &tool_probe_port, NULL, (pin_cap_t){}))) {
+
+        ioport_set_function(port, Input_Toolsetter, NULL);
 
         memcpy(&toolsetter, port, sizeof(xbar_t));
 
-        ioport_claim(Port_Digital, Port_Input, &tool_probe_port, "Toolsetter");
+        if(toolsetter.mode.inverted)
+            toolsetter.config(port, &(gpio_in_config_t){ .inverted = Off, .debounce = toolsetter.mode.debounce, .pull_mode = toolsetter.mode.pull_mode }, true );
 
         hal_probe_get_state = hal.probe.get_state;
         hal.probe.get_state = getProbeState;

@@ -51,8 +51,8 @@
 #define I2C1_ALT_PINMAP 1
 #endif
 
-#define SERIAL_PORT     34   // GPIOD: TX = 8, GPIOC: RX = 6
-#define SERIAL1_PORT    21   // GPIOD: TX = 5,        RX = 6
+#define SERIAL_PORT     34   // GPIOD: TX = 8, GPIOC: RX = 6 - AUX
+#define SERIAL1_PORT    21   // GPIOD: TX = 5,        RX = 6 - RS-485
 
 #define HAS_BOARD_INIT
 #define WIZCHIP_SPI_PRESCALER   SPI_BAUDRATEPRESCALER_4
@@ -244,15 +244,16 @@
 
 #endif
 
-//*****Switchbank will always claim the first 4 aux outputs******
-#define AUXOUTPUT3_PORT         GPIOC
-#define AUXOUTPUT3_PIN          14
-#define AUXOUTPUT2_PORT         GPIOC
-#define AUXOUTPUT2_PIN          0
-#define AUXOUTPUT1_PORT         GPIOC
-#define AUXOUTPUT1_PIN          1
-#define AUXOUTPUT0_PORT         GPIOC
+// *** Eventout plugin will default to claim the first 4 aux outputs ***
+#define AUXOUTPUT0_PORT         GPIOC // AUX OUT3 in the schematic
 #define AUXOUTPUT0_PIN          8
+#define AUXOUTPUT1_PORT         GPIOC // AUX OUT2 in the schematic
+#define AUXOUTPUT1_PIN          1
+#define AUXOUTPUT2_PORT         GPIOC // AUX OUT1 in the schematic
+#define AUXOUTPUT2_PIN          0
+#define AUXOUTPUT3_PORT         GPIOC // AUX OUT0 in the schematic
+#define AUXOUTPUT3_PIN          14
+
 #define AUXOUTPUT4_PORT         GPIOB // Modbus direction
 #define AUXOUTPUT4_PIN          0
 
@@ -271,10 +272,10 @@
 #define AUXOUTPUT13_PORT        GPIOB // Coolant mist
 #define AUXOUTPUT13_PIN         4
 
-#define EVENTOUT_1_ACTION       1
-#define EVENTOUT_2_ACTION       4
-#define EVENTOUT_3_ACTION       1
-#define EVENTOUT_4_ACTION       4
+#define EVENTOUT_1_ACTION       1 // Spindle
+#define EVENTOUT_2_ACTION       4 // Mist coolant
+#define EVENTOUT_3_ACTION       1 // Spindle
+#define EVENTOUT_4_ACTION       4 // Mist coolant
 
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
 #define SPINDLE_ENABLE_PORT     AUXOUTPUT9_PORT
@@ -317,8 +318,8 @@
 #define LED1_PIN                13
 #endif
 
-#define AUXINPUT0_ANALOG_PORT  GPIOA
-#define AUXINPUT0_ANALOG_PIN   0
+#define AUXINPUT0_ANALOG_PORT   GPIOA
+#define AUXINPUT0_ANALOG_PIN    0
 
 #define AUXINPUT0_PORT          GPIOD // AUX_IN_0
 #define AUXINPUT0_PIN           12
@@ -339,6 +340,7 @@
 #define AUXINPUT6_PORT          GPIOC // CYC/ST, MACRO3
 #define AUXINPUT6_PIN           11
 
+
 #define AUXINPUT7_PORT          GPIOD // AUX_IN_3
 #define AUXINPUT7_PIN           15
 
@@ -348,14 +350,24 @@
 #define AUXINPUT9_PORT          GPIOD // Safety door
 #define AUXINPUT9_PIN           7
 
+#if THCAD2_ENABLE && !I2C_STROBE_ENABLE
+#define AUXINPUT0_FREQ_PORT     GPIOB
+#define AUXINPUT0_FREQ_PIN      3
+#else
 #define AUXINPUT10_PORT         GPIOB // I2C strobe
 #define AUXINPUT10_PIN          3
+#endif
 
 #define AUXINPUT11_PORT         GPIOC // Probe
 #define AUXINPUT11_PIN          4
 
-#define AUXINPUT13_PORT         GPIOB //  // Reset/EStop
+#define AUXINPUT13_PORT         GPIOB // Reset/EStop
 #define AUXINPUT13_PIN          12
+
+#if PLASMA_ENABLE && !defined(M4_AVAILABLE)
+#define AUXINPUT14_PORT         GPIOE // M4 limit
+#define AUXINPUT14_PIN          14
+#endif
 
 #if CONTROL_ENABLE & CONTROL_HALT
 #define RESET_PORT              AUXINPUT13_PORT
@@ -396,6 +408,8 @@
 #define CONTROL_INMODE GPIO_BITBAND
 
 #ifdef BOARD_LONGBOARD32
+
+// Not mapped: PD10 -> PRU_RESET
 
 #define AUXINPUT12_PORT         GPIOD // External stepper driver alarm (A) or spindle encoder pulse
 #define AUXINPUT12_PIN          2
@@ -444,7 +458,7 @@
 #endif
 
 #if SDCARD_ENABLE || ETHERNET_ENABLE
-#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7  probably needs fixing
+#define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7
 #endif
 
 #if ETHERNET_ENABLE

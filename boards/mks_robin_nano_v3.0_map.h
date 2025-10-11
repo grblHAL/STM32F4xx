@@ -194,6 +194,9 @@
 #elif MOTOR_FAULT_ENABLE
 #define MOTOR_FAULT_PORT        AUXINPUT0_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT0_PIN
+#elif MPG_ENABLE == 1
+#define MPG_MODE_PORT           AUXINPUT0_PORT
+#define MPG_MODE_PIN            AUXINPUT0_PIN
 #endif
 
 #if SDCARD_ENABLE

@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2017-2024 Terje Io
+  Copyright (c) 2017-2025 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 31 - GPIOC: TX = 10, RX = 11
 32 - GPIOD: TX =  8, RX =  9 - Nucleo-144 Virtual COM port
 33 - GPIOC: TX = 10, RX =  5
+34 - GPIOD: TX =  8, GPIOC: RX = 5
 6  - GPIOC: TX =  6, RX =  7
 
 */
