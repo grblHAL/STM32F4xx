@@ -59,7 +59,7 @@ static probe_state_t state = {
     .connected = On
 };
 
-static bool probe_away;
+static bool probe_away, probe_configure = false;
 static xbar_t toolsetter;
 static on_report_options_ptr on_report_options;
 static probe_get_state_ptr hal_probe_get_state;
@@ -70,16 +70,20 @@ static probe_state_t getProbeState (void)
 {
     //get the probe state from the HAL
     state = hal_probe_get_state();
-    //get the probe state from the plugin
-    tls_input.triggered = (bool)toolsetter.get_value(&toolsetter) ^ tls_input.inverted;
 
-    //OR the result and return, unless it is an away probe in which case AND the result.
-    if(probe_away)
-        state.triggered &= tls_input.triggered;
-    else
-        state.triggered |= tls_input.triggered;
+    if(!probe_configure) {
 
-    state.tls_triggered = tls_input.triggered;
+        //get the probe state from the plugin
+        tls_input.triggered = (bool)toolsetter.get_value(&toolsetter) ^ tls_input.inverted;
+
+        //OR the result and return, unless it is an away probe in which case AND the result.
+        if(probe_away)
+            state.triggered &= tls_input.triggered;
+        else
+            state.triggered |= tls_input.triggered;
+
+        state.tls_triggered = tls_input.triggered;
+    }
 
     return state;
 }
@@ -93,8 +97,11 @@ static void probeConfigure (bool is_probe_away, bool probing)
 
     probe_away = is_probe_away;
 
-    if(hal_probe_configure)
+    if(hal_probe_configure) {
+        probe_configure = true;
         hal_probe_configure(is_probe_away, probing);
+        probe_configure = false;
+    }
 }
 
 static void onReportOptions (bool newopt)
@@ -102,7 +109,7 @@ static void onReportOptions (bool newopt)
     on_report_options(newopt);
 
     if(!newopt)
-        report_plugin("SLB Probing", "0.03");
+        report_plugin("SLB Probing", "0.04");
 }
 
 #endif
@@ -211,7 +218,7 @@ void board_init (void)
 
     uint8_t modbus_dir = MODBUS_DIR_AUX;
 
-    if(ioports_cfg(&d_out, Port_Digital, Port_Input)->n_ports)
+    if(ioports_cfg(&d_out, Port_Digital, Port_Output)->n_ports)
         d_out.claim(&d_out, &modbus_dir, "N/A", (pin_cap_t){});
 
 #endif
