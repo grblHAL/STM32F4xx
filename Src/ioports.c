@@ -76,7 +76,8 @@ static bool digital_in_cfg (xbar_t *input, gpio_in_config_t *config, bool persis
 {
     if(input->id < digital.in.n_ports && config->pull_mode != PullMode_UpDown) {
 
-        aux_in[input->id].mode.inverted = config->inverted;
+        if(!xbar_is_probe_in(input->function))
+            aux_in[input->id].mode.inverted = config->inverted;
         aux_in[input->id].mode.debounce = config->debounce;
         aux_in[input->id].mode.pull_mode = config->pull_mode;
         aux_in[input->id].port->PUPDR &= ~(GPIO_PUPDR_PUPDR0 << (input->pin << 1));

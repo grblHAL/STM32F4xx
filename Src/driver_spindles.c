@@ -523,10 +523,10 @@ bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl)
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
     if(aux_ctrl->function == Output_SpindlePWM) {
         const pwm_signal_t *pwm_timer;
-        if((pwm_timer = pwm_claim(aux_ctrl->port, aux_ctrl->pin)))
+        if((pwm_timer = pwm_claim(aux_ctrl->gpio.port, aux_ctrl->gpio.pin)))
             memcpy(&spindle_timer, pwm_timer, sizeof(pwm_signal_t));
         else {
-            aux_ctrl->aux_port = 0xFF;
+            aux_ctrl->port = IOPORT_UNASSIGNED;
             return false;
         }
     }
@@ -535,10 +535,10 @@ bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl)
 #if DRIVER_SPINDLE1_ENABLE & SPINDLE_PWM
     if(aux_ctrl->function == Output_Spindle1PWM) {
         const pwm_signal_t *pwm_timer;
-        if((pwm_timer = pwm_claim(aux_ctrl->port, aux_ctrl->pin)))
+        if((pwm_timer = pwm_claim(aux_ctrl->gpio.port, aux_ctrl->gpio.pin)))
             memcpy(&spindle1_timer, pwm_timer, sizeof(pwm_signal_t));
         else {
-            aux_ctrl->aux_port = 0xFF;
+            aux_ctrl->port = IOPORT_UNASSIGNED;
             return false;
         }
     }
@@ -546,7 +546,7 @@ bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl)
 
     xbar_t *pin;
 
-    if((pin = ioport_claim(Port_Digital, Port_Output, &aux_ctrl->aux_port, NULL))) {
+    if((pin = ioport_claim(Port_Digital, Port_Output, &aux_ctrl->port, NULL))) {
         ioport_set_function(pin, aux_ctrl->function, NULL);
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
         if(aux_ctrl->function == Output_SpindlePWM) {
@@ -561,9 +561,9 @@ bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl)
         }
 #endif
     } else
-        aux_ctrl->aux_port = 0xFF;
+        aux_ctrl->port = IOPORT_UNASSIGNED;
 
-    return aux_ctrl->aux_port != 0xFF;
+    return aux_ctrl->port != IOPORT_UNASSIGNED;
 }
 
 void driver_spindles_init (void)

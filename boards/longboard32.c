@@ -64,25 +64,37 @@ static xbar_t toolsetter;
 static on_report_options_ptr on_report_options;
 static probe_get_state_ptr hal_probe_get_state;
 static probe_configure_ptr hal_probe_configure;
+static probe_is_triggered_ptr hal_probe_is_triggered;
+
+static bool probeIsTriggered (probe_id_t probe_id)
+{
+    bool triggered = false;
+
+    if(probe_id == Probe_Toolsetter)
+        triggered = (bool)toolsetter.get_value(&toolsetter) ^ settings.probe.invert_toolsetter_input;
+    else
+        triggered = !!hal_probe_is_triggered && hal_probe_is_triggered(probe_id);
+
+    return triggered;
+}
 
 // redirected probing function for SLB OR.
 static probe_state_t getProbeState (void)
 {
-    //get the probe state from the HAL
+    // get the probe state from the HAL
     state = hal_probe_get_state();
 
     if(!probe_configure) {
 
-        //get the probe state from the plugin
+        // get the toolsetter state
+        tls_input.inverted = probe_away ? !settings.probe.invert_toolsetter_input : settings.probe.invert_toolsetter_input;
         tls_input.triggered = (bool)toolsetter.get_value(&toolsetter) ^ tls_input.inverted;
 
-        //OR the result and return, unless it is an away probe in which case AND the result.
+        // OR the result and return, unless it is an away probe in which case AND the result.
         if(probe_away)
             state.triggered &= tls_input.triggered;
         else
             state.triggered |= tls_input.triggered;
-
-        state.tls_triggered = tls_input.triggered;
     }
 
     return state;
@@ -93,8 +105,6 @@ static void probeConfigure (bool is_probe_away, bool probing)
 {
     tls_input.triggered = Off;
     tls_input.is_probing = probing;
-    tls_input.inverted = is_probe_away ? !settings.probe.invert_toolsetter_input : settings.probe.invert_toolsetter_input;
-
     probe_away = is_probe_away;
 
     if(hal_probe_configure) {
@@ -109,7 +119,7 @@ static void onReportOptions (bool newopt)
     on_report_options(newopt);
 
     if(!newopt)
-        report_plugin("SLB Probing", "0.04");
+        report_plugin("SLB Probing", "0.05");
 }
 
 #endif
@@ -237,14 +247,14 @@ void board_init (void)
 
         memcpy(&toolsetter, port, sizeof(xbar_t));
 
-        if(toolsetter.mode.inverted)
-            toolsetter.config(port, &(gpio_in_config_t){ .inverted = Off, .debounce = toolsetter.mode.debounce, .pull_mode = toolsetter.mode.pull_mode }, true );
-
         hal_probe_get_state = hal.probe.get_state;
         hal.probe.get_state = getProbeState;
 
         hal_probe_configure = hal.probe.configure;
         hal.probe.configure = probeConfigure;
+
+        hal_probe_is_triggered = hal.probe.is_triggered;
+        hal.probe.is_triggered = probeIsTriggered;
 
         on_report_options = grbl.on_report_options;
         grbl.on_report_options = onReportOptions;
