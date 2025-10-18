@@ -147,7 +147,7 @@
 #endif
 #if CONTROL_ENABLE & CONTROL_CYCLE_START
 #define CYCLE_START_PORT        AUXINPUT2_PORT
-#define CYCLE_START_PIN         AUXINPUT3_PIN
+#define CYCLE_START_PIN         AUXINPUT2_PIN
 #endif
 
 // Spindle PWM & encoder pins.
