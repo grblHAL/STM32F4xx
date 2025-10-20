@@ -70,7 +70,6 @@
 #define MODBUS_RTU_STREAM 1
 #endif
 
-
 //********on first revision of this board Y step/dir was flipped.  Use below config?
 
 // Define step pulse output pins.
