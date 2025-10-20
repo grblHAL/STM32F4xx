@@ -711,12 +711,12 @@ bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl)
 {
     xbar_t *pin;
 
-    if((pin = ioport_claim(Port_Digital, Port_Output, &aux_ctrl->aux_port, NULL)))
+    if((pin = ioport_claim(Port_Digital, Port_Output, &aux_ctrl->port, NULL)))
         ioport_set_function(pin, aux_ctrl->function, NULL);
     else
-        aux_ctrl->aux_port = 0xFF;
+        aux_ctrl->port = IOPORT_UNASSIGNED;
 
-    return aux_ctrl->aux_port != 0xFF;
+    return aux_ctrl->port != IOPORT_UNASSIGNED;
 }
 
 #endif // DRIVER_SPINDLE_ENABLE || DRIVER_SPINDLE1_ENABLE
