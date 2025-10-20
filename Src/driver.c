@@ -186,6 +186,12 @@ static input_signal_t inputpin[] = {
 #ifdef C_LIMIT_PIN
     { .id = Input_LimitC,         .port = C_LIMIT_PORT,       .pin = C_LIMIT_PIN,         .group = PinGroup_Limit },
 #endif
+#ifdef U_LIMIT_PIN
+    { .id = Input_LimitU,         .port = U_LIMIT_PORT,       .pin = U_LIMIT_PIN,         .group = PinGroup_Limit },
+#endif
+#ifdef V_LIMIT_PIN
+    { .id = Input_LimitV,         .port = V_LIMIT_PORT,       .pin = V_LIMIT_PIN,         .group = PinGroup_Limit },
+#endif
 // HOME input pins must be consecutive in this array
 #ifdef X_HOME_PIN
     { .id = Input_HomeX,          .port = X_HOME_PORT,        .pin = X_HOME_PIN,          .group = PinGroup_Home },
@@ -214,6 +220,12 @@ static input_signal_t inputpin[] = {
 #ifdef C_HOME_PIN
     { .id = Input_HomeC,          .port = C_HOME_PORT,        .pin = C_HOME_PIN,          .group = PinGroup_Home },
 #endif
+#ifdef U_HOME_PIN
+    { .id = Input_HomeU,          .port = U_HOME_PORT,        .pin = U_HOME_PIN,          .group = PinGroup_Home },
+#endif
+#ifdef V_HOME_PIN
+    { .id = Input_HomeV,          .port = V_HOME_PORT,        .pin = V_HOME_PIN,          .group = PinGroup_Home },
+#endif
 // MOTOR_FAULT input pins must be consecutive in this array
 #ifdef X_MOTOR_FAULT_PIN
     { .id = Input_MotorFaultX,    .port = X_MOTOR_FAULT_PORT,  .pin = X_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
@@ -232,6 +244,12 @@ static input_signal_t inputpin[] = {
 #endif
 #ifdef C_MOTOR_FAULT_PIN
     { .id = Input_MotorFaultC,    .port = C_MOTOR_FAULT_PORT,  .pin = C_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef U_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultU,    .port = U_MOTOR_FAULT_PORT,  .pin = U_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
+#endif
+#ifdef V_MOTOR_FAULT_PIN
+    { .id = Input_MotorFaultV,    .port = V_MOTOR_FAULT_PORT,  .pin = V_MOTOR_FAULT_PIN,  .group = PinGroup_Motor_Fault },
 #endif
 #ifdef X2_MOTOR_FAULT_PIN
     { .id = Input_MotorFaultX_2,  .port = X2_MOTOR_FAULT_PORT, .pin = X2_MOTOR_FAULT_PIN, .group = PinGroup_Motor_Fault },
@@ -331,6 +349,12 @@ static output_signal_t outputpin[] = {
 #ifdef C_AXIS
     { .id = Output_StepC,           .port = C_STEP_PORT,            .pin = C_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
+#ifdef U_AXIS
+    { .id = Output_StepU,           .port = U_STEP_PORT,            .pin = U_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+#endif
+#ifdef V_AXIS
+    { .id = Output_StepV,           .port = V_STEP_PORT,            .pin = V_STEP_PIN,              .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
+#endif
 #ifdef X2_STEP_PIN
     { .id = Output_StepX_2,         .port = X2_STEP_PORT,           .pin = X2_STEP_PIN,             .group = PinGroup_StepperStep,   .mode = {STEP_PINMODE} },
 #endif
@@ -351,6 +375,12 @@ static output_signal_t outputpin[] = {
 #endif
 #ifdef C_AXIS
     { .id = Output_DirC,            .port = C_DIRECTION_PORT,       .pin = C_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+#endif
+#ifdef U_AXIS
+    { .id = Output_DirU,            .port = U_DIRECTION_PORT,       .pin = U_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
+#endif
+#ifdef V_AXIS
+    { .id = Output_DirV,            .port = V_DIRECTION_PORT,       .pin = V_DIRECTION_PIN,         .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
 #endif
 #ifdef X2_DIRECTION_PIN
     { .id = Output_DirX_2,          .port = X2_DIRECTION_PORT,      .pin = X2_DIRECTION_PIN,        .group = PinGroup_StepperDir,    .mode = {DIRECTION_PINMODE} },
@@ -386,6 +416,12 @@ static output_signal_t outputpin[] = {
 #ifdef C_ENABLE_PORT
     { .id = Output_StepperEnableC,  .port = C_ENABLE_PORT,          .pin = C_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
+#ifdef U_ENABLE_PORT
+    { .id = Output_StepperEnableU,  .port = U_ENABLE_PORT,          .pin = U_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
+#endif
+#ifdef V_ENABLE_PORT
+    { .id = Output_StepperEnableV,  .port = V_ENABLE_PORT,          .pin = V_ENABLE_PIN,            .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
+#endif
 #ifdef X2_ENABLE_PIN
     { .id = Output_StepperEnableX,  .port = X2_ENABLE_PORT,         .pin = X2_ENABLE_PIN,           .group = PinGroup_StepperEnable, .mode = {STEPPERS_ENABLE_PINMODE} },
 #endif
@@ -417,6 +453,12 @@ static output_signal_t outputpin[] = {
 #ifdef MOTOR_CSM5_PIN
     { .id = Output_MotorChipSelectM5,   .port = MOTOR_CSM5_PORT,    .pin = MOTOR_CSM5_PIN,          .group = PinGroup_MotorChipSelect },
 #endif
+#ifdef MOTOR_CSM6_PIN
+    { .id = Output_MotorChipSelectM6,   .port = MOTOR_CSM6_PORT,    .pin = MOTOR_CSM6_PIN,          .group = PinGroup_MotorChipSelect },
+#endif
+#ifdef MOTOR_CSM7_PIN
+    { .id = Output_MotorChipSelectM7,   .port = MOTOR_CSM7_PORT,    .pin = MOTOR_CSM7_PIN,          .group = PinGroup_MotorChipSelect },
+#endif
 #ifdef MOTOR_CS_PIN
     { .id = Output_MotorChipSelect,     .port = MOTOR_CS_PORT,      .pin = MOTOR_CS_PIN,            .group = PinGroup_MotorChipSelect },
 #endif
@@ -437,6 +479,12 @@ static output_signal_t outputpin[] = {
 #endif
 #ifdef MOTOR_UARTM5_PIN
     { .id = Bidirectional_MotorUARTM5,  .port = MOTOR_UARTM5_PORT,  .pin = MOTOR_UARTM5_PIN,        .group = PinGroup_MotorUART },
+#endif
+#ifdef MOTOR_UARTM6_PIN
+    { .id = Bidirectional_MotorUARTM6,  .port = MOTOR_UARTM6_PORT,  .pin = MOTOR_UARTM6_PIN,        .group = PinGroup_MotorUART },
+#endif
+#ifdef MOTOR_UARTM7_PIN
+    { .id = Bidirectional_MotorUARTM7,  .port = MOTOR_UARTM7_PORT,  .pin = MOTOR_UARTM7_PIN,        .group = PinGroup_MotorUART },
 #endif
 #ifdef FLASH_CS_PORT
     { .id = Output_FlashCS,         .port = FLASH_CS_PORT,          .pin = FLASH_CS_PIN,            .group = PinGroup_SPI },
@@ -657,6 +705,12 @@ static void stepperEnable (axes_signals_t enable, bool hold)
   #ifdef C_ENABLE_PORT
     DIGITAL_OUT(C_ENABLE_PORT, C_ENABLE_PIN, enable.c);
   #endif
+  #ifdef U_ENABLE_PORT
+    DIGITAL_OUT(U_ENABLE_PORT, U_ENABLE_PIN, enable.u);
+  #endif
+  #ifdef V_ENABLE_PORT
+    DIGITAL_OUT(V_ENABLE_PORT, V_ENABLE_PIN, enable.v);
+  #endif
 #endif
 }
 
@@ -796,6 +850,12 @@ inline static __attribute__((always_inline)) void stepper_step_out (axes_signals
  #ifdef C_AXIS
     DIGITAL_OUT(C_STEP_PORT, C_STEP_PIN, step_out1.c);
  #endif
+#ifdef U_AXIS
+   DIGITAL_OUT(U_STEP_PORT, U_STEP_PIN, step_out1.u);
+#endif
+#ifdef V_AXIS
+   DIGITAL_OUT(V_STEP_PORT, V_STEP_PIN, step_out1.v);
+#endif
 
 #elif STEP_OUTMODE == GPIO_MAP
     STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_out1.value & motors_1.bits];
@@ -916,6 +976,12 @@ inline static __attribute__((always_inline)) void stepper_step_out (axes_signals
   #endif
   #ifdef C_AXIS
     DIGITAL_OUT(C_STEP_PORT, C_STEP_PIN, step_out.c);
+  #endif
+  #ifdef U_AXIS
+    DIGITAL_OUT(U_STEP_PORT, U_STEP_PIN, step_out.u);
+  #endif
+  #ifdef V_AXIS
+    DIGITAL_OUT(V_STEP_PORT, V_STEP_PIN, step_out.v);
   #endif
 #elif STEP_OUTMODE == GPIO_MAP
     STEP_PORT->ODR = (STEP_PORT->ODR & ~STEP_MASK) | step_outmap[step_out.value];
@@ -1084,6 +1150,12 @@ inline static __attribute__((always_inline)) void stepper_dir_out (axes_signals_
  #endif
  #ifdef C_AXIS
     DIGITAL_OUT(C_DIRECTION_PORT, C_DIRECTION_PIN, dir_out.c);
+ #endif
+ #ifdef U_AXIS
+    DIGITAL_OUT(U_DIRECTION_PORT, U_DIRECTION_PIN, dir_out.u);
+ #endif
+ #ifdef V_AXIS
+    DIGITAL_OUT(V_DIRECTION_PORT, V_DIRECTION_PIN, dir_out.v);
  #endif
 #elif DIRECTION_OUTMODE == GPIO_MAP
     DIRECTION_PORT->ODR = (DIRECTION_PORT->ODR & ~DIRECTION_MASK) | dir_outmap[dir_out.value];
@@ -1415,6 +1487,12 @@ inline static limit_signals_t limitsGetState (void)
   #ifdef C_LIMIT_PIN
     signals.min.c = DIGITAL_IN(C_LIMIT_PORT, C_LIMIT_PIN);
   #endif
+  #ifdef U_LIMIT_PIN
+    signals.min.u = DIGITAL_IN(U_LIMIT_PORT, U_LIMIT_PIN);
+  #endif
+  #ifdef V_LIMIT_PIN
+    signals.min.v = DIGITAL_IN(V_LIMIT_PORT, V_LIMIT_PIN);
+  #endif
 #elif LIMIT_INMODE == GPIO_MAP
     uint32_t bits = LIMIT_PORT->IDR;
     signals.min.x = !!(bits & X_LIMIT_BIT);
@@ -1428,6 +1506,12 @@ inline static limit_signals_t limitsGetState (void)
   #endif
   #ifdef C_LIMIT_PIN
     signals.min.c = !!(bits & C_LIMIT_BIT);
+  #endif
+  #ifdef U_LIMIT_PIN
+    signals.min.u = !!(bits & U_LIMIT_BIT);
+  #endif
+  #ifdef V_LIMIT_PIN
+    signals.min.v = !!(bits & V_LIMIT_BIT);
   #endif
 #else
     signals.min.value = (uint8_t)((LIMIT_PORT->IDR & LIMIT_MASK) >> LIMIT_INMODE);
@@ -1492,7 +1576,13 @@ inline static home_signals_t homeGetState (void)
   #ifdef C_HOME_PIN
     signals.a.c = DIGITAL_IN(C_HOME_PORT, C_HOME_PIN);
   #endif
-#elif HOME_INMODE == GPIO_MAP
+  #ifdef U_HOME_PIN
+     signals.a.u = DIGITAL_IN(U_HOME_PORT, U_HOME_PIN);
+  #endif
+  #ifdef VBHOME_PIN
+    signals.a.v = DIGITAL_IN(V_HOME_PORT, V_HOME_PIN);
+  #endif
+  #elif HOME_INMODE == GPIO_MAP
     uint32_t bits = HOME_PORT->IDR;
     signals.a.x = !!(bits & X_HOME_BIT);
     signals.a.y = !!(bits & Y_HOME_BIT);
@@ -1505,6 +1595,12 @@ inline static home_signals_t homeGetState (void)
   #endif
   #ifdef C_HOME_PIN
     signals.a.c = !!(bits & C_HOME_BIT);
+  #endif
+  #ifdef U_HOME_PIN
+    signals.a.u = !!(bits & U_HOME_BIT);
+  #endif
+  #ifdef V_HOME_PIN
+      signals.a.v = !!(bits & V_HOME_BIT);
   #endif
 #else
     signals.a.value = (uint8_t)((HOME_PORT->IDR & HOME_MASK) >> HOME_INMODE);
@@ -2910,7 +3006,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "251003";
+    hal.driver_version = "251020";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

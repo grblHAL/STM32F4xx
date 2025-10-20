@@ -224,8 +224,8 @@
 #define M3_STEP_PIN             5
 #define M3_DIRECTION_PORT       GPIOE
 #define M3_DIRECTION_PIN        10
-#define M3_LIMIT_PORT           GPIOE
-#define M3_LIMIT_PIN            6
+//#define M3_LIMIT_PORT           GPIOE
+//#define M3_LIMIT_PIN            6
 #define M3_ENABLE_PORT          GPIOC
 #define M3_ENABLE_PIN           7
 #endif
