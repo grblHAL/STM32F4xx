@@ -164,6 +164,13 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT7_PIN
 #endif
 
+#if !(DRIVER_SPINDLE_ENABLE & SPINDLE_PWM) && (MODBUS_ENABLE & MODBUS_RTU_DIR_ENABLED)
+#ifdef MODBUS_DIR_AUX
+#undef MODBUS_DIR_AUX
+#endif
+#define MODBUS_DIR_AUX          3
+#endif
+
 // Spindle encoder pins.
 #if SPINDLE_ENCODER_ENABLE
 #define RPM_COUNTER_N           2
