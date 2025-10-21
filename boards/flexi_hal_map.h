@@ -56,17 +56,18 @@
 
 #define HAS_BOARD_INIT
 
-#if MODBUS_ENABLE
+#define SERIAL1_PORT 1
 #define SERIAL2_PORT 33
-#define MODBUS_RTU_STREAM 2
-#endif
 
 #if MPG_ENABLE == 1
 #define MPG_MODE_PORT           GPIOA
 #define MPG_MODE_PIN            15
 #undef MPG_STREAM
-#define MPG_STREAM 1
-#define SERIAL1_PORT 1
+#define MPG_STREAM 0
+#endif
+
+#if MODBUS_ENABLE
+#define MODBUS_RTU_STREAM 1
 #endif
 
 //********on first revision of this board Y step/dir was flipped.  Use below config?
