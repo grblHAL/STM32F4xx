@@ -298,7 +298,7 @@
       },
       "symbols" : {
         "STM32F446xx": "",
-        "HSE_VALUE": 25000000
+        "HSE_VALUE": 12000000
       }
     },
     {
@@ -320,7 +320,7 @@
       },
       "symbols" : {
         "STM32F446xx": "",
-        "HSE_VALUE": 25000000
+        "HSE_VALUE": 12000000
       }
     },
     {
