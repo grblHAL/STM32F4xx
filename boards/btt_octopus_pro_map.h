@@ -25,8 +25,8 @@
 #error "Octopus Pro v1.1 board map is only configured for 8 motors max."
 #endif
 
-#if !(defined(STM32F446xx)) || HSE_VALUE != 25000000
-#error "This board has a STM32F429 processor with 25MHz crystal, select a corresponding build!"
+#if !(defined(STM32F446xx) || HSE_VALUE != 12000000) && !(defined(DEBUG) && IS_NUCLEO_DEVKIT == 144)
+#error "This board has a STM32F446 processor with 12MHz crystal, select a corresponding build!"
 #endif
 
 #define BOARD_NAME "BTT Octopus Pro v1.1"
@@ -257,6 +257,14 @@
 #if PROBE_ENABLE
 #define PROBE_PORT                  AUXINPUT1_PORT
 #define PROBE_PIN                   AUXINPUT1_PIN
+#endif
+
+#if SDCARD_ENABLE
+#define SDCARD_SDIO                 1
+#ifndef M6_LIMIT_PORT
+#define SD_DETECT_PORT              GPIOC
+#define SD_DETECT_PIN               14
+#endif
 #endif
 
 //Pins not used
