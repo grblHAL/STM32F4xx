@@ -386,28 +386,35 @@ bool timerCfg (hal_timer_t timer, timer_cfg_t *cfg)
 
 bool timerStart (hal_timer_t timer, uint32_t period)
 {
-    period++;
+    if(!(((dtimer_t *)timer)->timer->CR1 & TIM_CR1_CEN) ||
+         (((dtimer_t *)timer)->timer->CR1 & TIM_CR1_OPM) ||
+          period != ((dtimer_t *)timer)->cfg.period) {
 
-    if(((dtimer_t *)timer)->cfg.irq1_callback) {
-        ((dtimer_t *)timer)->timer->CCR2 = period;
-        period += ((dtimer_t *)timer)->cfg.irq1;
-    }
+        ((dtimer_t *)timer)->cfg.period = period;
 
-    if(((dtimer_t *)timer)->cfg.irq0_callback) {
-        ((dtimer_t *)timer)->timer->CCR1 = period;
-        period += ((dtimer_t *)timer)->cfg.irq0;
-    }
+        period--;
 
-    ((dtimer_t *)timer)->timer->ARR = period;
-
-    if(!(((dtimer_t *)timer)->timer->CR1 & TIM_CR1_CEN)) {
-    //    ((dtimer_t *)timer)->timer->CNT = ((dtimer_t *)timer)->timer->ARR;
-        ((dtimer_t *)timer)->timer->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF|TIM_SR_CC2IF);
-        if(!(((dtimer_t *)timer)->timer->DIER & TIM_DIER_UIE)) {
-            ((dtimer_t *)timer)->timer->DIER |= TIM_DIER_UIE;
-            ((dtimer_t *)timer)->timer->EGR = TIM_EGR_UG;
+        if(((dtimer_t *)timer)->cfg.irq1_callback) {
+            ((dtimer_t *)timer)->timer->CCR2 = period;
+            period += ((dtimer_t *)timer)->cfg.irq1;
         }
-        ((dtimer_t *)timer)->timer->CR1 |= TIM_CR1_CEN;
+
+        if(((dtimer_t *)timer)->cfg.irq0_callback) {
+            ((dtimer_t *)timer)->timer->CCR1 = period;
+            period += ((dtimer_t *)timer)->cfg.irq0;
+        }
+
+        ((dtimer_t *)timer)->timer->ARR = period;
+
+        if(!(((dtimer_t *)timer)->timer->CR1 & TIM_CR1_CEN)) {
+        //    ((dtimer_t *)timer)->timer->CNT = ((dtimer_t *)timer)->timer->ARR;
+            ((dtimer_t *)timer)->timer->SR &= ~(TIM_SR_UIF|TIM_SR_CC1IF|TIM_SR_CC2IF);
+            if(!(((dtimer_t *)timer)->timer->DIER & TIM_DIER_UIE)) {
+                ((dtimer_t *)timer)->timer->DIER |= TIM_DIER_UIE;
+                ((dtimer_t *)timer)->timer->EGR = TIM_EGR_UG;
+            }
+            ((dtimer_t *)timer)->timer->CR1 |= TIM_CR1_CEN;
+        }
     }
 
     return true;
