@@ -104,8 +104,10 @@
 #define M3_STEP_PIN             6
 #define M3_DIRECTION_PORT       GPIOA
 #define M3_DIRECTION_PIN        12
+#if !M3_LIMIT_ENABLE
 #define M3_LIMIT_PORT           GPIOC
 #define M3_LIMIT_PIN            11
+#endif
 #define M3_ENABLE_PORT          GPIOB
 #define M3_ENABLE_PIN           6
 #endif
@@ -257,6 +259,10 @@
 #define AUXINPUT8_PIN           3
 #define AUXINPUT9_PORT          GPIOC // Cycle start
 #define AUXINPUT9_PIN           4
+#if !M3_LIMIT_ENABLE
+#define AUXINPUT10_PORT         GPIOC
+#define AUXINPUT10_PIN          11
+#endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #if CONTROL_ENABLE & CONTROL_HALT
@@ -300,7 +306,6 @@
 #endif
 
 #if MPG_ENABLE == 1
-#define MPG_AUX_ENABLE
 #define MPG_MODE_PORT           AUXINPUT6_PORT
 #define MPG_MODE_PIN            AUXINPUT6_PIN
 #endif

@@ -280,6 +280,52 @@
       }
     },
     {
+      "name": "BTT Octopus Pro 1.1 F429",
+      "symbol": "BOARD_BTT_OCTOPUS_PRO",
+      "notes": "Untested, may not work.",
+      "URL": "https://github.com/bigtreetech/BIGTREETECH-OCTOPUS-Pro",
+      "MAP": "boards/btt_octopus_pro_map.h",
+      "caps": {
+        "axes": 8,
+        "eeprom": -32,
+        "fram": 0,
+        "safety_door": 1,
+        "serial_ports": 3,
+        "sdcard": 1,
+        "trinamic_spi_cs": 1,
+        "trinamic_uart_addr": 1,
+        "pio_board": "nucleo_f429zi",
+        "ldscript": "STM32F429VGTX_NONVS_FLASH.ld"
+      },
+      "symbols" : {
+        "STM32F429xx": "",
+        "HSE_VALUE": 12000000
+      }
+    },
+    {
+      "name": "BTT Octopus Pro 1.1 F429 (32K Bootloader)",
+      "symbol": "BOARD_BTT_OCTOPUS_PRO",
+      "notes": "Untested, may not work.",
+      "URL": "https://github.com/bigtreetech/BIGTREETECH-OCTOPUS-Pro",
+      "MAP": "boards/btt_octopus_pro_map.h",
+      "caps": {
+        "axes": 8,
+        "eeprom": -32,
+        "fram": 0,
+        "safety_door": 1,
+        "serial_ports": 3,
+        "sdcard": 1,
+        "trinamic_spi_cs": 1,
+        "trinamic_uart_addr": 1,
+        "pio_board": "nucleo_f429zi",
+        "ldscript": "STM32F429VGTX_BL32K_NONVS_FLASH.ld"
+      },
+      "symbols" : {
+        "STM32F429xx": "",
+        "HSE_VALUE": 12000000
+      }
+    },
+    {
       "name": "BTT Octopus Pro 1.1 F446",
       "symbol": "BOARD_BTT_OCTOPUS_PRO",
       "notes": "Untested, may not work.",
@@ -291,6 +337,7 @@
         "fram": 0,
         "safety_door": 1,
         "serial_ports": 3,
+        "sdcard": 1,
         "trinamic_spi_cs": 1,
         "trinamic_uart_addr": 1,
         "pio_board": "nucleo_f446ze",
@@ -313,6 +360,7 @@
         "fram": 0,
         "safety_door": 1,
         "serial_ports": 3,
+        "sdcard": 1,
         "trinamic_spi_cs": 1,
         "trinamic_uart_addr": 1,
         "pio_board": "nucleo_f446ze",

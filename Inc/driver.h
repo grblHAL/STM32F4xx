@@ -288,15 +288,6 @@
 
 #include "grbl/driver_opts2.h"
 
-#if SDCARD_ENABLE
-#ifndef SDCARD_SDIO
-#define SDCARD_SDIO 0
-#endif
-#if !SDCARD_SDIO && !defined(SD_CS_PORT)
-#error SD card plugin not supported!
-#endif
-#endif
-
 #if I2C_ENABLE && !defined(I2C_PORT)
 #define I2C_PORT 2 // GPIOB, SCL_PIN = 10, SDA_PIN = 11
 #endif

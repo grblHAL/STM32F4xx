@@ -37,23 +37,21 @@ static settings_changed_ptr settings_changed;
 
 #include "laser/ppi.h"
 
-static void (*ppi_spindle_on)(spindle_ptrs_t *spindle) = NULL;
-static void (*ppi_spindle_off)(spindle_ptrs_t *spindle) = NULL;
-static spindle_ptrs_t *ppi_spindle = NULL;
 static hal_timer_t ppi_timer;
+static laser_ppi_t laser_ppi = {0};
 
 static void spindlePulseOff (void *context)
 {
-    ppi_spindle_off(ppi_spindle);
+    laser_ppi.spindle_off(laser_ppi.spindle);
 }
 
 static void spindlePulseOn (spindle_ptrs_t *spindle, uint_fast16_t pulse_length)
 {
     hal.timer.start(ppi_timer, pulse_length);
-    ppi_spindle_on(spindle);
+    laser_ppi.spindle_on(spindle);
 }
 
-#endif
+#endif // PPI_ENABLE
 
 #if DRIVER_SPINDLE_ENABLE
 
@@ -216,19 +214,18 @@ static bool spindleConfig (spindle_ptrs_t *spindle)
             spindle_pwm.flags.invert_pwm = Off; // Handled in hardware
             spindle->set_state = spindleSetStateVariable;
 
-            if((spindle_pwm.flags.laser_mode_disable = settings.pwm_spindle.flags.laser_mode_disable)) {
 #if PPI_ENABLE
-                if(ppi_spindle == spindle)
-                    ppi_spindle = NULL;
+            if(spindle_pwm.flags.laser_mode_disable) {
+                if(laser_ppi.spindle == spindle)
+                    laser_ppi.spindle = NULL;
                 spindle->pulse_on = NULL;
-            }
-            if(ppi_timer) {
+            } else if(ppi_timer) {
+                laser_ppi.spindle = spindle;
+                laser_ppi.spindle_on = spindle_on;
+                laser_ppi.spindle_off = spindle_off;
                 spindle->pulse_on = spindlePulseOn;
-                ppi_spindle = spindle;
-                ppi_spindle_on = spindle_on;
-                ppi_spindle_off = spindle_off;
-#endif
             }
+#endif
         } else {
             if(spindle->context.pwm->flags.enable_out)
                 spindle->set_state(spindle, (spindle_state_t){0}, 0.0f);
@@ -437,15 +434,17 @@ static bool spindle1Config (spindle_ptrs_t *spindle)
             spindle->set_state = spindle1SetStateVariable;
 
 #if PPI_ENABLE
-            if(ppi_spindle == NULL && ppi_timer) {
-                spindle->pulse_on = spindlePulseOn;
-                ppi_spindle = spindle;
-                ppi_spindle_on = spindle1_on;
-                ppi_spindle_off = spindle1_off;
-            } else if(ppi_spindle != spindle)
+            if(spindle_pwm.flags.laser_mode_disable) {
+                if(laser_ppi.spindle == spindle)
+                    laser_ppi.spindle = NULL;
                 spindle->pulse_on = NULL;
+            } else if(laser_ppi.spindle == NULL && ppi_timer) {
+                laser_ppi.spindle = spindle;
+                laser_ppi.spindle_on = spindle1_on;
+                laser_ppi.spindle_off = spindle1_off;
+                spindle->pulse_on = spindlePulseOn;
+            }
 #endif
-
         } else {
             if(spindle->context.pwm->flags.enable_out)
                 spindle->set_state(spindle, (spindle_state_t){0}, 0.0f);
@@ -584,9 +583,6 @@ void driver_spindles_init (void)
         .get_state = spindleGetState,
         .get_pwm = spindleGetPWM,
         .update_pwm = spindleSetSpeed,
-  #if PPI_ENABLE
-        .pulse_on = spindlePulseOn,
-  #endif
         .cap = {
             .gpio_controlled = On,
             .variable = On,

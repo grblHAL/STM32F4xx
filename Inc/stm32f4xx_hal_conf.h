@@ -44,7 +44,9 @@
 #define HAL_DAC_MODULE_ENABLED
 /* #define HAL_DCMI_MODULE_ENABLED   */
 /* #define HAL_DMA2D_MODULE_ENABLED   */
+#ifdef STM32F407xx
 #define HAL_ETH_MODULE_ENABLED
+#endif
 /* #define HAL_NAND_MODULE_ENABLED   */
 /* #define HAL_NOR_MODULE_ENABLED   */
 /* #define HAL_PCCARD_MODULE_ENABLED   */

@@ -498,7 +498,7 @@ static output_signal_t outputpin[] = {
 #ifdef SPI_RST_PORT
     { .id = Output_SPIRST,          .port = SPI_RST_PORT,           .pin = SPI_RST_PIN,             .group = PinGroup_SPI },
 #endif
-#ifdef RS485_DIR_PORT
+#if defined(MODBUS_RTU_STREAM) && defined(RS485_DIR_PORT)
     { .id = Output_RS485_Direction, .port = RS485_DIR_PORT,         .pin = RS485_DIR_PIN,           .group = PinGroup_UART + MODBUS_RTU_STREAM },
 #endif
 #ifdef LED_R_PORT
@@ -3006,7 +3006,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "251020";
+    hal.driver_version = "251023";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3114,6 +3114,7 @@ bool driver_init (void)
     i2c_eeprom_init();
 #elif FLASH_ENABLE
     hal.nvs.type = NVS_Flash;
+    hal.nvs.size_max = 1024 * 16;
     hal.nvs.memcpy_from_flash = memcpy_from_flash;
     hal.nvs.memcpy_to_flash = memcpy_to_flash;
 #else

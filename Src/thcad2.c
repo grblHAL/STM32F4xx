@@ -224,7 +224,7 @@ void thcad2_init (void)
 
         static const periph_pin_t ssp = {
             .function = Input_SpindlePulse,
-            .group = PinGroup_SpindlePulse,
+            .group = PinGroup_AuxInputAnalog,
             .port = THCAD2_PORT,
             .pin = THCAD2_PIN,
             .mode = { .mask = PINMODE_NONE }
@@ -237,7 +237,7 @@ void thcad2_init (void)
         HAL_DMA_Init(&pwm_dma);
         __HAL_LINKDMA(&gate_timer, hdma[TIM_DMA_ID_UPDATE], pwm_dma);
 
-        HAL_NVIC_SetPriority(DMA_TX_IRQ, 3, 0);
+        HAL_NVIC_SetPriority(DMA_TX_IRQ, 0, 0);
         HAL_NVIC_EnableIRQ(DMA_TX_IRQ);
 
         get_sample();

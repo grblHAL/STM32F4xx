@@ -25,8 +25,8 @@
 #error "Octopus Pro v1.1 board map is only configured for 8 motors max."
 #endif
 
-#if !(defined(STM32F446xx) || HSE_VALUE != 12000000) && !(defined(DEBUG) && IS_NUCLEO_DEVKIT == 144)
-#error "This board has a STM32F446 processor with 12MHz crystal, select a corresponding build!"
+#if !((defined(STM32F446xx) || defined(STM32F429xx)) && HSE_VALUE == 12000000) && !(defined(DEBUG) && IS_NUCLEO_DEVKIT == 144)
+#error "This board has a STM32F429 or STM32F446 processor with 12MHz crystal, select a corresponding build!"
 #endif
 
 #define BOARD_NAME "BTT Octopus Pro v1.1"

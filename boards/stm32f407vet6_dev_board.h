@@ -120,6 +120,7 @@ PD15 SM4
 #endif
 */
 #define SERIAL_PORT             1   // GPIOA: TX = 9, RX = 10
+#define SERIAL1_PORT            21  // GPIOD: TX = 5, RX = 6
 
 #if I2C_ENABLE
 #define I2C_PORT                1   // GPIOB: SCL = 8, SDA = 9
@@ -209,10 +210,6 @@ PD15 SM4
 #define AUXOUTPUT3_PIN          8
 #define AUXOUTPUT4_PORT         GPIOD // Coolant mist
 #define AUXOUTPUT4_PIN          9
-#if MODBUS_ENABLE & MODBUS_RTU_ENABLED
-#define AUXOUTPUT5_PORT         GPIOD // Modbus direction
-#define AUXOUTPUT5_PIN          7
-#endif
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
@@ -345,7 +342,6 @@ PD15 SM4
 #endif
 
 #if MPG_ENABLE == 1
-#define MPG_AUX_ENABLE
 #define MPG_MODE_PORT           AUXINPUT6_PORT
 #define MPG_MODE_PIN            AUXINPUT6_PIN
 #endif
@@ -378,15 +374,11 @@ PD15 SM4
 
 #if MODBUS_ENABLE & MODBUS_RTU_ENABLED
 #undef MODBUS_ENABLE
-#define MODBUS_ENABLE (MODBUS_RTU_ENABLED|MODBUS_RTU_DIR_ENABLED)
-#define SERIAL1_PORT           21   // GPIOD: TX = 5, RX = 6
+#define MODBUS_ENABLE           (MODBUS_RTU_ENABLED|MODBUS_RTU_DIR_ENABLED)
 #define MODBUS_RTU_STREAM       1
+#define RS485_DIR_PORT          GPIOD
+#define RS485_DIR_PIN           7
 #endif
-
-#ifdef MODBUS_DIR_AUX
-#undef MODBUS_DIR_AUX
-#endif
-#define MODBUS_DIR_AUX          5   // GPIOD 7
 
 #define FLASH_CS_PORT           GPIOE
 #define FLASH_CS_PIN            3

@@ -51,7 +51,7 @@
 #define I2C1_ALT_PINMAP 1
 #endif
 
-#define SERIAL_PORT     34   // GPIOD: TX = 8, GPIOC: RX = 6 - AUX
+#define SERIAL_PORT     34   // GPIOD: TX = 8, GPIOC: RX = 5 - AUX
 #define SERIAL1_PORT    21   // GPIOD: TX = 5,        RX = 6 - RS-485
 
 #define HAS_BOARD_INIT
@@ -76,11 +76,6 @@
 #undef MODBUS_DIR_AUX
 #endif
 #define MODBUS_DIR_AUX          4
-
-#if MPG_ENABLE == 1 && !ETHERNET_ENABLE
-#define MPG_MODE_PORT           GPIOA
-#define MPG_MODE_PIN            4
-#endif
 
 // Define step pulse output pins.
 #define X_STEP_PORT             GPIOE
@@ -351,7 +346,7 @@
 #define AUXINPUT9_PIN           7
 
 #if THCAD2_ENABLE && !I2C_STROBE_ENABLE
-#define AUXINPUT0_FREQ_PORT     GPIOB
+#define AUXINPUT0_FREQ_PORT     GPIOB // Remove R92 and C96
 #define AUXINPUT0_FREQ_PIN      3
 #else
 #define AUXINPUT10_PORT         GPIOB // I2C strobe
@@ -367,6 +362,11 @@
 #if PLASMA_ENABLE && !defined(M4_AVAILABLE)
 #define AUXINPUT14_PORT         GPIOE // M4 limit
 #define AUXINPUT14_PIN          14
+#endif
+
+#if !ETHERNET_ENABLE && MPG_ENABLE
+#define AUXINPUT15_PORT         GPIOA // MPG mode input
+#define AUXINPUT15_PIN          4
 #endif
 
 #if CONTROL_ENABLE & CONTROL_HALT
@@ -393,6 +393,11 @@
 #if I2C_STROBE_ENABLE
 #define I2C_STROBE_PORT         AUXINPUT10_PORT
 #define I2C_STROBE_PIN          AUXINPUT10_PIN
+#endif
+
+#if MPG_ENABLE == 1 && defined(AUXINPUT15_PORT)
+#define MPG_MODE_PORT           AUXINPUT15_PORT
+#define MPG_MODE_PIN            AUXINPUT15_PIN
 #endif
 
 #if SPINDLE_ENCODER_ENABLE

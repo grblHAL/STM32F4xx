@@ -35,8 +35,8 @@
 #define ENABLE_SWD
 #endif
 
-#if MPG_ENABLE && ETHERNET_ENABLE
-#error "Networking and MGP Serial mode cannot be enabled together!"
+#if MPG_ENABLE == 1 && ETHERNET_ENABLE
+#error "Networking and MPG Serial mode 1 cannot be enabled together!"
 #endif
 
 #ifndef BOARD_NAME
@@ -56,18 +56,15 @@
 
 #define HAS_BOARD_INIT
 
-#define SERIAL1_PORT 1
-#define SERIAL2_PORT 33
-
-#if MPG_ENABLE == 1
-#define MPG_MODE_PORT           GPIOA
-#define MPG_MODE_PIN            15
-#undef MPG_STREAM
-#define MPG_STREAM 0
-#endif
+#define SERIAL_PORT             1   // GPIOA: TX =  9, RX = 10
+#define SERIAL1_PORT            33  // GPIOC: TX = 10, RX =  5
 
 #if MODBUS_ENABLE
-#define MODBUS_RTU_STREAM 1
+#define MODBUS_RTU_STREAM       1
+#endif
+
+#if MPG_ENABLE
+#define MPG_STREAM              0
 #endif
 
 //********on first revision of this board Y step/dir was flipped.  Use below config?
@@ -227,6 +224,10 @@
 #define AUXINPUT8_PIN           8
 #define AUXINPUT9_PORT          GPIOC // Cycle start
 #define AUXINPUT9_PIN           11
+#if !ETHERNET_ENABLE
+#define AUXINPUT10_PORT         GPIOA // MPG mode
+#define AUXINPUT10_PIN          15
+#endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #if CONTROL_ENABLE & CONTROL_HALT
@@ -262,6 +263,11 @@
 #define I2C_STROBE_PIN          AUXINPUT5_PIN
 #endif
 
+#if MPG_ENABLE == 1 && defined(AUXINPUT10_PORT)
+#define MPG_MODE_PORT           AUXINPUT10_PORT
+#define MPG_MODE_PIN            AUXINPUT10_PIN
+#endif
+
 #if SDCARD_ENABLE || ETHERNET_ENABLE
 #define SPI_PORT                13 // GPIOB, SCK_PIN = 3, MISO_PIN = 4, MOSI_PIN = 5  probably needs fixing
 #endif
@@ -269,12 +275,12 @@
 #if ETHERNET_ENABLE
 //CS is JOG_SW
 #undef SPI_ENABLE
-#define SPI_ENABLE 1
-#define SPI_CS_PORT             GPIOA //CS_JOG_SW
+#define SPI_ENABLE              1
+#define SPI_CS_PORT             GPIOA   // CS_JOG_SW
 #define SPI_CS_PIN              15
-#define SPI_IRQ_PORT            GPIOC //PRU_RESET
+#define SPI_IRQ_PORT            GPIOC   // PRU_RESET
 #define SPI_IRQ_PIN             3
-#define SPI_RST_PORT            GPIOA // TXD_INT
+#define SPI_RST_PORT            GPIOA   // TXD_INT
 #define SPI_RST_PIN             9
 #endif
 

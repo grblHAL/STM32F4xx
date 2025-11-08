@@ -23,57 +23,41 @@
 
 #include <string.h>
 
-#define LAST_UINSTANCE -1
-#include "grbl/stream.h"
-
 #include "main.h"
 #include "driver.h"
 
 #include "grbl/hal.h"
 #include "grbl/protocol.h"
-
-#define LAST_UINSTANCE -1
+#include "grbl/stream.h"
 
 #ifdef SERIAL_PORT
-enum {
-  SERIAL0_UINSTANCE = LAST_UINSTANCE,
-  SERIAL0_INSTANCE
-};
-#undef LAST_UINSTANCE
-#define LAST_UINSTANCE SERIAL0_INSTANCE
 static stream_rx_buffer_t rxbuf = {0};
 static stream_tx_buffer_t txbuf = {0};
-static enqueue_realtime_command_ptr enqueue_realtime_command = protocol_enqueue_realtime_command;
+static enqueue_realtime_command_ptr enqueue_realtime_command;
 static const io_stream_t *serialInit (uint32_t baud_rate);
 #else
 #define SERIAL_PORT 0
 #endif
 
 #ifdef SERIAL1_PORT
-enum {
-  SERIAL1_UINSTANCE = LAST_UINSTANCE,
-  SERIAL1_INSTANCE
-};
-#undef LAST_UINSTANCE
-#define LAST_UINSTANCE SERIAL1_INSTANCE
+#if !SERIAL_PORT
+#error "Add SERIAL_PORT before adding SERIAL1_PORT!"
+#endif
 static stream_rx_buffer_t rxbuf1 = {0};
 static stream_tx_buffer_t txbuf1 = {0};
-static enqueue_realtime_command_ptr enqueue_realtime_command1 = protocol_enqueue_realtime_command;
+static enqueue_realtime_command_ptr enqueue_realtime_command1;
 static const io_stream_t *serial1Init(uint32_t baud_rate);
 #else
 #define SERIAL1_PORT 0
 #endif
 
 #ifdef SERIAL2_PORT
-enum {
-  SERIAL2_UINSTANCE = LAST_UINSTANCE,
-  SERIAL2_INSTANCE
-};
-#undef LAST_UINSTANCE
-#define LAST_UINSTANCE SERIAL1_INSTANCE
+#if !SERIAL1_PORT
+#error "Add SERIAL1_PORT before adding SERIAL2_PORT!"
+#endif
 static stream_rx_buffer_t rxbuf2 = {0};
 static stream_tx_buffer_t txbuf2 = {0};
-static enqueue_realtime_command_ptr enqueue_realtime_command2 = protocol_enqueue_realtime_command;
+static enqueue_realtime_command_ptr enqueue_realtime_command2;
 static const io_stream_t *serial2Init(uint32_t baud_rate);
 #else
 #define SERIAL2_PORT 0
@@ -364,6 +348,9 @@ static const io_stream_t *serial2Init(uint32_t baud_rate);
 
 #endif // SERIAL2_PORT
 
+#if SERIAL_PORT
+
+static bool uart_release (uint8_t instance);
 static const io_stream_status_t *get_uart_status (uint8_t instance);
 
 static io_stream_status_t stream_status[] = {
@@ -403,36 +390,39 @@ static io_stream_properties_t serial[] = {
 #if SERIAL_PORT
     {
       .type = StreamType_Serial,
-      .instance = SERIAL0_INSTANCE,
+      .instance = 0,
       .flags.claimable = On,
       .flags.claimed = Off,
       .flags.can_set_baud = On,
       .flags.modbus_ready = On,
       .claim = serialInit,
+      .release = uart_release,
       .get_status = get_uart_status
     },
 #endif
 #if SERIAL1_PORT
     {
       .type = StreamType_Serial,
-      .instance = SERIAL1_INSTANCE,
+      .instance = 1,
       .flags.claimable = On,
       .flags.claimed = Off,
       .flags.can_set_baud = On,
       .flags.modbus_ready = On,
       .claim = serial1Init,
+      .release = uart_release,
       .get_status = get_uart_status
     },
 #endif
 #if SERIAL2_PORT
     {
       .type = StreamType_Serial,
-      .instance = SERIAL2_INSTANCE,
+      .instance = 2,
       .flags.claimable = On,
       .flags.claimed = Off,
       .flags.can_set_baud = On,
       .flags.modbus_ready = On,
       .claim = serial2Init,
+      .release = uart_release,
       .get_status = get_uart_status
     }
 #endif
@@ -449,7 +439,7 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t tx0 = {
         .function = Output_TX,
-        .group = PinGroup_UART + SERIAL0_INSTANCE,
+        .group = PinGroup_UART + 0,
         .port  = UART0_TX_PORT,
         .pin   = UART0_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT }
@@ -457,7 +447,7 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t rx0 = {
         .function = Input_RX,
-        .group = PinGroup_UART + SERIAL0_INSTANCE,
+        .group = PinGroup_UART + 0,
         .port = UART0_RX_PORT,
         .pin = UART0_RX_PIN,
         .mode = { .mask = PINMODE_NONE }
@@ -472,7 +462,7 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t tx1 = {
         .function = Output_TX,
-        .group = PinGroup_UART + SERIAL1_INSTANCE,
+        .group = PinGroup_UART + 1,
         .port  = UART1_TX_PORT,
         .pin   = UART1_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT }
@@ -480,7 +470,7 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t rx1 = {
         .function = Input_RX,
-        .group = PinGroup_UART + SERIAL1_INSTANCE,
+        .group = PinGroup_UART + 1,
         .port = UART1_RX_PORT,
         .pin = UART1_RX_PIN,
         .mode = { .mask = PINMODE_NONE }
@@ -495,7 +485,7 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t tx2 = {
         .function = Output_TX,
-        .group = PinGroup_UART + SERIAL2_INSTANCE,
+        .group = PinGroup_UART + 2,
         .port  = UART2_TX_PORT,
         .pin   = UART2_TX_PIN,
         .mode  = { .mask = PINMODE_OUTPUT }
@@ -503,7 +493,7 @@ void serialRegisterStreams (void)
 
     static const periph_pin_t rx2 = {
         .function = Input_RX,
-        .group = PinGroup_UART + SERIAL2_INSTANCE,
+        .group = PinGroup_UART + 2,
         .port = UART2_RX_PORT,
         .pin = UART2_RX_PIN,
         .mode = { .mask = PINMODE_NONE }
@@ -517,14 +507,35 @@ void serialRegisterStreams (void)
     stream_register_streams(&streams);
 }
 
-#if LAST_UINSTANCE != -1
-
 static const io_stream_status_t *get_uart_status (uint8_t instance)
 {
     stream_status[instance].flags = serial[instance].flags;
 
     return &stream_status[instance];
 }
+
+static bool uart_release (uint8_t instance)
+{
+    bool ok;
+
+    if((ok = serial[instance].flags.claimed))
+        serial[instance].flags.claimed = Off;
+
+    return ok;
+}
+
+#ifdef RS485_DIR_PORT
+
+static void rs485SetDirection (bool tx)
+{
+    DIGITAL_OUT(RS485_DIR_PORT, RS485_DIR_PIN, tx);
+}
+
+#endif // RS485_DIR_PORT
+
+#else
+
+void serialRegisterStreams (void) {}; // No serial ports!
 
 #endif
 
@@ -571,7 +582,7 @@ static void serialRxCancel (void)
 //
 // Writes a character to the serial output stream
 //
-static bool serialPutC (const char c)
+static bool serialPutC (const uint8_t c)
 {
     uint16_t next_head = BUFNEXT(txbuf.head, txbuf);    // Get pointer to next free slot in buffer
 
@@ -591,7 +602,7 @@ static bool serialPutC (const char c)
 //
 static void serialWriteS (const char *s)
 {
-    char c, *ptr = (char *)s;
+    uint8_t c, *ptr = (uint8_t *)s;
 
     while((c = *ptr++) != '\0')
         serialPutC(c);
@@ -600,9 +611,9 @@ static void serialWriteS (const char *s)
 //
 // Writes a number of characters from string to the serial output stream followed by EOL, blocks if buffer full
 //
-static void serialWrite (const char *s, uint16_t length)
+static void serialWrite (const uint8_t *s, uint16_t length)
 {
-    char *ptr = (char *)s;
+    uint8_t *ptr = (uint8_t *)s;
 
     while(length--)
         serialPutC(*ptr++);
@@ -630,17 +641,17 @@ static uint16_t serialTxCount (void)
 //
 // serialGetC - returns -1 if no data available
 //
-static int16_t serialGetC (void)
+static int32_t serialGetC (void)
 {
-    uint_fast16_t tail = rxbuf.tail;    // Get buffer pointer
+    uint_fast16_t tail = rxbuf.tail;            // Get buffer pointer
 
     if(tail == rxbuf.head)
         return -1; // no data available
 
-    char data = rxbuf.data[tail];       // Get next character
-    rxbuf.tail = BUFNEXT(tail, rxbuf);  // and update pointer
+    int32_t data = (int32_t)rxbuf.data[tail];   // Get next character
+    rxbuf.tail = BUFNEXT(tail, rxbuf);          // and update pointer
 
-    return (int16_t)data;
+    return data;
 }
 
 static bool serialSuspendInput (bool suspend)
@@ -650,7 +661,7 @@ static bool serialSuspendInput (bool suspend)
 
 static bool serialSetBaudRate (uint32_t baud_rate)
 {
-    stream_status[SERIAL0_INSTANCE].baud_rate = baud_rate;
+    stream_status[0].baud_rate = baud_rate;
 
     UART0->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
     UART0->BRR = UART_BRR_SAMPLING16(UART0_CLK, baud_rate);
@@ -661,7 +672,7 @@ static bool serialSetBaudRate (uint32_t baud_rate)
 
 static bool serialSetFormat (serial_format_t format)
 {
-    stream_status[SERIAL0_INSTANCE].format = format;
+    stream_status[0].format = format;
 
     UART0->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
 
@@ -681,7 +692,7 @@ static bool serialDisable (bool disable)
     return true;
 }
 
-static bool serialEnqueueRtCommand (char c)
+static bool serialEnqueueRtCommand (uint8_t c)
 {
     return enqueue_realtime_command(c);
 }
@@ -700,7 +711,7 @@ static const io_stream_t *serialInit (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .instance = SERIAL0_INSTANCE,
+        .instance = 0,
         .is_connected = stream_connected,
         .read = serialGetC,
         .write = serialWriteS,
@@ -717,47 +728,55 @@ static const io_stream_t *serialInit (uint32_t baud_rate)
         .disable_rx = serialDisable,
         .set_baud_rate = serialSetBaudRate,
         .set_format = serialSetFormat,
+#if MODBUS_RTU_STREAM == 0 && defined(RS485_DIR_PORT)
+        .set_direction = rs485SetDirection,
+#endif
         .set_enqueue_rt_handler = serialSetRtHandler
     };
 
-    if(!serial[SERIAL0_INSTANCE].flags.claimable || serial[SERIAL0_INSTANCE].flags.claimed)
+    if(!serial[0].flags.claimable || serial[0].flags.claimed)
         return NULL;
 
-    serial[SERIAL0_INSTANCE].flags.claimed = On;
+    serial[0].flags.claimed = On;
 
-    UART0_CLK_En();
+    if(!serial[0].flags.init_ok) {
+
+        UART0_CLK_En();
 
 #ifdef UART0_PORT
 
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = (1 << UART0_RX_PIN)|(1 << UART0_TX_PIN),
-        .Alternate = UART0_AF
-    };
-    HAL_GPIO_Init(UART0_PORT, &GPIO_InitStructure);
+        GPIO_InitTypeDef GPIO_InitStructure = {
+            .Mode      = GPIO_MODE_AF_PP,
+            .Pull      = GPIO_NOPULL,
+            .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Pin       = (1 << UART0_RX_PIN)|(1 << UART0_TX_PIN),
+            .Alternate = UART0_AF
+        };
+        HAL_GPIO_Init(UART0_PORT, &GPIO_InitStructure);
 
 #else
 
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = (1 << UART0_TX_PIN),
-        .Alternate = UART0_AF
-    };
-    HAL_GPIO_Init(UART0_TX_PORT, &GPIO_InitStructure);
+        GPIO_InitTypeDef GPIO_InitStructure = {
+            .Mode      = GPIO_MODE_AF_PP,
+            .Pull      = GPIO_NOPULL,
+            .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Pin       = (1 << UART0_TX_PIN),
+            .Alternate = UART0_AF
+        };
+        HAL_GPIO_Init(UART0_TX_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = (1 << UART0_RX_PIN),
-    HAL_GPIO_Init(UART0_RX_PORT, &GPIO_InitStructure);
+        GPIO_InitStructure.Pin = (1 << UART0_RX_PIN),
+        HAL_GPIO_Init(UART0_RX_PORT, &GPIO_InitStructure);
 
 #endif
 
-    serialSetBaudRate(baud_rate);
+        HAL_NVIC_SetPriority(UART0_IRQ, 1, 0);
+        HAL_NVIC_EnableIRQ(UART0_IRQ);
 
-    HAL_NVIC_SetPriority(UART0_IRQ, 1, 0);
-    HAL_NVIC_EnableIRQ(UART0_IRQ);
+        serial[0].flags.init_ok = On;
+    }
+
+    stream_set_defaults(&stream, baud_rate);
 
     return &stream;
 }
@@ -766,12 +785,12 @@ void UART0_IRQHandler (void)
 {
     if(UART0->SR & USART_SR_RXNE) {
         uint32_t data = UART0->DR;
-        if(!enqueue_realtime_command((char)data)) {             // Check and strip realtime commands...
+        if(!enqueue_realtime_command((uint8_t)data)) {          // Check and strip realtime commands...
             uint16_t next_head = BUFNEXT(rxbuf.head, rxbuf);    // Get and increment buffer pointer
             if(next_head == rxbuf.tail)                         // If buffer full
                 rxbuf.overflow = 1;                             // flag overflow
             else {
-                rxbuf.data[rxbuf.head] = (char)data;            // if not add data to buffer
+                rxbuf.data[rxbuf.head] = (uint8_t)data;         // if not add data to buffer
                 rxbuf.head = next_head;                         // and update pointer
             }
         }
@@ -831,7 +850,7 @@ static void serial1RxCancel (void)
 //
 // Writes a character to the serial output stream
 //
-static bool serial1PutC (const char c)
+static bool serial1PutC (const uint8_t c)
 {
     uint32_t next_head = BUFNEXT(txbuf1.head, txbuf1);   // Set and update head pointer
 
@@ -854,7 +873,7 @@ static bool serial1PutC (const char c)
 //
 static void serial1WriteS (const char *s)
 {
-    char c, *ptr = (char *)s;
+    uint8_t c, *ptr = (uint8_t *)s;
 
     while((c = *ptr++) != '\0')
         serial1PutC(c);
@@ -862,9 +881,9 @@ static void serial1WriteS (const char *s)
 
 // Writes a number of characters from a buffer to the serial output stream, blocks if buffer full
 //
-static void serial1Write (const char *s, uint16_t length)
+static void serial1Write (const uint8_t *s, uint16_t length)
 {
-    char *ptr = (char *)s;
+    uint8_t *ptr = (uint8_t *)s;
 
     while(length--)
         serial1PutC(*ptr++);
@@ -892,17 +911,17 @@ static uint16_t serial1TxCount (void)
 //
 // serialGetC - returns -1 if no data available
 //
-static int16_t serial1GetC (void)
+static int32_t serial1GetC (void)
 {
-    uint_fast16_t tail = rxbuf1.tail;       // Get buffer pointer
+    uint_fast16_t tail = rxbuf1.tail;           // Get buffer pointer
 
     if(tail == rxbuf1.head)
         return -1; // no data available
 
-    char data = rxbuf1.data[tail];          // Get next character
-    rxbuf1.tail = BUFNEXT(tail, rxbuf1);    // and update pointer
+    int32_t data =(int32_t) rxbuf1.data[tail];  // Get next character
+    rxbuf1.tail = BUFNEXT(tail, rxbuf1);        // and update pointer
 
-    return (int16_t)data;
+    return data;
 }
 
 static bool serial1SuspendInput (bool suspend)
@@ -912,7 +931,7 @@ static bool serial1SuspendInput (bool suspend)
 
 static bool serial1SetBaudRate (uint32_t baud_rate)
 {
-    stream_status[SERIAL1_INSTANCE].baud_rate = baud_rate;
+    stream_status[1].baud_rate = baud_rate;
 
     UART1->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
     UART1->BRR = UART_BRR_SAMPLING16(UART1_CLK, baud_rate);
@@ -923,7 +942,7 @@ static bool serial1SetBaudRate (uint32_t baud_rate)
 
 static bool serial1SetFormat (serial_format_t format)
 {
-    stream_status[SERIAL1_INSTANCE].format = format;
+    stream_status[1].format = format;
 
     UART1->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
 
@@ -943,7 +962,7 @@ static bool serial1Disable (bool disable)
     return true;
 }
 
-static bool serial1EnqueueRtCommand (char c)
+static bool serial1EnqueueRtCommand (uint8_t c)
 {
     return enqueue_realtime_command1(c);
 }
@@ -962,7 +981,7 @@ static const io_stream_t *serial1Init (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .instance = SERIAL1_INSTANCE,
+        .instance = 1,
         .is_connected = stream_connected,
         .read = serial1GetC,
         .write = serial1WriteS,
@@ -979,48 +998,55 @@ static const io_stream_t *serial1Init (uint32_t baud_rate)
         .disable_rx = serial1Disable,
         .set_baud_rate = serial1SetBaudRate,
         .set_format = serial1SetFormat,
+#if MODBUS_RTU_STREAM == 1 && defined(RS485_DIR_PORT)
+        .set_direction = rs485SetDirection,
+#endif
         .set_enqueue_rt_handler = serial1SetRtHandler
     };
 
-    if(!serial[SERIAL1_INSTANCE].flags.claimable || serial[SERIAL1_INSTANCE].flags.claimed)
+    if(!serial[1].flags.claimable || serial[1].flags.claimed)
         return NULL;
 
-    serial[SERIAL1_INSTANCE].flags.claimed = On;
+    serial[1].flags.claimed = On;
 
-    UART1_CLK_En();
+    if(!serial[1].flags.init_ok) {
+
+        UART1_CLK_En();
 
 #ifdef UART1_PORT
 
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = (1 << UART1_RX_PIN)|(1 << UART1_TX_PIN),
-        .Alternate = UART1_AF
-    };
-    HAL_GPIO_Init(UART1_PORT, &GPIO_InitStructure);
+        GPIO_InitTypeDef GPIO_InitStructure = {
+            .Mode      = GPIO_MODE_AF_PP,
+            .Pull      = GPIO_NOPULL,
+            .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Pin       = (1 << UART1_RX_PIN)|(1 << UART1_TX_PIN),
+            .Alternate = UART1_AF
+        };
+        HAL_GPIO_Init(UART1_PORT, &GPIO_InitStructure);
 
 #else
 
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = (1 << UART1_TX_PIN),
-        .Alternate = UART1_AF
-    };
-    HAL_GPIO_Init(UART1_TX_PORT, &GPIO_InitStructure);
+        GPIO_InitTypeDef GPIO_InitStructure = {
+            .Mode      = GPIO_MODE_AF_PP,
+            .Pull      = GPIO_NOPULL,
+            .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Pin       = (1 << UART1_TX_PIN),
+            .Alternate = UART1_AF
+        };
+        HAL_GPIO_Init(UART1_TX_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = (1 << UART1_RX_PIN),
-    HAL_GPIO_Init(UART1_RX_PORT, &GPIO_InitStructure);
+        GPIO_InitStructure.Pin = (1 << UART1_RX_PIN),
+        HAL_GPIO_Init(UART1_RX_PORT, &GPIO_InitStructure);
 
 #endif
 
-    serial1SetBaudRate(baud_rate);
+        HAL_NVIC_SetPriority(UART1_IRQ, 1, 0);
+        HAL_NVIC_EnableIRQ(UART1_IRQ);
 
-    HAL_NVIC_SetPriority(UART1_IRQ, 1, 0);
-    HAL_NVIC_EnableIRQ(UART1_IRQ);
+        serial[1].flags.init_ok = On;
+    }
 
+    stream_set_defaults(&stream, baud_rate);
 
     return &stream;
 }
@@ -1029,12 +1055,12 @@ void UART1_IRQHandler (void)
 {
     if(UART1->SR & USART_SR_RXNE) {
         uint32_t data = UART1->DR;
-        if(!enqueue_realtime_command1((char)data)) {            // Check and strip realtime commands...
+        if(!enqueue_realtime_command1((uint8_t)data)) {         // Check and strip realtime commands...
             uint16_t next_head = BUFNEXT(rxbuf1.head, rxbuf1);  // Get and increment buffer pointer
             if(next_head == rxbuf1.tail)                        // If buffer full
                 rxbuf1.overflow = 1;                            // flag overflow
             else {
-                rxbuf1.data[rxbuf1.head] = (char)data;          // if not add data to buffer
+                rxbuf1.data[rxbuf1.head] = (uint8_t)data;       // if not add data to buffer
                 rxbuf1.head = next_head;                        // and update pointer
             }
         }
@@ -1094,7 +1120,7 @@ static void serial2RxCancel (void)
 //
 // Writes a character to the serial output stream
 //
-static bool serial2PutC (const char c)
+static bool serial2PutC (const uint8_t c)
 {
     uint32_t next_head = BUFNEXT(txbuf2.head, txbuf2);   // Set and update head pointer
 
@@ -1117,7 +1143,7 @@ static bool serial2PutC (const char c)
 //
 static void serial2WriteS (const char *s)
 {
-    char c, *ptr = (char *)s;
+    uint8_t c, *ptr = (uint8_t *)s;
 
     while((c = *ptr++) != '\0')
         serial2PutC(c);
@@ -1125,9 +1151,9 @@ static void serial2WriteS (const char *s)
 
 // Writes a number of characters from a buffer to the serial output stream, blocks if buffer full
 //
-static void serial2Write (const char *s, uint16_t length)
+static void serial2Write (const uint8_t *s, uint16_t length)
 {
-    char *ptr = (char *)s;
+    uint8_t *ptr = (uint8_t *)s;
 
     while(length--)
         serial2PutC(*ptr++);
@@ -1155,17 +1181,17 @@ static uint16_t serial2TxCount (void)
 //
 // serialGetC - returns -1 if no data available
 //
-static int16_t serial2GetC (void)
+static int32_t serial2GetC (void)
 {
-    uint_fast16_t tail = rxbuf2.tail;       // Get buffer pointer
+    uint_fast16_t tail = rxbuf2.tail;           // Get buffer pointer
 
     if(tail == rxbuf2.head)
         return -1; // no data available
 
-    char data = rxbuf2.data[tail];          // Get next character
-    rxbuf2.tail = BUFNEXT(tail, rxbuf2);    // and update pointer
+    int32_t data = (int32_t)rxbuf2.data[tail];  // Get next character
+    rxbuf2.tail = BUFNEXT(tail, rxbuf2);        // and update pointer
 
-    return (int16_t)data;
+    return data;
 }
 
 static bool serial2SuspendInput (bool suspend)
@@ -1175,7 +1201,7 @@ static bool serial2SuspendInput (bool suspend)
 
 static bool serial2SetBaudRate (uint32_t baud_rate)
 {
-    stream_status[SERIAL2_INSTANCE].baud_rate = baud_rate;
+    stream_status[2].baud_rate = baud_rate;
 
     UART2->CR1 &= ~(USART_CR1_UE|USART_CR1_RXNEIE|USART_CR1_RE|USART_CR1_TE);
     UART2->BRR = UART_BRR_SAMPLING16(UART2_CLK, baud_rate);
@@ -1186,7 +1212,7 @@ static bool serial2SetBaudRate (uint32_t baud_rate)
 
 static bool serial2SetFormat (serial_format_t format)
 {
-    stream_status[SERIAL2_INSTANCE].format = format;
+    stream_status[2].format = format;
 
     UART2->CR1 &= ~(USART_CR1_M|USART_CR1_PCE|USART_CR1_PS);
 
@@ -1206,7 +1232,7 @@ static bool serial2Disable (bool disable)
     return true;
 }
 
-static bool serial2EnqueueRtCommand (char c)
+static bool serial2EnqueueRtCommand (uint8_t c)
 {
     return enqueue_realtime_command2(c);
 }
@@ -1225,7 +1251,7 @@ static const io_stream_t *serial2Init (uint32_t baud_rate)
 {
     static const io_stream_t stream = {
         .type = StreamType_Serial,
-        .instance = SERIAL2_INSTANCE,
+        .instance = 2,
         .is_connected = stream_connected,
         .read = serial2GetC,
         .write = serial2WriteS,
@@ -1242,48 +1268,55 @@ static const io_stream_t *serial2Init (uint32_t baud_rate)
         .disable_rx = serial2Disable,
         .set_baud_rate = serial2SetBaudRate,
         .set_format = serial2SetFormat,
+#if MODBUS_RTU_STREAM == 2 && defined(RS485_DIR_PORT)
+        .set_direction = rs485SetDirection,
+#endif
         .set_enqueue_rt_handler = serial2SetRtHandler
     };
 
-    if(!serial[SERIAL2_INSTANCE].flags.claimable || serial[SERIAL2_INSTANCE].flags.claimed)
+    if(!serial[2].flags.claimable || serial[2].flags.claimed)
         return NULL;
 
-    serial[SERIAL2_INSTANCE].flags.claimed = On;
+    serial[2].flags.claimed = On;
 
+    if(!serial[2].flags.init_ok) {
 
-    UART2_CLK_En();
+        UART2_CLK_En();
 
 #ifdef UART2_PORT
 
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = (1 << UART2_RX_PIN)|(1 << UART2_TX_PIN),
-        .Alternate = UART2_AF
-    };
-    HAL_GPIO_Init(UART2_PORT, &GPIO_InitStructure);
+        GPIO_InitTypeDef GPIO_InitStructure = {
+            .Mode      = GPIO_MODE_AF_PP,
+            .Pull      = GPIO_NOPULL,
+            .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Pin       = (1 << UART2_RX_PIN)|(1 << UART2_TX_PIN),
+            .Alternate = UART2_AF
+        };
+        HAL_GPIO_Init(UART2_PORT, &GPIO_InitStructure);
 
 #else
 
-    GPIO_InitTypeDef GPIO_InitStructure = {
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_NOPULL,
-        .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
-        .Pin       = (21 << UART2_TX_PIN),
-        .Alternate = UART2_AF
-    };
-    HAL_GPIO_Init(UART2_TX_PORT, &GPIO_InitStructure);
+        GPIO_InitTypeDef GPIO_InitStructure = {
+            .Mode      = GPIO_MODE_AF_PP,
+            .Pull      = GPIO_NOPULL,
+            .Speed     = GPIO_SPEED_FREQ_VERY_HIGH,
+            .Pin       = (21 << UART2_TX_PIN),
+            .Alternate = UART2_AF
+        };
+        HAL_GPIO_Init(UART2_TX_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = (1 << UART2_RX_PIN),
-    HAL_GPIO_Init(UART2_RX_PORT, &GPIO_InitStructure);
+        GPIO_InitStructure.Pin = (1 << UART2_RX_PIN),
+        HAL_GPIO_Init(UART2_RX_PORT, &GPIO_InitStructure);
 
 #endif
 
-    serial2SetBaudRate(baud_rate);
+        HAL_NVIC_SetPriority(UART2_IRQ, 1, 0);
+        HAL_NVIC_EnableIRQ(UART2_IRQ);
 
-    HAL_NVIC_SetPriority(UART2_IRQ, 1, 0);
-    HAL_NVIC_EnableIRQ(UART2_IRQ);
+        serial[2].flags.init_ok = On;
+    }
+
+    stream_set_defaults(&stream, baud_rate);
 
     return &stream;
 }
@@ -1292,12 +1325,12 @@ void UART2_IRQHandler (void)
 {
     if(UART2->SR & USART_SR_RXNE) {
         uint32_t data = UART2->DR;
-        if(!enqueue_realtime_command2((char)data)) {            // Check and strip realtime commands...
+        if(!enqueue_realtime_command2((uint8_t)data)) {         // Check and strip realtime commands...
             uint16_t next_head = BUFNEXT(rxbuf2.head, rxbuf2);  // Get and increment buffer pointer
             if(next_head == rxbuf2.tail)                        // If buffer full
                 rxbuf2.overflow = 1;                            // flag overflow
             else {
-                rxbuf2.data[rxbuf2.head] = (char)data;          // if not add data to buffer
+                rxbuf2.data[rxbuf2.head] = (uint8_t)data;       // if not add data to buffer
                 rxbuf2.head = next_head;                        // and update pointer
             }
         }
