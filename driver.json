@@ -644,7 +644,7 @@
         "sdcard": 1,
         "spindle_sync": 0,
         "rgb_out": 0,
-        "ethernet": 1
+        "ethernet": 1,
         "pio_board": "genericSTM32F407VET6",
         "ldscript": "STM32F407VETX_FLASH.ld"
       },
