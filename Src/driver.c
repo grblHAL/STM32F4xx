@@ -2891,6 +2891,16 @@ static uint32_t get_free_mem (void)
     return stack_limit - (uint32_t)&_end - mallinfo().uordblks;
 }
 
+static status_code_t hard_reset (sys_state_t state, char *args)
+{
+    report_message("Initiating hard reset of controller", Message_Warning);
+    hal.delay_ms(100, NULL);
+
+    NVIC_SystemReset();
+
+    return Status_OK;
+}
+
 #if USB_SERIAL_CDC
 
 static status_code_t enter_dfu (sys_state_t state, char *args)
@@ -3276,14 +3286,18 @@ bool driver_init (void)
     }
 #endif
 
-#if USB_SERIAL_CDC
 
-    static const sys_command_t boot_command_list[] = {
-        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
-  #ifdef UF2_BOOTLOADER
-        {"UF2", enter_uf2, { .allow_blocking = On, .noargs = On }, { .str = "enter UF2 bootloader" } }
-  #endif
-    };
+static const sys_command_t boot_command_list[] = {
+    {"REBOOT", hard_reset, { .allow_blocking = On, .noargs = On }, { .str = "hard reset controller" } },
+#if USB_SERIAL_CDC
+    {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
+#endif
+#ifdef UF2_BOOTLOADER
+    {"UF2", enter_uf2, { .allow_blocking = On, .noargs = On }, { .str = "enter UF2 bootloader" } }
+#endif
+};
+
+#if USB_SERIAL_CDC
 
     static sys_commands_t boot_commands = {
         .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
