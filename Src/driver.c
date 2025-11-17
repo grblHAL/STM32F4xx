@@ -3059,6 +3059,7 @@ bool driver_init (void)
 
     hal.control.get_state = systemGetState;
 
+    hal.reboot = NVIC_SystemReset;
     hal.irq_enable = __enable_irq;
     hal.irq_disable = __disable_irq;
 #if I2C_STROBE_ENABLE || defined(SPI_IRQ_PIN)
