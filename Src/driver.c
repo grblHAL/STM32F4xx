@@ -571,6 +571,11 @@ static output_signal_t outputpin[] = {
 #elif defined(AUXOUTPUT1_PWM_PORT)
     { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_PWM_PORT,    .pin = AUXOUTPUT1_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
+#ifdef AUXOUTPUT2_ANALOG_PORT
+    { .id = Output_Analog_Aux2,     .port = AUXOUTPUT2_ANALOG_PORT, .pin = AUXOUTPUT2_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog }
+#elif defined(AUXOUTPUT2_PWM_PORT)
+    { .id = Output_Analog_Aux2,     .port = AUXOUTPUT2_PWM_PORT,    .pin = AUXOUTPUT2_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
+#endif
 };
 
 extern __IO uint32_t uwTick, cycle_count;
@@ -3054,6 +3059,7 @@ bool driver_init (void)
 
     hal.control.get_state = systemGetState;
 
+    hal.reboot = NVIC_SystemReset;
     hal.irq_enable = __enable_irq;
     hal.irq_disable = __disable_irq;
 #if I2C_STROBE_ENABLE || defined(SPI_IRQ_PIN)

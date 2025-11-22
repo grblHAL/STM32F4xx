@@ -35,7 +35,13 @@
 #define PWM_OUT1 0
 #endif
 
-#define AUX_ANALOG_OUT (PWM_OUT0 + PWM_OUT1)
+#ifdef AUXOUTPUT2_PWM_PORT
+#define PWM_OUT2 1
+#else
+#define PWM_OUT2 0
+#endif
+
+#define AUX_ANALOG_OUT (PWM_OUT0 + PWM_OUT1 + PWM_OUT2)
 
 #include "pwm.h"
 
