@@ -3011,7 +3011,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "251023";
+    hal.driver_version = "251129";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3110,7 +3110,43 @@ bool driver_init (void)
     serialRegisterStreams();
 
 #if USB_SERIAL_CDC
+
+    static const sys_command_t boot_command_list[] = {
+        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
+  #ifdef UF2_BOOTLOADER
+        {"UF2", enter_uf2, { .allow_blocking = On, .noargs = On }, { .str = "enter UF2 bootloader" } }
+  #endif
+    };
+
+    static sys_commands_t boot_commands = {
+        .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
+        .commands = boot_command_list
+    };
+
+    grbl.on_report_options = onReportOptions;
+
     stream_connect(usbInit());
+    system_register_commands(&boot_commands);
+
+  #if COPROC_PASSTHRU
+
+    extern uint8_t _estack; /* Symbol defined in the linker script */
+
+    bool enterpt;
+    uint32_t *addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFE00);
+
+    if((enterpt = *addr == 0xDEADBEAD)) {
+        *addr = 0x0;
+        // Reduce USB IRQ priority to lower than the UART port!
+        HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
+        HAL_NVIC_SetPriority(OTG_HS_IRQn, 1, 0);
+        HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+    }
+
+    stream_passthru_init(COPROC_STREAM, 115200, enterpt);
+
+  #endif // COPROC_PASSTHRU
+
 #else
     if(!stream_connect_instance(SERIAL_STREAM, BAUD_RATE))
         while(true); // Cannot boot if no communication channel is available!
@@ -3282,45 +3318,6 @@ bool driver_init (void)
     }
 #endif
 
-#if USB_SERIAL_CDC
-
-    static const sys_command_t boot_command_list[] = {
-        {"DFU", enter_dfu, { .allow_blocking = On, .noargs = On }, { .str = "enter DFU bootloader" } },
-  #ifdef UF2_BOOTLOADER
-        {"UF2", enter_uf2, { .allow_blocking = On, .noargs = On }, { .str = "enter UF2 bootloader" } }
-  #endif
-    };
-
-    static sys_commands_t boot_commands = {
-        .n_commands = sizeof(boot_command_list) / sizeof(sys_command_t),
-        .commands = boot_command_list
-    };
-
-    grbl.on_report_options = onReportOptions;
-
-    system_register_commands(&boot_commands);
-
-#if COPROC_PASSTHRU
-
-    extern uint8_t _estack; /* Symbol defined in the linker script */
-
-    bool enterpt;
-    uint32_t *addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFE00);
-
-    if((enterpt = *addr == 0xDEADBEAD)) {
-        *addr = 0x0;
-        // Reduce USB IRQ priority to lower than the UART port!
-        HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
-        HAL_NVIC_SetPriority(OTG_HS_IRQn, 1, 0);
-        HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
-    }
-
-    stream_passthru_init(COPROC_STREAM, 115200, enterpt);
-
-#endif // COPROC_PASSTHRU
-
-#endif // USB_SERIAL_CDC
-
 #if TRINAMIC_SPI_ENABLE
     extern void tmc_spi_init (void);
     tmc_spi_init();
@@ -3346,12 +3343,12 @@ bool driver_init (void)
     neopixel_init();
 #endif
 
-#if defined(NEOPIXEL_PWM)
+#if defined(LED_PWM_PORT) || defined(LED1_PWM_PORT)
     extern void neopixel_pwm_init (void);
     neopixel_pwm_init();
 #endif
 
-#if defined(NEOPIXEL_GPO)
+#if defined(LED_GPO_PORT) || defined(LED1_GPO_PORT)
     extern void neopixel_gpo_init (void);
     neopixel_gpo_init();
 #endif

@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2024 Terje Io & nickshl
+  Copyright (c) 2020-2025 Terje Io & nickshl
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -88,7 +88,7 @@ static void get_rx_pin (xbar_t *pin, void *data)
     }
 }
 
-static bool claim_stream (io_stream_properties_t const *sstream)
+static bool claim_stream (io_stream_properties_t const *sstream, void *data)
 {
     if((sstream->type == StreamType_Serial) && !sstream->flags.claimed)
     {
@@ -105,7 +105,7 @@ static bool claim_stream (io_stream_properties_t const *sstream)
 
 void board_init (void)
 {
-    if(!hal.driver_cap.mpg_mode && stream_enumerate_streams(claim_stream) && rx_pin.port)
+    if(!hal.driver_cap.mpg_mode && stream_enumerate_streams(claim_stream, NULL) && rx_pin.port)
     {
         on_execute_realtime = grbl.on_execute_realtime;
         grbl.on_execute_realtime = uart_poll_realtime;

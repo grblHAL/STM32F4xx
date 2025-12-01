@@ -23,7 +23,7 @@
 
 #include "driver.h"
 
-#ifdef NEOPIXEL_GPO
+#if defined(LED_GPO_PORT) || defined(LED1_GPO_PORT)
 
 #include "grbl/modbus.h"
 
@@ -34,6 +34,7 @@ typedef struct {
     int oneLow;
 } ws2812_led_t;
 
+// for SLB @ ?MHZ...
 static ws2812_led_t ws2812 = {
     .zeroHigh = 3,
     .zeroLow = 7,
@@ -42,16 +43,18 @@ static ws2812_led_t ws2812 = {
 };
 
 static settings_changed_ptr settings_changed;
-static neopixel_cfg_t neopixel = { .intensity = 255 };
-#ifdef LED1_PIN
-static neopixel_cfg_t neopixel1 = { .intensity = 255 };
-#endif
+
+// LED0
+
+#ifdef LED_GPO_PIN
+
+static neopixel_cfg_t strip0 = { .intensity = 255 };
 
 static inline void _write (void)
 {
     volatile uint32_t t;
-    uint32_t i = neopixel.num_bytes;
-    uint8_t *led = neopixel.leds, v, mask;
+    uint32_t i = strip0.num_bytes;
+    uint8_t *led = strip0.leds, v, mask;
 
     if(led && !modbus_isbusy()) {
 
@@ -62,20 +65,20 @@ static inline void _write (void)
             mask = 0b10000000;
             do {
                 if(v & mask) {
-                    DIGITAL_OUT(LED_PORT, LED_PIN, 1);
+                    DIGITAL_OUT(LED_GPO_PORT, LED_GPO_PIN, 1);
                     t = ws2812.oneHigh;
                     while(--t)
                         __ASM volatile ("nop");
-                    DIGITAL_OUT(LED_PORT, LED_PIN, 0);
+                    DIGITAL_OUT(LED_GPO_PORT, LED_GPO_PIN, 0);
                     t = ws2812.oneLow;
                     while(--t)
                         __ASM volatile ("nop");
                 } else {
-                    DIGITAL_OUT(LED_PORT, LED_PIN, 1);
+                    DIGITAL_OUT(LED_GPO_PORT, LED_GPO_PIN, 1);
                     t = ws2812.zeroHigh;
                     while(--t)
                         __ASM volatile ("nop");
-                    DIGITAL_OUT(LED_PORT, LED_PIN, 0);
+                    DIGITAL_OUT(LED_GPO_PORT, LED_GPO_PIN, 0);
                     t = ws2812.zeroLow;
                     while(--t)
                         __ASM volatile ("nop");
@@ -89,17 +92,17 @@ static inline void _write (void)
 
 static void neopixels_write (void)
 {
-    if(neopixel.num_leds > 1)
+    if(strip0.num_leds > 1)
         _write();
 }
 
 static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
 {
-    if(neopixel.num_leds && device < neopixel.num_leds) {
+    if(strip0.num_leds && device < strip0.num_leds) {
 
-        rgb_1bpp_pack(&neopixel.leds[device * 3], color, mask, neopixel.intensity);
+        rgb_1bpp_pack(&strip0.leds[device * 3], color, mask, strip0.intensity);
 
-        if(neopixel.num_leds == 1)
+        if(strip0.num_leds == 1)
             _write();
     }
 }
@@ -111,22 +114,22 @@ static void neopixel_out (uint16_t device, rgb_color_t color)
 
 static uint8_t neopixels_set_intensity (uint8_t intensity)
 {
-    uint8_t prev = neopixel.intensity;
+    uint8_t prev = strip0.intensity;
 
-    if(neopixel.intensity != intensity) {
+    if(strip0.intensity != intensity) {
 
-        neopixel.intensity = intensity;
+        strip0.intensity = intensity;
 
-        if(neopixel.num_leds) {
+        if(strip0.num_leds) {
 
-            uint_fast16_t device = neopixel.num_leds;
+            uint_fast16_t device = strip0.num_leds;
             do {
                 device--;
-                rgb_color_t color = rgb_1bpp_unpack(&neopixel.leds[device * 3], prev);
+                rgb_color_t color = rgb_1bpp_unpack(&strip0.leds[device * 3], prev);
                 neopixel_out(device, color);
             } while(device);
 
-            if(neopixel.num_leds != 1)
+            if(strip0.num_leds != 1)
                 _write();
         }
     }
@@ -134,13 +137,17 @@ static uint8_t neopixels_set_intensity (uint8_t intensity)
     return prev;
 }
 
-#ifdef LED1_PIN
+#endif // LED_GPO_PIN
+
+#ifdef LED1_GPO_PIN
+
+static neopixel_cfg_t strip1 = { .intensity = 255 };
 
 static void _write1 (void)
 {
     volatile uint32_t t;
-    uint32_t i = neopixel1.num_bytes;
-    uint8_t *led = neopixel1.leds, v, mask;
+    uint32_t i = strip1.num_bytes;
+    uint8_t *led = strip1.leds, v, mask;
 
     if(led && !modbus_isbusy()) {
 
@@ -151,20 +158,20 @@ static void _write1 (void)
             mask = 0b10000000;
             do {
                 if(v & mask) {
-                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 1);
+                    DIGITAL_OUT(LED1_GPO_PORT, LED1_GPO_PIN, 1);
                     t = ws2812.oneHigh;
                     while(--t)
                         __ASM volatile ("nop");
-                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 0);
+                    DIGITAL_OUT(LED1_GPO_PORT, LED1_GPO_PIN, 0);
                     t = ws2812.oneLow;
                     while(--t)
                         __ASM volatile ("nop");
                 } else {
-                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 1);
+                    DIGITAL_OUT(LED1_GPO_PORT, LED1_GPO_PIN, 1);
                     t = ws2812.zeroHigh;
                     while(--t)
                         __ASM volatile ("nop");
-                    DIGITAL_OUT(LED1_PORT, LED1_PIN, 0);
+                    DIGITAL_OUT(LED1_GPO_PORT, LED1_GPO_PIN, 0);
                     t = ws2812.zeroLow;
                     while(--t)
                         __ASM volatile ("nop");
@@ -178,17 +185,17 @@ static void _write1 (void)
 
 void neopixels1_write (void)
 {
-    if(neopixel1.num_leds > 1)
+    if(strip1.num_leds > 1)
         _write1();
 }
 
 static void neopixel1_out_masked (uint16_t device, rgb_color_t color, rgb_color_mask_t mask)
 {
-    if(neopixel1.num_leds && device < neopixel1.num_leds) {
+    if(strip1.num_leds && device < strip1.num_leds) {
 
-        rgb_1bpp_pack(&neopixel1.leds[device * 3], color, mask, neopixel1.intensity);
+        rgb_1bpp_pack(&strip1.leds[device * 3], color, mask, strip1.intensity);
 
-        if(neopixel1.num_leds == 1)
+        if(strip1.num_leds == 1)
             _write1();
     }
 }
@@ -200,22 +207,22 @@ static void neopixel1_out (uint16_t device, rgb_color_t color)
 
 static uint8_t neopixels1_set_intensity (uint8_t intensity)
 {
-    uint8_t prev = neopixel1.intensity;
+    uint8_t prev = strip1.intensity;
 
-    if(neopixel1.intensity != intensity) {
+    if(strip1.intensity != intensity) {
 
-        neopixel1.intensity = intensity;
+    	strip1.intensity = intensity;
 
-        if(neopixel1.num_leds) {
+        if(strip1.num_leds) {
 
-            uint_fast16_t device = neopixel1.num_leds;
+            uint_fast16_t device = strip1.num_leds;
             do {
                 device--;
-                rgb_color_t color = rgb_1bpp_unpack(&neopixel1.leds[device * 3], prev);
+                rgb_color_t color = rgb_1bpp_unpack(&strip1.leds[device * 3], prev);
                 neopixel1_out(device, color);
             } while(device);
 
-            if(neopixel1.num_leds != 1)
+            if(strip1.num_leds != 1)
                 _write1();
         }
     }
@@ -223,49 +230,53 @@ static uint8_t neopixels1_set_intensity (uint8_t intensity)
     return prev;
 }
 
-#endif  // LED1_PIN
+#endif // LED1_GPO_PIN
 
 static void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
 {
-    if(hal.rgb0.out == neopixel_out && (neopixel.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0)) {
+#ifdef LED_GPO_PIN
+
+    if(hal.rgb0.out == neopixel_out && (strip0.leds == NULL || hal.rgb0.num_devices != settings->rgb_strip.length0)) {
 
         hal.rgb0.num_devices = settings->rgb_strip.length0;
 
-        if(neopixel.leds) {
-            free(neopixel.leds);
-            neopixel.leds = NULL;
+        if(strip0.leds) {
+            free(strip0.leds);
+            strip0.leds = NULL;
         }
 
         if(hal.rgb0.num_devices) {
-            neopixel.num_bytes = hal.rgb0.num_devices * 3;
-            if((neopixel.leds = calloc(neopixel.num_bytes, sizeof(uint8_t))) == NULL)
+            strip0.num_bytes = hal.rgb0.num_devices * 3;
+            if((strip0.leds = calloc(strip0.num_bytes, sizeof(uint8_t))) == NULL)
                 hal.rgb0.num_devices = 0;
         }
 
-        neopixel.num_leds = hal.rgb0.num_devices;
+        strip0.num_leds = hal.rgb0.num_devices;
     }
 
-#ifdef LED1_PIN
+#endif // LED_GPO_PIN
 
-    if(hal.rgb1.out == neopixel1_out && (neopixel1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip.length1)) {
+#ifdef LED1_GPO_PIN
+
+    if(hal.rgb1.out == neopixel1_out && (strip1.leds == NULL || hal.rgb1.num_devices != settings->rgb_strip.length1)) {
 
         hal.rgb1.num_devices = settings->rgb_strip.length1;
 
-        if(neopixel1.leds) {
-            free(neopixel1.leds);
-            neopixel1.leds = NULL;
+        if(strip1.leds) {
+            free(strip1.leds);
+            strip1.leds = NULL;
         }
 
         if(hal.rgb1.num_devices) {
-            neopixel1.num_bytes = hal.rgb1.num_devices * 3;
-            if((neopixel1.leds = calloc(neopixel1.num_bytes, sizeof(uint8_t))) == NULL)
+        	strip1.num_bytes = hal.rgb1.num_devices * 3;
+            if((strip1.leds = calloc(strip1.num_bytes, sizeof(uint8_t))) == NULL)
                 hal.rgb1.num_devices = 0;
         }
 
-        neopixel1.num_leds = hal.rgb1.num_devices;
+        strip1.num_leds = hal.rgb1.num_devices;
     }
 
-#endif
+#endif // LED1_GPO_PIN
 
     if(settings_changed)
         settings_changed(settings, changed);
@@ -274,28 +285,33 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 void neopixel_gpo_init (void)
 {
     static bool init = false;
-    static const periph_pin_t leds0 = {
-        .function = Output_LED_Adressable,
-        .group = PinGroup_LED,
-        .port = LED_PORT,
-        .pin = LED_PIN,
-        .mode = { .mask = PINMODE_NONE },
-        .description = "Neopixels"
-    };
 
-    GPIO_InitTypeDef GPIO_InitStruct = {
-        .Pin = 1 << LED_PIN,
-        .Mode = GPIO_MODE_OUTPUT_PP,
-        .Pull = GPIO_NOPULL,
-        .Speed = GPIO_SPEED_FREQ_VERY_HIGH
-    };
+    uint8_t leds = 0;
 
     if(!init) {
 
         init = true;
 
+        GPIO_InitTypeDef gpio = {
+            .Mode = GPIO_MODE_OUTPUT_PP,
+            .Pull = GPIO_NOPULL,
+            .Speed = GPIO_SPEED_FREQ_VERY_HIGH
+        };
+
+#ifdef LED_GPO_PIN
+
+        static const periph_pin_t leds0 = {
+            .function = Output_LED_Adressable,
+            .group = PinGroup_LED,
+            .port = LED_GPO_PORT,
+            .pin = LED_GPO_PIN,
+            .mode = { .mask = PINMODE_NONE },
+            .description = "Neopixels"
+        };
+
         if(hal.rgb0.out == NULL) {
 
+        	leds++;
             hal.rgb0.out = neopixel_out;
             hal.rgb0.out_masked = neopixel_out_masked;
             hal.rgb0.set_intensity = neopixels_set_intensity;
@@ -303,24 +319,28 @@ void neopixel_gpo_init (void)
             hal.rgb0.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
             hal.rgb0.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
-            HAL_GPIO_Init(LED_PORT, &GPIO_InitStruct);
+            gpio.Pin = 1 << LED_GPO_PIN;
+            HAL_GPIO_Init(LED_GPO_PORT, &gpio);
 
             hal.periph_port.register_pin(&leds0);
         }
 
-#ifdef LED1_PIN
+#endif // LED_GPO_PIN
+
+#ifdef LED1_GPO_PIN
 
         static const periph_pin_t leds1 = {
             .function = Output_LED1_Adressable,
             .group = PinGroup_LED,
-            .port = LED1_PORT,
-            .pin = LED1_PIN,
+            .port = LED1_GPO_PORT,
+            .pin = LED1_GPO_PIN,
             .mode = { .mask = PINMODE_NONE },
             .description = "Neopixels"
         };
 
         if(hal.rgb1.out == NULL) {
 
+        	leds++;
             hal.rgb1.out = neopixel1_out;
             hal.rgb1.out_masked = neopixel1_out_masked;
             hal.rgb1.set_intensity = neopixels1_set_intensity;
@@ -328,22 +348,26 @@ void neopixel_gpo_init (void)
             hal.rgb1.flags = (rgb_properties_t){ .is_blocking = On, .is_strip = On };
             hal.rgb1.cap = (rgb_color_t){ .R = 255, .G = 255, .B = 255 };
 
-            GPIO_InitStruct.Pin = 1 << LED1_PIN;
-            HAL_GPIO_Init(LED1_PORT, &GPIO_InitStruct);
+            gpio.Pin = 1 << LED1_GPO_PIN;
+            HAL_GPIO_Init(LED1_GPO_PORT, &gpio);
 
             hal.periph_port.register_pin(&leds1);
         }
-#endif
 
-        if(hal.rgb0.out == neopixel_out
-#ifdef LED1_PIN
-                || hal.rgb1.out == neopixel1_out
-#endif
-            ) {
+#endif // LED1_GPO_PIN
+
+        if(leds) {
+
+        	// TODO: verify and add others...
+        	if(hal.f_mcu >= 168) {
+        		ws2812.zeroHigh = ws2812.oneLow = 4;
+        		ws2812.zeroLow = ws2812.oneHigh = 9;
+        	}
+
             settings_changed = hal.settings_changed;
             hal.settings_changed = onSettingsChanged;
         }
     }
 }
 
-#endif // NEOPIXEL_GPO
+#endif
