@@ -304,7 +304,7 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT13_PIN
 #endif
 
-#define LED_PWM_PORT            GPIOC // rail LED strip (PWM), does not work when debugging due to U14/R96 chopping output
+#define LED_PWM_PORT            GPIOC_BASE // rail LED strip (PWM), does not work when debugging due to U14/R96 chopping output
 #define LED_PWM_PIN             9
 #if !defined(DEBUG) && RGB_LED_ENABLE
 #define LED1_GPO_PORT           GPIOA // ring LED strip (GPO), when enabled SWD debugging is blocked (use $DFU to reenable)
@@ -332,7 +332,6 @@
 
 #define AUXINPUT6_PORT          GPIOC // CYC/ST, MACRO3
 #define AUXINPUT6_PIN           11
-
 
 #define AUXINPUT7_PORT          GPIOD // AUX_IN_3
 #define AUXINPUT7_PIN           15
