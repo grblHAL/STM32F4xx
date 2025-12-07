@@ -2921,7 +2921,7 @@ status_code_t enter_uf2 (sys_state_t state, char *args)
 {
     extern uint32_t _board_dfu_dbl_tap; /* Symbol defined in the linker script */
 
-    hal.stream.write("Entering UF2 Bootloader" ASCII_EOL);
+    report_message("Entering UF2 Bootloader", Message_Warning);
     hal.delay_ms(100, NULL);
 
     uint32_t *addr = (uint32_t *)(&_board_dfu_dbl_tap);
