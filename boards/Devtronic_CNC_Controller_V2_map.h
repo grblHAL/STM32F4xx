@@ -131,9 +131,9 @@
 #define AUXOUTPUT4_PORT         GPIOA // Spindle PWM / RS-485 DIR
 #define AUXOUTPUT4_PIN          8
 #define AUXOUTPUT5_PORT         GPIOC // Coolant flood
-#define AUXOUTPUT5_PIN          15
+#define AUXOUTPUT5_PIN          14
 #define AUXOUTPUT6_PORT         GPIOC // Coolant mist
-#define AUXOUTPUT6_PIN          14
+#define AUXOUTPUT6_PIN          15
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
