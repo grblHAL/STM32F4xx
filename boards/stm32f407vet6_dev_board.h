@@ -158,6 +158,7 @@ PD15 SM4
 #else
 #define DIRECTION_OUTMODE       GPIO_MAP
 #endif
+//#define DIRECTION_PINMODE       PINMODE_OD // Uncomment for open drain outputs
 
 // Define stepper driver enable/disable output pins.
 #define STEPPERS_ENABLE_PORT    GPIOD
@@ -200,10 +201,27 @@ PD15 SM4
 #define M4_LIMIT_PIN            10
 #endif
 
+#if !RGB_LED_ENABLE
+// LED 1 - 3, all red
+#define LED_R_PORT              GPIOE
+#define LED_R_PIN               13
+#define LED_G_PORT              GPIOE
+#define LED_G_PIN               14
+#define LED_B_PORT              GPIOE
+#define LED_B_PIN               15
+#elif !(DRIVER_SPINDLE_ENABLE & SPINDLE_DIR)
+#define LED_PWM_PORT            GPIOC_BASE
+#define LED_PWM_PIN             6
+#else
+#error "LED strip output not available!"
+#endif
+
 #define AUXOUTPUT0_PORT         GPIOB // Spindle PWM
 #define AUXOUTPUT0_PIN          0
+#if !RGB_LED_ENABLE
 #define AUXOUTPUT1_PORT         GPIOC // Spindle direction
 #define AUXOUTPUT1_PIN          6
+#endif
 #define AUXOUTPUT2_PORT         GPIOC // Spindle enable
 #define AUXOUTPUT2_PIN          7
 #define AUXOUTPUT3_PORT         GPIOD // Coolant flood
@@ -235,10 +253,6 @@ PD15 SM4
 #define COOLANT_MIST_PIN        AUXOUTPUT4_PIN
 #endif
 
-#if ETHERNET_ENABLE && defined(_WIZCHIP_)
-
-#endif
-
 #ifdef SPI_PORT
 #define SPI_CS_PORT             GPIOE
 #define SPI_CS_PIN              7
@@ -248,23 +262,8 @@ PD15 SM4
 #define SPI_RST_PIN             8
 #endif
 
-// LED 1 - 3, all red
-#define LED_R_PORT              GPIOE
-#define LED_R_PIN               13
-#define LED_G_PORT              GPIOE
-#define LED_G_PIN               14
-#define LED_B_PORT              GPIOE
-#define LED_B_PIN               15
-
 // Button 1 - 3
 // PE10 - 12
-
-//#define NEOPIXEL_GPO
-//#define LED_PORT                GPIOA
-//#define LED_PIN                 7
-
-//#define NEOPIXEL_SPI            1 // PA7
-//#define NEOPIXELS_NUM           6
 
 #if !SPINDLE_SYNC_ENABLE
 #define AUXINPUT0_PORT          GPIOC
@@ -305,6 +304,10 @@ PD15 SM4
 #define AUXINPUT6_PIN           11
 #endif
 */
+#ifndef M4_LIMIT_PORT
+#define AUXINPUT7_PORT          GPIOD
+#define AUXINPUT7_PIN           10
+#endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #if CONTROL_ENABLE & CONTROL_HALT
@@ -325,7 +328,7 @@ PD15 SM4
 #define PROBE_PIN               AUXINPUT5_PIN
 #endif
 
-#if SAFETY_DOOR_ENABLE
+#if SAFETY_DOOR_ENABLE && defined(AUXINPUT0_PORT)
 #define SAFETY_DOOR_PORT        AUXINPUT0_PORT
 #define SAFETY_DOOR_PIN         AUXINPUT0_PIN
 #endif

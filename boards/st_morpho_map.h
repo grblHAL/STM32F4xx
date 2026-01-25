@@ -194,29 +194,8 @@
 #endif // SPI_PORT
 
 #if RGB_LED_ENABLE
-
-/*
-#define LED_R_PORT              GPIOA
-#define LED_R_PIN               7
-#define LED_G_PORT              GPIOB
-#define LED_G_PIN               7
-#define LED_B_PORT              GPIOC
-#define LED_B_PIN               8
-*/
-#define NEOPIXEL_PWM
-#define LED_PORT                GPIOC // rail LED strip
-#define LED_PIN                 9
-#define NEOPIXEL_GPO
-#define LED1_PORT               GPIOB // ring LED strip (GPO), when enabled SWD debugging is blocked (use $DFU to reenable)
-#define LED1_PIN                2
-
-//#define NEOPIXEL_GPO
-#define LED_PORT                GPIOA
-#define LED_PIN                 7
-
-//#define NEOPIXEL_SPI            1 // PA7
-//#define NEOPIXELS_NUM           6
-
+//#define LED_PWM_PORT            GPIOC_BASE  // For testing, uses Z step out
+//#define LED_PWM_PIN             9
 #endif
 
 #if SPINDLE_ENCODER_ENABLE

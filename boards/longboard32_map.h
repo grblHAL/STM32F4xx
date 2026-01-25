@@ -343,8 +343,8 @@
 #define AUXINPUT9_PIN           7
 
 #if THCAD2_ENABLE && !I2C_STROBE_ENABLE
-#define AUXINPUT0_FREQ_PORT     GPIOB // Remove R92 and C96
-#define AUXINPUT0_FREQ_PIN      3
+#define THCAD2_PORT             GPIOB_BASE // Remove R92 and C96
+#define THCAD2_PIN              3
 #else
 #define AUXINPUT10_PORT         GPIOB // I2C strobe
 #define AUXINPUT10_PIN          3

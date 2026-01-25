@@ -26,8 +26,10 @@
 #include "grbl/plugins.h"
 #include "grbl/ioports.h"
 
-#define THCAD2_PORT GPIOA // TIM2_CH2 - PA1 and PB3 supported
-#define THCAD2_PIN  1
+ // TIM2_CH2 - only PA1 and PB3 currently supported
+#if !defined(THCAD2_PORT) || !((THCAD2_PORT == GPIOA_BASE && THCAD2_PIN == 1) || (THCAD2_PORT == GPIOB_BASE && THCAD2_PIN == 3))
+#error "THCAD2: no port/pin or unsupported port/pin"
+#endif
 
 #define PULSE_COUNTER_N     2
 #define GATE_TIMER_N        3
@@ -220,12 +222,12 @@ void thcad2_init (void)
 #endif
         };
 
-        HAL_GPIO_Init(THCAD2_PORT, &GPIO_Init);
+        HAL_GPIO_Init(((GPIO_TypeDef *)THCAD2_PORT), &GPIO_Init);
 
         static const periph_pin_t ssp = {
             .function = Input_SpindlePulse,
             .group = PinGroup_AuxInputAnalog,
-            .port = THCAD2_PORT,
+            .port = ((GPIO_TypeDef *)THCAD2_PORT),
             .pin = THCAD2_PIN,
             .mode = { .mask = PINMODE_NONE }
         };

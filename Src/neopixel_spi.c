@@ -220,30 +220,7 @@ void neopixel_spi_init (void)
             .description = "Neopixels"
         };
 
-#elif NEOPIXEL_SPI == 11
-
-        __HAL_RCC_SPI1_CLK_ENABLE();
-        __HAL_RCC_DMA2_CLK_ENABLE();
-
-        GPIO_InitTypeDef GPIO_InitStruct = {
-            .Pin = GPIO_PIN_5,
-            .Mode = GPIO_MODE_AF_PP,
-            .Pull = GPIO_NOPULL,
-            .Speed = GPIO_SPEED_FREQ_VERY_HIGH,
-            .Alternate = GPIO_AF5_SPI1,
-        };
-        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-        static const periph_pin_t sdi = {
-            .function = Output_MOSI,
-            .group = PinGroup_SPI,
-            .port = GPIOB,
-            .pin = 5,
-            .mode = { .mask = PINMODE_NONE },
-            .description = "Neopixels"
-        };
-
-#elif NEOPIXEL_SPI == 12
+#elif NEOPIXEL_SPI == 11 || NEOPIXEL_SPI == 12
 
         __HAL_RCC_SPI1_CLK_ENABLE();
         __HAL_RCC_DMA2_CLK_ENABLE();
