@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2019-2025 Terje Io
+  Copyright (c) 2019-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -256,6 +256,7 @@
                                     ((INSTANCE) == RPM_TIMER_BASE) || \
                                     ((INSTANCE) == RPM_COUNTER_BASE) || \
                                     ((INSTANCE) == TMC_UART_TIMER_BASE))
+//                                    ((INSTANCE) == TIM3_BASE && SDCARD_SDIO))
 
 // Adjust these values to get more accurate step pulse timings when required, e.g if using high step rates.
 // The default values below are calibrated for 5 microsecond pulses on a F446 @ 180 MHz.
@@ -308,15 +309,6 @@
 #define STEPPERS_ENABLE_PINMODE PINMODE_OUTPUT
 #endif
 
-#if defined(AUXOUTPUT0_PWM_PORT) || defined(AUXOUTPUT1_PWM_PORT) || defined(AUXOUTPUT2_PWM_PORT) ||\
-     defined(AUXOUTPUT0_ANALOG_PORT) || defined(AUXOUTPUT1_ANALOG_PORT) || defined(AUXOUTPUT2_ANALOG_PORT) ||\
-      defined(AUXINPUT0_ANALOG_PORT) || defined(AUXINPUT1_ANALOG_PORT) ||\
-       defined(MCP3221_ENABLE)
-#define AUX_ANALOG 1
-#else
-#define AUX_ANALOG 0
-#endif
-
 typedef struct {
     pin_function_t id;
     pin_cap_t cap;
@@ -365,9 +357,7 @@ void board_init (void);
 #endif
 
 void ioports_init(pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
-#if AUX_ANALOG
 void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
-#endif
 void ioports_event (input_signal_t *input);
 
 #endif // __DRIVER_H__

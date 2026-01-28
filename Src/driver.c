@@ -2916,6 +2916,14 @@ static bool driver_setup (settings_t *settings)
 
 #endif // SPINDLE_ENCODER_ENABLE
 
+#if LITTLEFS_ENABLE
+
+#include "sdcard/fs_littlefs.h"
+#include "sdcard/macros.h"
+
+    fs_littlefs_mount("/", eeprom_littlefs_hal());
+#endif
+
     IOInitDone = settings->version.id == 23;
 
     hal.settings_changed(settings, (settings_changed_flags_t){0});
@@ -3121,7 +3129,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260113";
+    hal.driver_version = "260127";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3404,12 +3412,8 @@ bool driver_init (void)
     if(aux_digital_in.n_pins || aux_digital_out.n_pins)
         ioports_init(&aux_digital_in, &aux_digital_out);
 
-#if AUX_ANALOG
-  #ifndef MCP3221_ENABLE
     if(aux_analog_in.n_pins || aux_analog_out.n_pins)
-  #endif
         ioports_init_analog(&aux_analog_in, &aux_analog_out);
-#endif
 
     io_expanders_init();
     aux_ctrl_claim_ports(aux_claim_explicit, NULL);

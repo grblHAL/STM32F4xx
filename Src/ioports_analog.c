@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2023-2025 Terje Io
+  Copyright (c) 2023-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@
 
 #include "driver.h"
 
-#if AUX_ANALOG
+#if defined(AUXOUTPUT0_PWM_PORT) || defined(AUXOUTPUT1_PWM_PORT) || defined(AUXOUTPUT2_PWM_PORT) ||\
+     defined(AUXOUTPUT0_ANALOG_PORT) || defined(AUXOUTPUT1_ANALOG_PORT) || defined(AUXOUTPUT2_ANALOG_PORT) ||\
+      defined(AUXINPUT0_ANALOG_PORT) || defined(AUXINPUT1_ANALOG_PORT)
 
 #ifdef AUXOUTPUT0_PWM_PORT
 #define PWM_OUT0 1
@@ -41,7 +43,21 @@
 #define PWM_OUT2 0
 #endif
 
-#define AUX_ANALOG_OUT (PWM_OUT0 + PWM_OUT1 + PWM_OUT2)
+#ifdef AUXOUTPUT0_ANALOG_PORT
+#define DAC_OUT0 1
+#else
+#define DAC_OUT0 0
+#endif
+
+#ifdef AUXOUTPUT1_ANALOG_PORT
+#define DAC_OUT1 1
+#else
+#define DAC_OUT1 0
+#endif
+
+#define AUX_ANALOG_PWM_OUT (PWM_OUT0 + PWM_OUT1 + PWM_OUT2)
+#define AUX_ANALOG_DAC_OUT (DAC_OUT0 + DAC_OUT1)
+#define AUX_ANALOG_OUT (AUX_ANALOG_PWM_OUT + AUX_ANALOG_DAC_OUT)
 
 #include "pwm.h"
 
@@ -96,7 +112,87 @@ static ADC_ChannelConfTypeDef adc_config = {
     .SamplingTime = ADC_SAMPLETIME_3CYCLES
 };
 
-#if AUX_ANALOG_OUT
+#if AUX_ANALOG_DAC_OUT
+
+#include "stm32f4xx_ll_dac.h"
+
+typedef struct {
+    GPIO_TypeDef *port;
+    uint8_t pin;
+    DAC_TypeDef *dac;
+    uint32_t ch;
+} dac_map_t;
+
+static const dac_map_t dac_map[] = {
+    { GPIOA, 4, DAC1, LL_DAC_CHANNEL_1 },
+#if defined(DAC_CHANNEL2_SUPPORT)
+    { GPIOA, 5, DAC1, LL_DAC_CHANNEL_2 }
+#endif
+};
+
+static const dac_map_t *dac_get_port (GPIO_TypeDef *port, uint8_t pin)
+{
+    const dac_map_t *map = NULL;
+    uint_fast8_t idx = sizeof(dac_map) / sizeof(dac_map_t);
+
+    do {
+        idx--;
+        if(port == dac_map[idx].port && pin == dac_map[idx].pin)
+            map = &dac_map[idx];
+    } while(idx && map == NULL);
+
+    return map;
+}
+
+static float dac_get_value (xbar_t *output)
+{
+    float value = 1.0f;
+    const dac_map_t *port;
+
+    if((port = dac_get_port(aux_out_analog[output->id].port, aux_out_analog[output->id].pin)))
+        value = (float)LL_DAC_RetrieveOutputData(port->dac, port->ch);
+
+    return value;
+}
+
+static void dac_out (uint8_t p, float value)
+{
+    const dac_map_t *port;
+
+    if((port = dac_get_port(aux_out_analog[p].port, aux_out_analog[p].pin)))
+        LL_DAC_ConvertData12RightAligned(port->dac, port->ch, (uint32_t)value);
+}
+
+static bool dac_init (xbar_t *output, pwm_config_t *config, bool persistent)
+{
+    const dac_map_t *port;
+
+    if((port = dac_get_port(aux_out_analog[output->id].port, aux_out_analog[output->id].pin))) {
+
+        __HAL_RCC_DAC_CLK_ENABLE();
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+
+        GPIO_InitTypeDef GPIO_InitStruct = {
+            .Pin = 1 << port->pin,
+            .Mode = GPIO_MODE_ANALOG,
+            .Pull = GPIO_NOPULL
+        };
+
+        HAL_GPIO_Init(port->port, &GPIO_InitStruct);
+
+        LL_DAC_Enable(port->dac, port->ch);
+        LL_DAC_ConvertData12RightAligned(port->dac, port->ch, 0);
+    }
+
+    if(port == NULL && !aux_out_analog[output->id].mode.claimed)
+        hal.port.claim(Port_Analog, Port_Output, &output->id, "N/A");
+
+    return !!port;
+}
+
+#endif // AUX_ANALOG_DAC_OUT
+
+#if AUX_ANALOG_PWM_OUT
 
 static float pwm_get_value (xbar_t *output)
 {
@@ -129,14 +225,6 @@ static void pwm_out (uint8_t port, float value)
                 pwm->timer->BDTR |= TIM_BDTR_MOE;
         }
     }
-}
-
-static bool analog_out (uint8_t port, float value)
-{
-    if(port < analog.out.n_ports)
-        pwm_out(port, value);
-
-    return port < analog.out.n_ports;
 }
 
 static bool init_pwm (xbar_t *output, pwm_config_t *config, bool persistent)
@@ -180,6 +268,28 @@ static bool init_pwm (xbar_t *output, pwm_config_t *config, bool persistent)
         hal.port.claim(Port_Analog, Port_Output, &output->id, "N/A");
 
     return ok;
+}
+
+#endif // AUX_ANALOG_PWM_OUT
+
+#if AUX_ANALOG_OUT
+
+static bool analog_out (uint8_t port, float value)
+{
+    if(port < analog.out.n_ports) {
+#if AUX_ANALOG_DAC_OUT && AUX_ANALOG_PWM_OUT
+        if(aux_out_analog[port].mode.pwm || aux_out_analog[port].mode.servo_pwm)
+            pwm_out(port, value);
+        else
+            dac_out(port, value);
+#elif AUX_ANALOG_DAC_OUT
+        dac_out(port, value);
+#else
+        pwm_out(port, value);
+#endif
+    }
+
+    return port < analog.out.n_ports;
 }
 
 #endif // AUX_ANALOG_OUT
@@ -254,15 +364,25 @@ static xbar_t *get_pin_info (io_port_direction_t dir, uint8_t port)
                 pin.id = port;
                 pin.port = aux_out_analog[port].port;
                 pin.mode = aux_out_analog[port].mode;
-                pin.mode.pwm = !pin.mode.servo_pwm; //?? for easy filtering
+                pin.mode.pwm &= !pin.mode.servo_pwm; //?? for easy filtering
                 XBAR_SET_CAP(pin.cap, pin.mode);
                 pin.function = aux_out_analog[port].id;
                 pin.group = aux_out_analog[port].group;
                 pin.pin = aux_out_analog[port].pin;
                 pin.port = (void *)aux_out_analog[port].port;
                 pin.description = aux_out_analog[port].description;
+#if AUX_ANALOG_DAC_OUT && AUX_ANALOG_PWM_OUT
+                pin.get_value = pin.mode.pwm || pin.mode.servo_pwm ? pwm_get_value : dac_get_value;
+                pin.config = pin.mode.pwm || pin.mode.servo_pwm ? init_pwm : dac_init;
+#elif AUX_ANALOG_DAC_OUT
+                pin.get_value = dac_get_value;
+                pin.config = dac_init;
+#else
                 pin.get_value = pwm_get_value;
                 pin.config = init_pwm;
+#endif
+                if(!aux_out_analog[port].mode.pwm)
+                    pin.cap.resolution = Resolution_12bit;
                 info = &pin;
             }
 #endif // AUX_ANALOG_OUT
@@ -387,4 +507,11 @@ void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_ou
     }
 }
 
-#endif // AUX_ANALOG
+#else
+
+void ioports_init_analog (pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs)
+{
+// NOOP
+}
+
+#endif
