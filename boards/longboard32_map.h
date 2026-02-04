@@ -377,14 +377,28 @@
 #endif
 
 // Define probe switch input pin.
-#if PROBE_ENABLE
-#define PROBE_PORT              AUXINPUT11_PORT
-#define PROBE_PIN               AUXINPUT11_PIN
-#endif
+// If LONGBOARD_PROBESWAP is defined, then we swap the probe and toolsetter pins.
+// If undefined, the default behavior is used. Also note longboard32.c has custom code that will MUX tls/probe inputs depending on enabled features.
+#if defined(LONGBOARD_PROBESWAP)
+  #if PROBE_ENABLE
+  #define PROBE_PORT              AUXINPUT3_PORT
+  #define PROBE_PIN               AUXINPUT3_PIN
+  #endif
 
-#if TOOLSETTER_ENABLE
-#define TOOLSETTER_PORT         AUXINPUT3_PORT
-#define TOOLSETTER_PIN          AUXINPUT3_PIN
+  #if TOOLSETTER_ENABLE
+  #define TOOLSETTER_PORT         AUXINPUT11_PORT
+  #define TOOLSETTER_PIN          AUXINPUT11_PIN
+  #endif
+#else
+  #if PROBE_ENABLE
+  #define PROBE_PORT              AUXINPUT11_PORT
+  #define PROBE_PIN               AUXINPUT11_PIN
+  #endif
+
+  #if TOOLSETTER_ENABLE
+  #define TOOLSETTER_PORT         AUXINPUT3_PORT
+  #define TOOLSETTER_PIN          AUXINPUT3_PIN
+  #endif
 #endif
 
 #if I2C_STROBE_ENABLE
