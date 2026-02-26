@@ -4,7 +4,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2024 Terje Io
+  Copyright (c) 2024-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 /* Internal API */
 
-bool timer_claim (TIM_TypeDef *timer);
+hal_timer_t timer_claim (TIM_TypeDef *timer);
 bool timer_is_claimed (TIM_TypeDef *timer);
 uint32_t timer_clk_enable (TIM_TypeDef *timer);
 uint32_t timer_get_clock_hz (TIM_TypeDef *timer);

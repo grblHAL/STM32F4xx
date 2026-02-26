@@ -76,7 +76,14 @@ static const adc_map_t adc_map[] = {
     { GPIOA,  1, 123, ADC1, ADC_CHANNEL_1 },
     { GPIOA,  2, 123, ADC1, ADC_CHANNEL_2 },
     { GPIOA,  3, 123, ADC1, ADC_CHANNEL_3 },
-#ifdef ADC2
+#if defined(STM32F401xC) || defined(STM32F401xE) || defined(STM32F411xE) ||  defined(STM32F412Vx)
+    { GPIOA,  4, 123, ADC1, ADC_CHANNEL_4 },
+    { GPIOA,  5, 123, ADC1, ADC_CHANNEL_5 },
+    { GPIOA,  6, 123, ADC1, ADC_CHANNEL_6 },
+    { GPIOA,  7, 123, ADC1, ADC_CHANNEL_7 },
+    { GPIOB,  0, 123, ADC1, ADC_CHANNEL_8 },
+    { GPIOB,  1, 123, ADC1, ADC_CHANNEL_9 },
+#elif defined(ADC2)
     { GPIOA,  4,  12, ADC2, ADC_CHANNEL_4 },
     { GPIOA,  5,  12, ADC2, ADC_CHANNEL_5 },
     { GPIOA,  6,  12, ADC2, ADC_CHANNEL_6 },

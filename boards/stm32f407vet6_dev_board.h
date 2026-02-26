@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2024-2025 Terje Io
+  Copyright (c) 2024-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -357,15 +357,13 @@ PD15 SM4
 #define SPINDLE_INDEX_PIN       14
 #endif
 #endif
-*/
-#if QEI_ENABLE && !SPINDLE_SYNC_ENABLE
-#define QEI_A_PORT              GPIOA
-#define QEI_A_PIN               15
-#define QEI_B_PORT              GPIOB
-#define QEI_B_PIN               14
-#endif // QEI_ENABLE
 
-#if QEI_SELECT_ENABLE
+#if ENCODER_ENABLE && defined(AUXINPUT2_PIN)
+#define QEI_A_PORT              AUXINPUT2_PORT
+#define QEI_A_PIN               AUXINPUT2_PIN
+#define QEI_B_PORT              AUXINPUT1_PORT
+#define QEI_B_PIN               AUXINPUT1_PIN
+#if (ENCODER_ENABLE & 1)
 #if !I2C_STROBE_ENABLE
 #define QEI_SELECT_PORT         AUXINPUT3_PORT
 #define QEI_SELECT_PIN          AUXINPUT3_PIN
@@ -374,6 +372,8 @@ PD15 SM4
 #define QEI_SELECT_PIN          AUXINPUT4_PIN
 #endif
 #endif
+#endif // QEI_ENABLE
+*/
 
 #if MODBUS_ENABLE & MODBUS_RTU_ENABLED
 #undef MODBUS_ENABLE

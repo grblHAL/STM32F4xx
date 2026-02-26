@@ -54,12 +54,16 @@
 #include "eeprom/eeprom.h"
 #endif
 
-#if QEI_ENABLE
-#include "encoder/encoder.h"
-#endif
-
 #if FLASH_ENABLE
 #include "flash.h"
+#endif
+
+#if QEI_ENABLE
+#include "grbl/encoders.h"
+#endif
+
+#if QEI_ENABLE || SPINDLE_ENCODER_ENABLE
+#include "encoders.h"
 #endif
 
 #if ETHERNET_ENABLE
@@ -72,62 +76,6 @@
 
 #define STEPPER_TIMER_DIV 4
 #define DRIVER_IRQMASK (LIMIT_MASK|DEVICES_IRQ_MASK)
-
-#if QEI_ENABLE
-
-#define QEI_DEBOUNCE 3
-#define QEI_VELOCITY_TIMEOUT 100
-
-typedef enum {
-   QEI_DirUnknown = 0,
-   QEI_DirCW,
-   QEI_DirCCW
-} qei_dir_t;
-
-typedef union {
-    uint_fast8_t pins;
-    struct {
-        uint_fast8_t a :1,
-                     b :1;
-    };
-} qei_state_t;
-
-typedef struct {
-    encoder_t encoder;
-    int32_t count;
-    int32_t vel_count;
-    uint_fast16_t state;
-    qei_dir_t dir;
-    volatile uint32_t dbl_click_timeout;
-    volatile uint32_t vel_timeout;
-    uint32_t vel_timestamp;
-} qei_t;
-
-static qei_t qei = {0};
-static bool qei_enable = false;
-
-#endif
-
-#if SPINDLE_ENCODER_ENABLE
-
-#include "grbl/spindle_sync.h"
-
-static spindle_data_t spindle_data;
-static spindle_encoder_t spindle_encoder = {
-    .tics_per_irq = 4
-};
-static on_spindle_programmed_ptr on_spindle_programmed = NULL;
-
-#if RPM_TIMER_N != 2
-static volatile uint32_t rpm_timer_ovf = 0;
-#define RPM_TIMER_RESOLUTION 1
-#define RPM_TIMER_COUNT (RPM_TIMER->CNT | (rpm_timer_ovf << 16))
-#else
-#define RPM_TIMER_RESOLUTION 1
-#define RPM_TIMER_COUNT RPM_TIMER->CNT
-#endif
-
-#endif // SPINDLE_ENCODER_ENABLE
 
 #if defined(LED_R_PIN) && defined(LED_G_PIN) && defined(LED_B_PIN)
 #define LED_RGB 1
@@ -254,16 +202,6 @@ static input_signal_t inputpin[] = {
 #endif
 #ifdef SPINDLE_INDEX_PIN
     { .id = Input_SpindleIndex,   .port = SPINDLE_INDEX_PORT, .pin = SPINDLE_INDEX_PIN,   .group = PinGroup_SpindleIndex },
-#endif
-#if QEI_ENABLE
-    { .id = Input_QEI_A,          .port = QEI_A_PORT,         .pin = QEI_A_PIN,           .group = PinGroup_QEI },
-    { .id = Input_QEI_B,          .port = QEI_B_PORT,         .pin = QEI_B_PIN,           .group = PinGroup_QEI },
-  #if QEI_SELECT_ENABLE
-    { .id = Input_QEI_Select,     .port = QEI_SELECT_PORT,    .pin = QEI_SELECT_PIN,      .group = PinGroup_QEI_Select },
-  #endif
-  #if QEI_INDEX_ENABLED
-    { .id = Input_QEI_Index,      .port = QEI_INDEX_PORT,     .pin = QEI_INDEX_PIN,       .group = PinGroup_QEI },
-  #endif
 #endif
 #ifdef SPI_IRQ_PORT
     { .id = Input_SPIIRQ,         .port = SPI_IRQ_PORT,       .pin = SPI_IRQ_PIN,         .group = PinGroup_SPI },
@@ -612,7 +550,7 @@ static input_signal_t *z_limit_pin;
 static bool z_limits_irq_enabled = false;
 #endif
 
-#if defined(SAFETY_DOOR_PIN) || defined(QEI_SELECT_PIN)
+#if defined(SAFETY_DOOR_PIN)
 static pin_debounce_t debounce;
 #endif
 static void aux_irq_handler (uint8_t port, bool state);
@@ -1770,11 +1708,6 @@ static void aux_irq_handler (uint8_t port, bool state)
 
     if((aux_in = aux_ctrl_in_get(port))) {
         switch(aux_in->function) {
-#ifdef QEI_SELECT_PIN
-            case Input_QEI_Select:
-                qei_select_handler();
-                break;
-#endif
 #ifdef I2C_STROBE_PIN
             case Input_I2CStrobe:
                 if(i2c_strobe.callback)
@@ -1835,20 +1768,21 @@ static bool aux_claim_explicit (aux_ctrl_t *aux_ctrl)
                 hal.driver_cap.toolsetter = probe_add(Probe_Toolsetter, aux_ctrl->port, pin->cap.irq_mode, aux_ctrl->input, probeGetState);
                 break;
 #endif
-#if SAFETY_DOOR_ENABLE || defined(QEI_SELECT_PIN) || (defined(RESET_PIN) && !ESTOP_ENABLE)
+#if SAFETY_DOOR_ENABLE || (defined(RESET_PIN) && !ESTOP_ENABLE)
   #if defined(RESET_PIN) && !ESTOP_ENABLE
             case Input_Reset:
   #endif
   #if SAFETY_DOOR_ENABLE
             case Input_SafetyDoor:
   #endif
-  #ifdef QEI_SELECT_PIN
-            case Input_QEI_Select:
-  #endif
                 ((input_signal_t *)aux_ctrl->input)->mode.debounce = ((input_signal_t *)aux_ctrl->input)->cap.debounce && hal.driver_cap.software_debounce;
                 break;
 #endif
-            default: break;
+            default:
+#if QEI_ENABLE && defined(QEI_A_PIN) && defined(QEI_B_PIN)
+                encoder_pin_claimed(aux_ctrl->port, pin);
+#endif
+                break;
         }
     }
 
@@ -1915,116 +1849,6 @@ static void aux_assign_irq (void)
         }
     }
 }
-
-#if SPINDLE_ENCODER_ENABLE
-
-static spindle_data_t *spindleGetData (spindle_data_request_t request)
-{
-    bool stopped;
-    uint32_t pulse_length, rpm_timer_delta;
-
-    spindle_encoder_counter_t encoder;
-
-//    while(spindle_encoder.spin_lock);
-
-    __disable_irq();
-
-    memcpy(&encoder, &spindle_encoder.counter, sizeof(spindle_encoder_counter_t));
-
-    pulse_length = spindle_encoder.timer.pulse_length / spindle_encoder.tics_per_irq;
-    rpm_timer_delta = RPM_TIMER_COUNT - spindle_encoder.timer.last_pulse;
-
-    // if 16 bit RPM timer and RPM_TIMER_COUNT < spindle_encoder.timer.last_pulse then what?
-
-    __enable_irq();
-
-    // If no spindle pulses during last 250 ms assume RPM is 0
-    if((stopped = ((pulse_length == 0) || (rpm_timer_delta > spindle_encoder.maximum_tt)))) {
-        spindle_data.rpm = 0.0f;
-        rpm_timer_delta = (uint16_t)(((uint16_t)RPM_COUNTER->CNT - (uint16_t)encoder.last_count)) * pulse_length;
-    }
-
-    switch(request) {
-
-        case SpindleData_Counters:
-            spindle_data.index_count = encoder.index_count;
-            spindle_data.pulse_count = encoder.pulse_count + (uint32_t)((uint16_t)RPM_COUNTER->CNT - (uint16_t)encoder.last_count);
-            spindle_data.error_count = spindle_encoder.error_count;
-            break;
-
-        case SpindleData_RPM:
-            if(!stopped)
-                spindle_data.rpm = spindle_encoder.rpm_factor / (float)pulse_length;
-            break;
-
-        case SpindleData_AtSpeed:
-            if(!stopped)
-                spindle_data.rpm = spindle_encoder.rpm_factor / (float)pulse_length;
-            spindle_data.state_programmed.at_speed = !spindle_data.at_speed_enabled || (spindle_data.rpm >= spindle_data.rpm_low_limit && spindle_data.rpm <= spindle_data.rpm_high_limit);
-            spindle_data.state_programmed.encoder_error = spindle_encoder.error_count > 0;
-            break;
-
-        case SpindleData_AngularPosition:
-            spindle_data.angular_position = (float)encoder.index_count +
-                    ((float)((uint16_t)encoder.last_count - (uint16_t)encoder.last_index) +
-                              (pulse_length == 0 ? 0.0f : (float)rpm_timer_delta / (float)pulse_length)) *
-                                spindle_encoder.pulse_distance;
-            break;
-    }
-
-    return &spindle_data;
-}
-
-static void spindleDataReset (void)
-{
-    while(spindle_encoder.spin_lock);
-
-    uint32_t timeout = uwTick + 1000; // 1 second
-
-    uint32_t index_count = spindle_encoder.counter.index_count + 2;
-    if(spindleGetData(SpindleData_RPM)->rpm > 0.0f) { // wait for index pulse if running
-
-        while(index_count != spindle_encoder.counter.index_count && uwTick <= timeout);
-
-//        if(uwTick > timeout)
-//            alarm?
-    }
-
-    RPM_TIMER->EGR |= TIM_EGR_UG; // Reload RPM timer
-    RPM_COUNTER->CR1 &= ~TIM_CR1_CEN;
-
-#if RPM_TIMER_N != 2
-    rpm_timer_ovf = 0;
-#endif
-
-    spindle_encoder.timer.last_pulse =
-    spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-    spindle_encoder.timer.pulse_length =
-    spindle_encoder.counter.last_count =
-    spindle_encoder.counter.last_index =
-    spindle_encoder.counter.pulse_count =
-    spindle_encoder.counter.index_count =
-    spindle_encoder.error_count = 0;
-
-    RPM_COUNTER->EGR |= TIM_EGR_UG;
-    RPM_COUNTER->CCR1 = spindle_encoder.tics_per_irq;
-    RPM_COUNTER->CR1 |= TIM_CR1_CEN;
-}
-
-static void onSpindleProgrammed (spindle_ptrs_t *spindle, spindle_state_t state, float rpm, spindle_rpm_mode_t mode)
-{
-    if(on_spindle_programmed)
-        on_spindle_programmed(spindle, state, rpm, mode);
-
-    if(spindle->get_data == spindleGetData) {
-        spindle_set_at_speed_range(spindle, &spindle_data, rpm);
-        spindle_data.state_programmed.on = state.on;
-        spindle_data.state_programmed.ccw = state.ccw;
-    }
-}
-
-#endif // SPINDLE_ENCODER_ENABLE
 
 // Start/stop coolant (and mist if enabled)
 static void coolantSetState (coolant_state_t mode)
@@ -2171,48 +1995,8 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 #endif
 
 #if SPINDLE_ENCODER_ENABLE
-
-        static const spindle_data_ptrs_t encoder_data = {
-            .get = spindleGetData,
-            .reset = spindleDataReset
-        };
-
-        static bool event_claimed = false;
-
-        if((hal.spindle_data.get = settings->spindle.ppr > 0 ? spindleGetData : NULL)) {
-
-            hal.driver_cap.spindle_encoder_index_event = On;
-
-            if(spindle_encoder.ppr != settings->spindle.ppr) {
-
-                spindle_ptrs_t *spindle;
-
-                hal.spindle_data.reset = spindleDataReset;
-                if((spindle = spindle_get(0)))
-                    spindle->set_state(spindle, (spindle_state_t){0}, 0.0f);
-
-                if(!event_claimed) {
-                    event_claimed = true;
-                    on_spindle_programmed = grbl.on_spindle_programmed;
-                    grbl.on_spindle_programmed = onSpindleProgrammed;
-                }
-
-                spindle_encoder.ppr = settings->spindle.ppr;
-                spindle_encoder.tics_per_irq = max(1, spindle_encoder.ppr / 32);
-                spindle_encoder.pulse_distance = 1.0f / spindle_encoder.ppr;
-                spindle_encoder.maximum_tt = 250000UL / RPM_TIMER_RESOLUTION; // 250ms
-                spindle_encoder.rpm_factor = (60.0f * 1000000.0f / RPM_TIMER_RESOLUTION) / (float)spindle_encoder.ppr;
-                spindleDataReset();
-            }
-        } else {
-            spindle_encoder.ppr = 0;
-            hal.spindle_data.reset = NULL;
-            hal.driver_cap.spindle_encoder_index_event = Off;
-        }
-
-        spindle_bind_encoder(spindle_encoder.ppr ? &encoder_data : NULL);
-
-#endif // SPINDLE_ENCODER_ENABLE
+        spindle_encoder_cfg(settings);
+#endif
 
         float sl = (float)hal.f_step_timer / 1000000.0f;
 
@@ -2416,25 +2200,6 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
                     input->mode.pull_mode = true;
                     input->mode.irq_mode = IRQ_Mode_Falling;
                     break;
-#if QEI_ENABLE
-                case Input_QEI_A:
-                    if(qei_enable)
-                        input->mode.irq_mode = IRQ_Mode_Change;
-                    break;
-
-                case Input_QEI_B:
-                    if(qei_enable)
-                        input->mode.irq_mode = IRQ_Mode_Change;
-                    break;
-
-  #if QEI_INDEX_ENABLED
-                case Input_QEI_Index:
-                    if(qei_enable)
-                        input->mode.irq_mode = IRQ_Mode_None;
-                    break;
-  #endif
-
-#endif // QEI_ENABLE
 
 #if SDCARD_ENABLE && defined(SD_DETECT_PIN)
                 case Input_SdCardDetect:
@@ -2609,80 +2374,6 @@ void setPeriphPinDescription (const pin_function_t function, const pin_group_t g
             ppin = ppin->next;
     } while(ppin);
 }
-
-#if QEI_ENABLE
-
-static void qei_update (void)
-{
-    const uint8_t encoder_valid_state[] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
-
-    uint_fast8_t idx;
-    qei_state_t state = {0};
-
-    state.a = DIGITAL_IN(QEI_A_PORT, QEI_A_PIN);
-    state.b = DIGITAL_IN(QEI_B_PORT, QEI_B_PIN);
-
-    idx = (((qei.state << 2) & 0x0F) | state.pins);
-
-    if(encoder_valid_state[idx] ) {
-
-//        int32_t count = qei.count;
-
-        qei.state = ((qei.state << 4) | idx) & 0xFF;
-
-        if (qei.state == 0x42 || qei.state == 0xD4 || qei.state == 0x2B || qei.state == 0xBD) {
-            qei.count--;
-            if(qei.vel_timeout == 0 || qei.dir == QEI_DirCW) {
-                qei.dir = QEI_DirCCW;
-                qei.encoder.event.position_changed = hal.encoder.on_event != NULL;
-                hal.encoder.on_event(&qei.encoder, qei.count);
-            }
-        } else if(qei.state == 0x81 || qei.state == 0x17 || qei.state == 0xE8 || qei.state == 0x7E) {
-            qei.count++;
-            if(qei.vel_timeout == 0 || qei.dir == QEI_DirCCW) {
-                qei.dir = QEI_DirCW;
-                qei.encoder.event.position_changed = hal.encoder.on_event != NULL;
-                hal.encoder.on_event(&qei.encoder, qei.count);
-            }
-        }
-    }
-}
-
-static void qei_reset (uint_fast8_t id)
-{
-    qei.vel_timeout = 0;
-    qei.dir = QEI_DirUnknown;
-    qei.count = qei.vel_count = 0;
-    qei.vel_timestamp = uwTick;
-    qei.vel_timeout = qei.encoder.axis != 0xFF ? QEI_VELOCITY_TIMEOUT : 0;
-}
-
-#if QEI_SELECT_ENABLE
-
-static void qei_select_handler (void)
-{
-    if(DIGITAL_IN(QEI_SELECT_PORT, QEI_SELECT_PIN))
-        return;
-
-    if(!qei.dbl_click_timeout) {
-        qei.dbl_click_timeout = qei.encoder.settings->dbl_click_window;
-    } else if(qei.dbl_click_timeout < qei.encoder.settings->dbl_click_window) {
-        qei.dbl_click_timeout = 0;
-        qei.encoder.event.dbl_click = On;
-        hal.encoder.on_event(&qei.encoder, qei.count);
-    }
-}
-
-#endif
-
-// dummy handler, called on events if plugin init fails
-static void encoder_event (encoder_t *encoder, int32_t position)
-{
-    UNUSED(position);
-    encoder->event.events = 0;
-}
-
-#endif // QEI_ENABLE
 
 #if SDCARD_SDIO
 
@@ -2863,59 +2554,6 @@ static bool driver_setup (settings_t *settings)
 
 #endif
 
-#if SPINDLE_ENCODER_ENABLE
-
-    RPM_TIMER_CLKEN();
-#if timerAPB2(RPM_TIMER_N)
-    RPM_TIMER->PSC = HAL_RCC_GetPCLK2Freq() * 2 / 1000000UL * RPM_TIMER_RESOLUTION - 1;
-#else
-    RPM_TIMER->PSC = HAL_RCC_GetPCLK1Freq() * 2 / 1000000UL * RPM_TIMER_RESOLUTION - 1;
-#endif
-#if RPM_TIMER_N == 2
-    RPM_TIMER->CR1 = TIM_CR1_CKD_1;
-#else
-    RPM_TIMER->CR1 = TIM_CR1_CKD_1|TIM_CR1_URS;
-    RPM_TIMER->DIER |= TIM_DIER_UIE;
-    HAL_NVIC_EnableIRQ(RPM_TIMER_IRQn);
-    HAL_NVIC_SetPriority(RPM_TIMER_IRQn, 0, 0);
-#endif
-    RPM_TIMER->CR1 |= TIM_CR1_CEN;
-
-    RPM_COUNTER_CLKEN();
-#if SPINDLE_ENCODER_CLK == 1
-    RPM_COUNTER->SMCR = TIM_SMCR_SMS_0|TIM_SMCR_SMS_1|TIM_SMCR_SMS_2|TIM_SMCR_ETF_2|TIM_SMCR_ETF_3|TIM_SMCR_TS_0|TIM_SMCR_TS_2;
-#else
-    RPM_COUNTER->SMCR = TIM_SMCR_ECE;
-#endif
-    RPM_COUNTER->PSC = 0;
-    RPM_COUNTER->ARR = 65535;
-    RPM_COUNTER->DIER = TIM_DIER_CC1IE;
-
-    HAL_NVIC_EnableIRQ(RPM_COUNTER_IRQn);
-
-    GPIO_Init.Mode = GPIO_MODE_AF_PP;
-    GPIO_Init.Pin = SPINDLE_PULSE_BIT;
-    GPIO_Init.Pull = GPIO_PULLUP;
-    GPIO_Init.Speed = GPIO_SPEED_FREQ_LOW;
-#if RPM_COUNTER_N == 2
-    GPIO_Init.Alternate = GPIO_AF1_TIM2;
-#else
-    GPIO_Init.Alternate = GPIO_AF2_TIM3;
-#endif
-    HAL_GPIO_Init(SPINDLE_PULSE_PORT, &GPIO_Init);
-
-    static const periph_pin_t ssp = {
-        .function = Input_SpindlePulse,
-        .group = PinGroup_SpindlePulse,
-        .port = SPINDLE_PULSE_PORT,
-        .pin = SPINDLE_PULSE_PIN,
-        .mode = { .mask = PINMODE_NONE }
-    };
-
-    hal.periph_port.register_pin(&ssp);
-
-#endif // SPINDLE_ENCODER_ENABLE
-
 #if LITTLEFS_ENABLE
 
 #include "sdcard/fs_littlefs.h"
@@ -2930,11 +2568,6 @@ static bool driver_setup (settings_t *settings)
 
 #if ETHERNET_ENABLE
     enet_start();
-#endif
-
-#if QEI_ENABLE
-    if(qei_enable)
-        encoder_start(&qei.encoder);
 #endif
 
 #if SDCARD_ENABLE && defined(SD_DETECT_PIN)
@@ -3129,7 +2762,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260127";
+    hal.driver_version = "260222";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3293,11 +2926,6 @@ bool driver_init (void)
   #endif
 #endif
 
-#if QEI_ENABLE
-    hal.encoder.reset = qei_reset;
-    hal.encoder.on_event = encoder_event;
-#endif
-
 // driver capabilities, used for announcing and negotiating (with the core) driver functionality
 
     hal.limits_cap = get_limits_cap();
@@ -3418,8 +3046,8 @@ bool driver_init (void)
     io_expanders_init();
     aux_ctrl_claim_ports(aux_claim_explicit, NULL);
 
-   extern bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl);
-   aux_ctrl_claim_out_ports(aux_out_claim_explicit, NULL);
+    extern bool aux_out_claim_explicit (aux_ctrl_out_t *aux_ctrl);
+    aux_ctrl_claim_out_ports(aux_out_claim_explicit, NULL);
 
 #if DRIVER_SPINDLE_ENABLE || DRIVER_SPINDLE1_ENABLE
     extern void driver_spindles_init (void);
@@ -3441,16 +3069,16 @@ bool driver_init (void)
     tmc_uart_init();
 #endif
 
+#ifdef QEI_PORT
+    driver_encoders_init();
+#endif
+
 #ifdef HAS_BOARD_INIT
     board_init();
 #endif
 
 #if ETHERNET_ENABLE
     enet_init();
-#endif
-
-#if QEI_ENABLE
-    qei_enable = encoder_init(QEI_ENABLE);
 #endif
 
 #if defined(NEOPIXEL_SPI)
@@ -3526,56 +3154,6 @@ ISR_CODE void STEPPER_TIMER_IRQHandler (void)
 
 //    DIGITAL_OUT(AUXOUTPUT9_PORT, AUXOUTPUT9_PIN, 0);
 }
-
-#if SPINDLE_ENCODER_ENABLE
-
-ISR_CODE void RPM_COUNTER_IRQHandler (void)
-{
-    spindle_encoder.spin_lock = true;
-
-    __disable_irq();
-    uint32_t tval = RPM_TIMER_COUNT;
-    uint16_t cval = RPM_COUNTER->CNT;
-    __enable_irq();
-
-    RPM_COUNTER->SR = ~TIM_SR_CC1IF;
-    RPM_COUNTER->CCR1 = (uint16_t)(RPM_COUNTER->CCR1 + spindle_encoder.tics_per_irq);
-
-    spindle_encoder.counter.pulse_count += (uint16_t)(cval - (uint16_t)spindle_encoder.counter.last_count);
-    spindle_encoder.counter.last_count = cval;
-    spindle_encoder.timer.pulse_length = tval - spindle_encoder.timer.last_pulse;
-    spindle_encoder.timer.last_pulse = tval;
-
-    spindle_encoder.spin_lock = false;
-}
-
-#if RPM_TIMER_N != 2
-
-ISR_CODE void RPM_TIMER_IRQHandler (void)
-{
-    RPM_TIMER->SR &= ~TIM_SR_UIF;
-
-    rpm_timer_ovf++;
-}
-
-#endif
-
-static void inline spindle_encoder_index_event (void)
-{
-    uint32_t rpm_count = RPM_COUNTER->CNT;
-    spindle_encoder.timer.last_index = RPM_TIMER_COUNT;
-
-    if(spindle_encoder.counter.index_count && (uint16_t)(rpm_count - (uint16_t)spindle_encoder.counter.last_index) != spindle_encoder.ppr)
-        spindle_encoder.error_count++;
-
-    spindle_encoder.counter.last_index = rpm_count;
-    spindle_encoder.counter.index_count++;
-
-    if(hal.spindle_encoder_on_index)
-        hal.spindle_encoder_on_index(spindle_encoder.counter.index_count);
-}
-
-#endif // SPINDLE_ENCODER_ENABLE
 
 void core_pin_debounce (void *pin)
 {
@@ -3816,10 +3394,6 @@ ISR_CODE void EXTI15_10_IRQHandler(void)
         if(ifg & SPINDLE_INDEX_BIT) 
 			spindle_encoder_index_event();
 #endif
-#if QEI_ENABLE && ((QEI_A_BIT|QEI_B_BIT) & 0xFC00)
-        if(ifg & (QEI_A_BIT|QEI_B_BIT))
-            qei_update();
-#endif
 #if (LIMIT_MASK|SD_DETECT_BIT) & 0xFC00
         if(ifg & (LIMIT_MASK|SD_DETECT_BIT))
             core_pin_irq(ifg);
@@ -3836,24 +3410,6 @@ ISR_CODE void EXTI15_10_IRQHandler(void)
 // Interrupt handler for 1 ms interval timer
 void Driver_IncTick (void)
 {
-#if QEI_ENABLE
-      if(qei.vel_timeout && !(--qei.vel_timeout)) {
-          qei.encoder.velocity = abs(qei.count - qei.vel_count) * 1000 / (uwTick - qei.vel_timestamp);
-          qei.vel_timestamp = uwTick;
-          qei.vel_timeout = QEI_VELOCITY_TIMEOUT;
-          if((qei.encoder.event.position_changed = !qei.dbl_click_timeout || qei.encoder.velocity == 0))
-              hal.encoder.on_event(&qei.encoder, qei.count);
-          qei.vel_count = qei.count;
-      }
-
-  #if QEI_SELECT_ENABLE
-      if(qei.dbl_click_timeout && !(--qei.dbl_click_timeout)) {
-          qei.encoder.event.click = On;
-          hal.encoder.on_event(&qei.encoder, qei.count);
-      }
-  #endif
-#endif
-
 #ifdef Z_LIMIT_POLL
     static bool z_limit_state = false;
     if(z_limits_irq_enabled) {

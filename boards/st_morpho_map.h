@@ -104,7 +104,7 @@
 #define M3_STEP_PIN             6
 #define M3_DIRECTION_PORT       GPIOA
 #define M3_DIRECTION_PIN        12
-#if !M3_LIMIT_ENABLE
+#if M3_LIMIT_ENABLE
 #define M3_LIMIT_PORT           GPIOC
 #define M3_LIMIT_PIN            11
 #endif
@@ -118,8 +118,7 @@
 #define AUXOUTPUT1_PORT         GPIOB // Aux 1
 #define AUXOUTPUT1_PIN          2
 #endif
-#ifndef SPI_PORT
-
+#if !(defined(SPI_PORT) || defined(QEI_PORT))
 #define AUXINPUT0_ANALOG_PORT   GPIOA
 #define AUXINPUT0_ANALOG_PIN    5
 #define AUXINPUT1_ANALOG_PORT   GPIOA
@@ -203,16 +202,27 @@
 #define SPINDLE_PULSE_PIN       2
 #define SPINDLE_INDEX_PORT      GPIOB
 #define SPINDLE_INDEX_PIN       14
-#elif QEI_ENABLE
-#define QEI_A_PORT              GPIOA
-#define QEI_A_PIN               15
-#define QEI_B_PORT              GPIOB
-#define QEI_B_PIN               14
 #else
 #define AUXINPUT0_PORT          GPIOB
 #define AUXINPUT0_PIN           14
 #define AUXINPUT1_PORT          GPIOA
 #define AUXINPUT1_PIN           15
+#endif
+
+#if ENCODER_ENABLE && defined(AUXINPUT0_PIN)
+#define QEI_A_PORT              AUXINPUT1_PORT
+#define QEI_A_PIN               AUXINPUT1_PIN
+#define QEI_B_PORT              AUXINPUT0_PORT
+#define QEI_B_PIN               AUXINPUT0_PIN
+#if (ENCODER_ENABLE & 1)
+#if !I2C_STROBE_ENABLE
+#define QEI_SELECT_PORT         AUXINPUT3_PORT
+#define QEI_SELECT_PIN          AUXINPUT3_PIN
+#elif !SAFETY_DOOR_ENABLE
+#define QEI_SELECT_PORT         AUXINPUT4_PORT
+#define QEI_SELECT_PIN          AUXINPUT4_PIN
+#endif
+#endif
 #endif
 
 #ifndef M3_LIMIT_PIN //  N_ABC_MOTORS == 0
@@ -287,16 +297,6 @@
 #if MPG_ENABLE == 1
 #define MPG_MODE_PORT           AUXINPUT6_PORT
 #define MPG_MODE_PIN            AUXINPUT6_PIN
-#endif
-
-#if QEI_SELECT_ENABLE
-#if !I2C_STROBE_ENABLE
-#define QEI_SELECT_PORT         AUXINPUT3_PORT
-#define QEI_SELECT_PIN          AUXINPUT3_PIN
-#elif !SAFETY_DOOR_ENABLE
-#define QEI_SELECT_PORT         AUXINPUT4_PORT
-#define QEI_SELECT_PIN          AUXINPUT4_PIN
-#endif
 #endif
 
 #if ETHERNET_ENABLE
