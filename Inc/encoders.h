@@ -1,10 +1,10 @@
 /*
 
-  timers.h - driver code for STM32F7xx ARM processors
+  timers.h - driver code for STM32F4xx ARM processors
 
   Part of grblHAL
 
-  Copyright (c) 2024-2026 Terje Io
+  Copyright (c) 2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,20 +22,6 @@
 
 #pragma once
 
-/* Internal API */
-
-hal_timer_t timer_claim (TIM_TypeDef *timer);
-bool timer_is_claimed (TIM_TypeDef *timer);
-uint32_t timer_clk_enable (TIM_TypeDef *timer);
-uint32_t timer_get_clock_hz (TIM_TypeDef *timer);
-timer_cap_t timer_get_cap (TIM_TypeDef *timer);
-timer_resolution_t timer_get_resolution (TIM_TypeDef *timer);
-
-/* HAL API */
-
-hal_timer_t timerClaim (timer_cap_t cap, uint32_t timebase);
-bool timerCfg (hal_timer_t timer, timer_cfg_t *cfg);
-bool timerStart (hal_timer_t timer, uint32_t period);
-bool timerStop (hal_timer_t timer);
-
-/**/
+void driver_encoders_init (void);
+void spindle_encoder_index_event (void);
+void encoder_pin_claimed (uint8_t port, xbar_t *pin);

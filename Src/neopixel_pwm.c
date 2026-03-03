@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F7xx
 
-  Copyright (c) 2025 Terje Io
+  Copyright (c) 2025-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -461,9 +461,6 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
     if(settings_changed)
         settings_changed(settings, changed);
 }
-
-extern bool timer_claim (TIM_TypeDef *timer);
-extern uint32_t timer_clk_enable (TIM_TypeDef *timer);
 
 void neopixel_pwm_init (void)
 {

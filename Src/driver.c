@@ -58,12 +58,9 @@
 #include "flash.h"
 #endif
 
-#if QEI_ENABLE
-#include "grbl/encoders.h"
-#endif
-
 #if QEI_ENABLE || SPINDLE_ENCODER_ENABLE
 #include "encoders.h"
+#include "grbl/encoders.h"
 #endif
 
 #if ETHERNET_ENABLE
@@ -1779,9 +1776,7 @@ static bool aux_claim_explicit (aux_ctrl_t *aux_ctrl)
                 break;
 #endif
             default:
-#if QEI_ENABLE && defined(QEI_A_PIN) && defined(QEI_B_PIN)
                 encoder_pin_claimed(aux_ctrl->port, pin);
-#endif
                 break;
         }
     }
@@ -1992,10 +1987,6 @@ void settings_changed (settings_t *settings, settings_changed_flags_t changed)
 
 #ifdef SQUARING_ENABLED
         hal.stepper.disable_motors((axes_signals_t){0}, SquaringMode_Both);
-#endif
-
-#if SPINDLE_ENCODER_ENABLE
-        spindle_encoder_cfg(settings);
 #endif
 
         float sl = (float)hal.f_step_timer / 1000000.0f;
@@ -2762,7 +2753,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260222";
+    hal.driver_version = "260303";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
@@ -3069,7 +3060,7 @@ bool driver_init (void)
     tmc_uart_init();
 #endif
 
-#ifdef QEI_PORT
+#if SPINDLE_ENCODER_ENABLE || (QEI_ENABLE && defined(QEI_PORT))
     driver_encoders_init();
 #endif
 

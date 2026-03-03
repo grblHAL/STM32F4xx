@@ -253,8 +253,6 @@
 #endif
 
 #define IS_TIMER_CLAIMED(INSTANCE) (((INSTANCE) == STEPPER_TIMER_BASE) || \
-                                    ((INSTANCE) == RPM_TIMER_BASE) || \
-                                    ((INSTANCE) == RPM_COUNTER_BASE) || \
                                     ((INSTANCE) == TMC_UART_TIMER_BASE))
 //                                    ((INSTANCE) == TIM3_BASE && SDCARD_SDIO))
 

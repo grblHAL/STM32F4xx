@@ -236,7 +236,6 @@
       "MAP": "boards/btt_skr_pro_v1_1_map.h",
       "caps": {
         "axes": 6,
-		"auto_square": 2,
         "serial_ports": 3,
         "digital_in": 4,
         "digital_out": 6,
@@ -260,7 +259,6 @@
       "MAP": "boards/btt_skr_pro_v1_1_map.h",
       "caps": {
         "axes": 6,
-		    "auto_square": 2,
         "serial_ports": 3,
         "digital_in": 4,
         "digital_out": 6,
@@ -534,7 +532,6 @@
       "MAP": "boards/flexi_hal_map.h",
       "caps": {
         "axes": 5,
-        "auto_square": 2,
         "digital_in": 5,
         "digital_out": 4,
         "serial_ports": 2,
@@ -562,7 +559,6 @@
       "MAP": "boards/longboard32_map.h",
       "caps": {
         "axes": 5,
-        "auto_square": 1,
         "usb_cdc": 1,
         "serial_ports": 2,
         "safety_door": 1,
