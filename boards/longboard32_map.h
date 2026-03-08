@@ -353,6 +353,11 @@
 #define AUXINPUT11_PORT         GPIOC // Probe
 #define AUXINPUT11_PIN          4
 
+#if !SPINDLE_ENCODER_ENABLE
+#define AUXINPUT12_PORT         GPIOD // External stepper driver alarm (A)
+#define AUXINPUT12_PIN          2
+#endif
+
 #define AUXINPUT13_PORT         GPIOB // Reset/EStop
 #define AUXINPUT13_PIN          12
 
@@ -427,9 +432,6 @@
 
 // Not mapped: PD10 -> PRU_RESET
 
-#define AUXINPUT12_PORT         GPIOD // External stepper driver alarm (A) or spindle encoder pulse
-#define AUXINPUT12_PIN          2
-
 #if MOTOR_FAULT_ENABLE && ((N_GANGED && N_AXIS == 4) || N_AXIS == 5)
 #define MOTOR_FAULT_ENABLE      1
 #define MOTOR_FAULT_PORT        AUXINPUT12_PORT
@@ -461,17 +463,42 @@
 #define MOTOR_CSM3_PIN          12
 #endif
 
-#else
+#else // SLB_EXT
 
-#define X_MOTOR_FAULT_PORT      GPIOA
-#define X_MOTOR_FAULT_PIN       15
-#define Y_MOTOR_FAULT_PORT      GPIOA
-#define Y_MOTOR_FAULT_PIN       1
-#define Z_MOTOR_FAULT_PORT      GPIOA
-#define Z_MOTOR_FAULT_PIN       2
-#define MOTOR_FAULT_INMODE      GPIO_BITBAND
+#define AUXINPUT16_PORT         GPIOA
+#define AUXINPUT16_PIN          15
+#define AUXINPUT17_PORT         GPIOA
+#define AUXINPUT17_PIN          1
+#define AUXINPUT18_PORT         GPIOA
+#define AUXINPUT18_PIN          2
+#define AUXINPUT19_PORT         GPIOA
+#define AUXINPUT19_PIN          3
 
+#define X_MOTOR_FAULT_PORT      AUXINPUT16_PORT
+#define X_MOTOR_FAULT_PIN       AUXINPUT16_PIN
+#define Y_MOTOR_FAULT_PORT      AUXINPUT17_PORT
+#define Y_MOTOR_FAULT_PIN       AUXINPUT17_PIN
+#define Z_MOTOR_FAULT_PORT      AUXINPUT18_PORT
+#define Z_MOTOR_FAULT_PIN       AUXINPUT18_PIN
+#if N_GANGED && N_AXIS == 4
+#ifdef AUXINPUT12_PIN
+#define M3_MOTOR_FAULT_PORT     AUXINPUT12_PORT
+#define M3_MOTOR_FAULT_PIN      AUXINPUT12_PIN
 #endif
+#define M4_MOTOR_FAULT_PORT     AUXINPUT19_PORT
+#define M4_MOTOR_FAULT_PIN      AUXINPUT19_PIN
+#else
+#if N_ABC_MOTORS > 0
+#define M3_MOTOR_FAULT_PORT     AUXINPUT19_PORT
+#define M3_MOTOR_FAULT_PIN      AUXINPUT19_PIN
+#endif
+#if N_ABC_MOTORS == 2 && defined(AUXINPUT12_PIN)
+#define M4_MOTOR_FAULT_PORT     AUXINPUT12_PORT
+#define M4_MOTOR_FAULT_PIN      AUXINPUT12_PIN
+#endif
+#endif
+
+#endif // SLB_EXT
 
 #if SDCARD_ENABLE || ETHERNET_ENABLE
 #define SPI_PORT                1 // GPIOA, SCK_PIN = 5, MISO_PIN = 6, MOSI_PIN = 7

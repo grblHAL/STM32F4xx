@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2024-2025 Terje Io
+  Copyright (c) 2024-2026 Terje Io
   Copyright (c) 2022 Expatria Technologies
 
   grblHAL is free software: you can redistribute it and/or modify
@@ -34,8 +34,6 @@
 #include "sdcard/sdcard.h"
 
 static driver_setup_ptr driver_setup;
-
-extern pin_group_pins_t *get_motor_fault_inputs (void);
 
 static void clear_ringleds (void *data)
 {
@@ -119,7 +117,7 @@ static void onReportOptions (bool newopt)
     on_report_options(newopt);
 
     if(!newopt)
-        report_plugin("SLB Probing", "0.05");
+        report_plugin("SLB Probing", "0.06");
 }
 
 #endif
@@ -148,8 +146,23 @@ static void onStateChanged (sys_state_t state)
 #else
 
 static control_signals_get_state_ptr hal_control_get_state;
-static pin_group_pins_t *fault_inputs;
 static stepper_status_t stepper_status = {};
+
+typedef struct {
+    uint8_t n_pins;
+    struct {
+        uint8_t axis;
+        input_signal_t *input;
+    } motor[N_ABC_MOTORS + 3];
+} motor_pins_t;
+
+motor_pins_t fault_signals = {};
+
+void motor_fault_add_pin (input_signal_t *input, xbar_t *pin)
+{
+    fault_signals.motor[fault_signals.n_pins].input = input;
+    fault_signals.motor[fault_signals.n_pins++].axis = xbar_fault_pin_to_axis(input->id);
+}
 
 static void poll_motor_fault (void *data)
 {
@@ -161,12 +174,11 @@ static void poll_motor_fault (void *data)
 
         task_add_delayed(poll_motor_fault, NULL, 25);
 
-        for(idx = 0; idx < fault_inputs->n_pins; idx++) {
-            uint8_t axis = xbar_fault_pin_to_axis(fault_inputs->pins.inputs[idx].id);
-            if(bit_istrue(settings.motor_fault_enable.mask, bit(axis))) {
-                input_signal_t *input = &fault_inputs->pins.inputs[idx];
+        for(idx = 0; idx < fault_signals.n_pins; idx++) {
+            if(bit_istrue(settings.motor_fault_enable.mask, bit(fault_signals.motor[idx].axis))) {
+                input_signal_t *input = fault_signals.motor[idx].input;
                 if(DIGITAL_IN(input->port, input->pin) ^ input->mode.inverted)
-                    xbar_stepper_state_set(&stepper_status.fault, axis, fault_inputs->pins.inputs[idx].id >= Input_MotorFaultX_2);
+                    xbar_stepper_state_set(&stepper_status.fault, fault_signals.motor[idx].axis, input->id >= Input_MotorFaultX2);
             }
         }
 
@@ -199,12 +211,15 @@ static control_signals_t getControlState (void)
 
 static bool driverSetup (settings_t *settings)
 {
+    if(!driver_setup(settings))
+        return false;
+
     hal.homing.get_state = NULL; // for now, StallGuard sensorless homing not yet in use. Later check if sensorless homing is enabled.
     hal.home_cap.a.bits = hal.home_cap.b.bits = 0;
     xbar_set_homing_source();
 
 #if !TRINAMIC_ENABLE
-    if((hal.signals_cap.motor_fault = settings->motor_fault_enable.value && (fault_inputs = get_motor_fault_inputs()))) {
+    if((hal.signals_cap.motor_fault = !!settings->motor_fault_enable.value && fault_signals.n_pins)) {
 
         task_add_delayed(poll_motor_fault, NULL, 25);
 
@@ -215,7 +230,7 @@ static bool driverSetup (settings_t *settings)
     }
 #endif
 
-    return driver_setup(settings);
+    return true;
 }
 
 void board_init (void)
