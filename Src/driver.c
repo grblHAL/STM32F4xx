@@ -29,6 +29,7 @@
 #include "main.h"
 #include "driver.h"
 #include "serial.h"
+#include "encoders.h"
 
 #include "grbl/task.h"
 #include "grbl/motor_pins.h"
@@ -59,7 +60,6 @@
 #endif
 
 #if QEI_ENABLE || SPINDLE_ENCODER_ENABLE
-#include "encoders.h"
 #include "grbl/encoders.h"
 #endif
 
