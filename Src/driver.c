@@ -233,6 +233,18 @@ static input_signal_t inputpin[] = {
 #ifdef AUXINPUT19_PIN
     { .id = Input_Aux19,          .port = AUXINPUT19_PORT,    .pin = AUXINPUT19_PIN,      .group = PinGroup_AuxInput },
 #endif
+#ifdef AUXINPUT20_PIN
+    { .id = Input_Aux20,          .port = AUXINPUT20_PORT,    .pin = AUXINPUT20_PIN,      .group = PinGroup_AuxInput },
+#endif
+#ifdef AUXINPUT21_PIN
+    { .id = Input_Aux21,          .port = AUXINPUT21_PORT,    .pin = AUXINPUT21_PIN,      .group = PinGroup_AuxInput },
+#endif
+#ifdef AUXINPUT22_PIN
+    { .id = Input_Aux22,          .port = AUXINPUT22_PORT,    .pin = AUXINPUT22_PIN,      .group = PinGroup_AuxInput },
+#endif
+#ifdef AUXINPUT23_PIN
+    { .id = Input_Aux23,          .port = AUXINPUT23_PORT,    .pin = AUXINPUT23_PIN,      .group = PinGroup_AuxInput },
+#endif
 #ifdef AUXINPUT0_ANALOG_PIN
     { .id = Input_Analog_Aux0,    .port = AUXINPUT0_ANALOG_PORT, .pin = AUXINPUT0_ANALOG_PIN, .group = PinGroup_AuxInputAnalog },
 #endif
@@ -1808,18 +1820,18 @@ static void aux_assign_irq (void)
 
                 if(irq & input->bit) { // duplicate IRQ
 
-                    if(aux == NULL)
+                    if(aux == NULL || xbar_is_motor_fault_in(aux->function))
                         input->cap.irq_mode = IRQ_Mode_None;
                     else for(j = 0; j < aux_digital_in.n_pins - 1; j++) {
                         input2 = &aux_digital_in.pins.inputs[j];
                         if(input->pin == input2->pin) {
                             if(input->id < input2->id || (aux->signal.bits & main_signals.bits)) {
                                 input2->cap.irq_mode = IRQ_Mode_None;
-                                if(!(xbar_is_probe_in(input2->id) || xbar_is_motor_fault_in(aux->function)))
+                                if(!(xbar_is_probe_in(input2->id)))
                                     input2->id = (pin_function_t)(Input_Aux0 + input2->user_port);
                             } else {
                                 input->cap.irq_mode = IRQ_Mode_None;
-                                if(!(xbar_is_probe_in(input->id) || xbar_is_motor_fault_in(aux->function)))
+                                if(!(xbar_is_probe_in(input->id)))
                                     input->id = (pin_function_t)(Input_Aux0 + input->user_port);
                             }
                         }
@@ -2739,7 +2751,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260308";
+    hal.driver_version = "260311";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
