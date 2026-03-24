@@ -1,0 +1,36 @@
+{
+  "build": {
+    "cpu": "cortex-m4",
+    "extra_flags": "-DSTM32F4 -DSTM32F429xx",
+    "f_cpu": "180000000L",
+    "mcu": "stm32f429vgt6",
+    "product_line": "STM32F429xx"
+  },
+  "debug": {
+    "jlink_device": "STM32F429VG",
+    "openocd_target": "stm32f4x",
+    "svd_path": "STM32F429x.svd"
+  },
+  "frameworks": [
+    "cmsis",
+    "mbed",
+    "stm32cube",
+    "libopencm3",
+    "zephyr"
+  ],
+  "name": "STM32F429VG (128k RAM, 64k CCM RAM, 1024k Flash)",
+  "upload": {
+    "maximum_ram_size": 262144,
+    "maximum_size": 1048576,
+    "protocol": "stlink",
+    "protocols": [
+      "jlink",
+      "cmsis-dap",
+      "stlink",
+      "blackmagic",
+      "mbed"
+    ]
+  },
+  "url": "https://www.st.com/en/microcontrollers-microprocessors/stm32f429-439.html",
+  "vendor": "ST"
+}
