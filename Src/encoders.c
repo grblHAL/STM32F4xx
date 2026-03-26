@@ -93,13 +93,18 @@ static const stm32_pcnt_hw_t counters[] = {
 #if !IS_TIMER_CLAIMED(TIM2_BASE)
     { .port = GPIOA, .pin = 5, .af = GPIO_AF1_TIM2, .timer = timer(2), .ecm = false },
     { .port = GPIOA, .pin = 15, .af = GPIO_AF1_TIM2, .timer = timer(2), .ecm = false },
+    { .port = GPIOB, .pin = 8, .af = GPIO_AF1_TIM2, .timer = timer(2), .ecm = false },
 #endif
 #if !IS_TIMER_CLAIMED(TIM1_BASE)
     { .port = GPIOA, .pin = 12, .af = GPIO_AF1_TIM1, .timer = timer(1), .ecm = false },
+    { .port = GPIOE, .pin = 7, .af = GPIO_AF1_TIM1, .timer = timer(1), .ecm = false },
 #endif
 #if !IS_TIMER_CLAIMED(TIM3_BASE)
     { .port = GPIOB, .pin = 4, .af = GPIO_AF2_TIM3, .timer = timer(3), .ecm = true },
-    { .port = GPIOD, .pin = 2, .af = GPIO_AF2_TIM3, .timer = timer(3), .ecm = false }
+    { .port = GPIOD, .pin = 7, .af = GPIO_AF2_TIM3, .timer = timer(3), .ecm = false },
+#endif
+#if !IS_TIMER_CLAIMED(TIM4_BASE)
+    { .port = GPIOE, .pin = 0, .af = GPIO_AF2_TIM4, .timer = timer(4), .ecm = false }
 #endif
 };
 
@@ -564,7 +569,7 @@ void driver_encoders_init (void)
                 .Pin = (1 << SPINDLE_PULSE_PIN),
                 .Pull = GPIO_NOPULL,
                 .Speed = GPIO_SPEED_FREQ_LOW,
-                .Alternate = GPIO_AF2_TIM3
+                .Alternate = counters[idx].af
             };
 
             HAL_GPIO_Init(SPINDLE_PULSE_PORT, &GPIO_Init);

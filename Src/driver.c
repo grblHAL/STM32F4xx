@@ -221,6 +221,7 @@ static input_signal_t inputpin[] = {
 #ifdef AUXINPUT15_PIN
     { .id = Input_Aux15,          .port = AUXINPUT15_PORT,    .pin = AUXINPUT15_PIN,      .group = PinGroup_AuxInput },
 #endif
+#if N_AUX_DIN > 16
 #ifdef AUXINPUT16_PIN
     { .id = Input_Aux16,          .port = AUXINPUT16_PORT,    .pin = AUXINPUT16_PIN,      .group = PinGroup_AuxInput },
 #endif
@@ -245,6 +246,7 @@ static input_signal_t inputpin[] = {
 #ifdef AUXINPUT23_PIN
     { .id = Input_Aux23,          .port = AUXINPUT23_PORT,    .pin = AUXINPUT23_PIN,      .group = PinGroup_AuxInput },
 #endif
+#endif // N_AUX_DIN > 16
 #ifdef AUXINPUT0_ANALOG_PIN
     { .id = Input_Analog_Aux0,    .port = AUXINPUT0_ANALOG_PORT, .pin = AUXINPUT0_ANALOG_PIN, .group = PinGroup_AuxInputAnalog },
 #endif
@@ -1723,12 +1725,24 @@ static void aux_irq_handler (uint8_t port, bool state)
 
 __attribute__((weak)) void motor_fault_add_pin (input_signal_t *input, xbar_t *pin)
 {
-
+    // NOOP
 }
+
+#ifdef USE_EXPANDERS
+__attribute__((weak)) bool input_add_expander_pin (xbar_t *pin)
+{
+    return false;
+}
+#endif
 
 static bool aux_claim_explicit (aux_ctrl_t *aux_ctrl)
 {
     xbar_t *pin;
+
+#ifdef USE_EXPANDERS
+    if(aux_ctrl->gpio.port == (void *)EXPANDER_PORT)
+        return input_add_expander_pin((xbar_t *)aux_ctrl->input);
+#endif
 
     if(aux_ctrl->input == NULL) {
 
@@ -2751,7 +2765,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260311";
+    hal.driver_version = "260324";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
