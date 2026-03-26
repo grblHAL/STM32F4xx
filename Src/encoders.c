@@ -92,6 +92,7 @@ static const stm32_pcnt_hw_t counters[] = {
 #endif
 #if !IS_TIMER_CLAIMED(TIM2_BASE)
     { .port = GPIOA, .pin = 5, .af = GPIO_AF1_TIM2, .timer = timer(2), .ecm = false },
+    { .port = GPIOA, .pin = 15, .af = GPIO_AF1_TIM2, .timer = timer(2), .ecm = false },
 #endif
 #if !IS_TIMER_CLAIMED(TIM1_BASE)
     { .port = GPIOA, .pin = 12, .af = GPIO_AF1_TIM1, .timer = timer(1), .ecm = false },
