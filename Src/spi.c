@@ -3,7 +3,7 @@
 
   Part of grblHAL driver for STM32F4xx
 
-  Copyright (c) 2020-2025 Terje Io
+  Copyright (c) 2020-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -459,16 +459,12 @@ void spi_init (void)
     }
 }
 
-uint32_t spi_set_speed (uint32_t prescaler)
+void spi_set_speed (uint32_t prescaler)
 {
-    uint32_t cur;
-
-    if((cur = (spi_port.Instance->CR1 & SPI_BAUDRATEPRESCALER_256)) != prescaler) {
+    if((spi_port.Instance->CR1 & SPI_BAUDRATEPRESCALER_256) != prescaler) {
         spi_port.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
         spi_port.Instance->CR1 |= prescaler;
     }
-
-    return cur;
 }
 
 uint8_t spi_get_byte (void)

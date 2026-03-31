@@ -101,7 +101,7 @@ static const stm32_pcnt_hw_t counters[] = {
 #endif
 #if !IS_TIMER_CLAIMED(TIM3_BASE)
     { .port = GPIOB, .pin = 4, .af = GPIO_AF2_TIM3, .timer = timer(3), .ecm = true },
-    { .port = GPIOD, .pin = 7, .af = GPIO_AF2_TIM3, .timer = timer(3), .ecm = false },
+    { .port = GPIOD, .pin = 2, .af = GPIO_AF2_TIM3, .timer = timer(3), .ecm = false },
 #endif
 #if !IS_TIMER_CLAIMED(TIM4_BASE)
     { .port = GPIOE, .pin = 0, .af = GPIO_AF2_TIM4, .timer = timer(4), .ecm = false }
@@ -559,7 +559,7 @@ void driver_encoders_init (void)
             sp_encoder.ccr = &sp_encoder.timer->CCR1;
             sp_encoder.timer->PSC = 0;
             sp_encoder.timer->ARR = 65535;
-            sp_encoder.timer->CCER = TIM_CCER_CC1E;
+//            sp_encoder.timer->CCER = TIM_CCER_CC1E; // Fails with F411 for some reason
             sp_encoder.timer->SMCR = counters[idx].ecm ? (TIM_SMCR_SMS_0|TIM_SMCR_SMS_1|TIM_SMCR_SMS_2|TIM_SMCR_ETF_2|TIM_SMCR_ETF_3|TIM_SMCR_TS_0|TIM_SMCR_TS_2) : TIM_SMCR_ECE;
 
             HAL_NVIC_EnableIRQ(RPM_COUNTER_IRQn);
@@ -567,7 +567,7 @@ void driver_encoders_init (void)
                 .Speed = GPIO_SPEED_FREQ_LOW,
                 .Mode = GPIO_MODE_AF_PP,
                 .Pin = (1 << SPINDLE_PULSE_PIN),
-                .Pull = GPIO_NOPULL,
+                .Pull = GPIO_PULLUP,
                 .Speed = GPIO_SPEED_FREQ_LOW,
                 .Alternate = counters[idx].af
             };

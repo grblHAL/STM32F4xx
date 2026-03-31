@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2023-2025 Terje Io
+  Copyright (c) 2023-2026 Terje Io
   SoftSPI implementation Copyright (c) 2021 fitch22
 
   grblHAL is free software: you can redistribute it and/or modify
@@ -412,7 +412,7 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
     uint8_t res;
     uint_fast8_t idx = n_motors;
 #ifndef TRINAMIC_SPI_PORT
-    uint32_t f_spi = spi_set_speed(SPI_BAUDRATEPRESCALER_32);
+    spi_set_speed(SPI_BAUDRATEPRESCALER_32);
 #endif
 
     datagram[driver.seq].addr.value = reg->addr.value;
@@ -455,10 +455,6 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
     DIGITAL_OUT(cs.port, cs.pin, 1);
     delay(50);
 
-#ifndef TRINAMIC_SPI_PORT
-    spi_set_speed(f_spi);
-#endif
-
     return status;
 }
 
@@ -469,7 +465,7 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
     uint8_t res;
     uint_fast8_t idx = n_motors;
 #ifndef TRINAMIC_SPI_PORT
-    uint32_t f_spi = spi_set_speed(SPI_BAUDRATEPRESCALER_32);
+    spi_set_speed(SPI_BAUDRATEPRESCALER_32);
 #endif
 
     memcpy(&datagram[driver.seq], reg, sizeof(TMC_spi_datagram_t));
@@ -494,10 +490,6 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *reg
     delay(100);
     DIGITAL_OUT(cs.port, cs.pin, 1);
     delay(50);
-
-#ifndef TRINAMIC_SPI_PORT
-    spi_set_speed(f_spi);
-#endif
 
     return status;
 }
@@ -543,7 +535,7 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *data
 {
     TMC_spi_status_t status;
 #ifndef TRINAMIC_SPI_PORT
-    uint32_t f_spi = spi_set_speed(SPI_BAUDRATEPRESCALER_32);
+    spi_set_speed(SPI_BAUDRATEPRESCALER_32);
 #endif
 
     DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 0);
@@ -569,10 +561,6 @@ TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *data
 
     DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 1);
 
-#ifndef TRINAMIC_SPI_PORT
-    spi_set_speed(f_spi);
-#endif
-
     return status;
 }
 
@@ -580,7 +568,7 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
 {
     TMC_spi_status_t status;
 #ifndef TRINAMIC_SPI_PORT
-    uint32_t f_spi = spi_set_speed(SPI_BAUDRATEPRESCALER_32);
+    spi_set_speed(SPI_BAUDRATEPRESCALER_32);
 #endif
 
     DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 0);
@@ -594,10 +582,6 @@ TMC_spi_status_t tmc_spi_write (trinamic_motor_t driver, TMC_spi_datagram_t *dat
 
     DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 1);
 
-#ifndef TRINAMIC_SPI_PORT
-    spi_set_speed(f_spi);
-#endif
-
     return status;
 }
 
@@ -605,7 +589,7 @@ TMC_spi20_datagram_t tmc_spi20_write (trinamic_motor_t driver, TMC_spi20_datagra
 {
     TMC_spi20_datagram_t status = {0};
 #ifndef TRINAMIC_SPI_PORT
-    uint32_t f_spi = spi_set_speed(SPI_BAUDRATEPRESCALER_32);
+    spi_set_speed(SPI_BAUDRATEPRESCALER_32);
 #else
     while(__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_BSY)) {};
 #endif
@@ -619,10 +603,6 @@ TMC_spi20_datagram_t tmc_spi20_write (trinamic_motor_t driver, TMC_spi20_datagra
     DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 1);
 
     status.value >>= 4;
-
-#ifndef TRINAMIC_SPI_PORT
-    spi_set_speed(f_spi);
-#endif
 
     return status;
 }
