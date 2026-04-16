@@ -151,7 +151,7 @@ static DMA_HandleTypeDef spi_dma_tx = {
 
 #endif
 
-void spi_init (void)
+spi_cap_t spi_start (spi_slave_t *device)
 {
     static bool init = false;
 
@@ -457,14 +457,8 @@ void spi_init (void)
 
         init = true;
     }
-}
 
-void spi_set_speed (uint32_t prescaler)
-{
-    if((spi_port.Instance->CR1 & SPI_BAUDRATEPRESCALER_256) != prescaler) {
-        spi_port.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
-        spi_port.Instance->CR1 |= prescaler;
-    }
+    return (spi_cap_t){ .started = On };
 }
 
 uint8_t spi_get_byte (void)
@@ -488,21 +482,44 @@ uint8_t spi_put_byte (uint8_t byte)
     return (uint8_t)spi_port.Instance->DR;
 }
 
-void spi_write (uint8_t *data, uint16_t len)
+bool spi_write (uint8_t *data, uint16_t len)
 {
     if(HAL_SPI_Transmit_DMA(&spi_port, data, len) == HAL_OK)
         while(spi_port.State != HAL_SPI_STATE_READY);
 
     __HAL_DMA_DISABLE(&spi_dma_tx);
+
+    return true;
 }
 
-void spi_read (uint8_t *data, uint16_t len)
+bool spi_read (uint8_t *data, uint16_t len)
 {
     if(HAL_SPI_Receive_DMA(&spi_port, data, len) == HAL_OK)
         while(spi_port.State != HAL_SPI_STATE_READY);
 
     __HAL_DMA_DISABLE(&spi_dma_rx);
     __HAL_DMA_DISABLE(&spi_dma_tx);
+
+    return true;
+}
+
+bool spi_select (spi_slave_t *device)
+{
+    if((spi_port.Instance->CR1 & SPI_BAUDRATEPRESCALER_256) != device->f_clock) {
+        spi_port.Instance->CR1 &= ~SPI_BAUDRATEPRESCALER_256;
+        spi_port.Instance->CR1 |= device->f_clock;
+    }
+
+    DIGITAL_OUT((GPIO_TypeDef *)device->cs_port, device->cs_pin, 0);
+
+    return true;
+}
+
+bool spi_deselect (spi_slave_t *device)
+{
+    DIGITAL_OUT((GPIO_TypeDef *)device->cs_port, device->cs_pin, 1);
+
+    return true;
 }
 
 void DMA_RX_IRQ_HANDLER (void)

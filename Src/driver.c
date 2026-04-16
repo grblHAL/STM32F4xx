@@ -415,13 +415,22 @@ static output_signal_t outputpin[] = {
     { .id = Bidirectional_MotorUARTM7,  .port = MOTOR_UARTM7_PORT,  .pin = MOTOR_UARTM7_PIN,        .group = PinGroup_MotorUART },
 #endif
 #ifdef FLASH_CS_PORT
-    { .id = Output_FlashCS,         .port = FLASH_CS_PORT,          .pin = FLASH_CS_PIN,            .group = PinGroup_SPI },
+    { .id = Output_FlashCS,         .port = FLASH_CS_PORT,          .pin = FLASH_CS_PIN,            .group = PinGroup_SPICS },
 #endif
 #ifdef SD_CS_PORT
-    { .id = Output_SdCardCS,        .port = SD_CS_PORT,             .pin = SD_CS_PIN,               .group = PinGroup_SdCard },
+    { .id = Output_SdCardCS,        .port = SD_CS_PORT,             .pin = SD_CS_PIN,               .group = PinGroup_SPICS },
 #endif
 #ifdef SPI_CS_PORT
-    { .id = Output_SPICS,           .port = SPI_CS_PORT,            .pin = SPI_CS_PIN,              .group = PinGroup_SPI },
+    { .id = Output_SPICS0,           .port = SPI_CS_PORT,           .pin = SPI_CS_PIN,              .group = PinGroup_SPICS },
+#endif
+#ifdef SPI_CS1_PORT
+    { .id = Output_SPICS1,           .port = SPI_CS1_PORT,          .pin = SPI_CS1_PIN,             .group = PinGroup_SPICS },
+#endif
+#ifdef SPI_CS2_PORT
+    { .id = Output_SPICS2,           .port = SPI_CS2_PORT,          .pin = SPI_CS2_PIN,             .group = PinGroup_SPICS },
+#endif
+#ifdef SPI_CS3_PORT
+    { .id = Output_SPICS3,           .port = SPI_CS3_PORT,          .pin = SPI_CS3_PIN,             .group = PinGroup_SPICS },
 #endif
 #ifdef SPI_RST_PORT
     { .id = Output_SPIRST,          .port = SPI_RST_PORT,           .pin = SPI_RST_PIN,             .group = PinGroup_SPI },
@@ -2519,10 +2528,8 @@ static bool driver_setup (settings_t *settings)
 
             if(outputpin[i].group == PinGroup_MotorChipSelect ||
                 outputpin[i].group == PinGroup_MotorUART ||
-                 outputpin[i].id == Output_SPICS ||
-                  outputpin[i].id == Output_FlashCS ||
-                   outputpin[i].id == Output_SdCardCS ||
-                    (outputpin[i].group == PinGroup_StepperEnable && (st_enable.mask & xbar_fn_to_axismask(outputpin[i].id).mask)))
+                 outputpin[i].group == PinGroup_SPICS ||
+                  (outputpin[i].group == PinGroup_StepperEnable && (st_enable.mask & xbar_fn_to_axismask(outputpin[i].id).mask)))
                 outputpin[i].port->BSRR = GPIO_Init.Pin;
 
             HAL_GPIO_Init(outputpin[i].port, &GPIO_Init);
@@ -2765,7 +2772,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260324";
+    hal.driver_version = "260410";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

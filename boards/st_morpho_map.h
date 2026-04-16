@@ -308,6 +308,8 @@
 #define SPI_IRQ_PIN             0
 #define SPI_RST_PORT            GPIOB // AUXOUTPUT1
 #define SPI_RST_PIN             2
+#define WIZNET_CS_PORT          SPI_CS_PORT
+#define WIZNET_CS_PIN           SPI_CS_PIN
 #endif
 
 // EOF

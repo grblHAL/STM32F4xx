@@ -282,6 +282,8 @@
 #define SPI_IRQ_PIN             3
 #define SPI_RST_PORT            GPIOA   // TXD_INT
 #define SPI_RST_PIN             9
+#define WIZNET_CS_PORT          SPI_CS_PORT
+#define WIZNET_CS_PIN           SPI_CS_PIN
 #endif
 
 #if SDCARD_ENABLE

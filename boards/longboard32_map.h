@@ -411,9 +411,14 @@
 #define I2C_STROBE_PIN          AUXINPUT10_PIN
 #endif
 
-#if MPG_ENABLE == 1 && defined(AUXINPUT15_PORT)
+#if MPG_ENABLE == 1
+#if defined(AUXINPUT15_PORT)
 #define MPG_MODE_PORT           AUXINPUT15_PORT
 #define MPG_MODE_PIN            AUXINPUT15_PIN
+#elif !I2C_STROBE_ENABLE && defined(AUXINPUT10_PORT)
+#define MPG_MODE_PORT           AUXINPUT10_PORT
+#define MPG_MODE_PIN            AUXINPUT10_PIN
+#endif
 #endif
 
 #if SPINDLE_ENCODER_ENABLE
@@ -513,6 +518,8 @@
 #define SPI_IRQ_PIN             10
 #define SPI_RST_PORT            GPIOA // TXD_INT
 #define SPI_RST_PIN             9
+#define WIZNET_CS_PORT          SPI_CS_PORT
+#define WIZNET_CS_PIN           SPI_CS_PIN
 #endif
 
 #if SDCARD_ENABLE

@@ -10,8 +10,6 @@
 
 #include <stdio.h>
 
-#include "spi.h"
-
 #include "socket.h"
 #if _WIZCHIP_ == W5500
 #include "W5500/w5500.h"
@@ -27,9 +25,14 @@ typedef struct {
 } st_gpio_t;
 
 static struct {
-    st_gpio_t cs;
     st_gpio_t rst;
 } hw;
+
+static spi_slave_t dev = {
+    .cs_pin = WIZNET_CS_PIN,
+    .cs_port = WIZNET_CS_PORT,
+    .f_clock = SPI_BAUDRATEPRESCALER_4
+};
 
 static void (*irq_callback)(void);
 static volatile bool spin_lock = false;
@@ -44,16 +47,14 @@ inline static void delay (uint32_t delay)
 
 static void wizchip_select (void)
 {
-    spi_set_speed(WIZCHIP_SPI_PRESCALER);
-
-    DIGITAL_OUT(hw.cs.port, hw.cs.pin, 0);
+    spi_select(&dev);
 
     delay(25);
 }
 
 static void wizchip_deselect (void)
 {
-    DIGITAL_OUT(hw.cs.port, hw.cs.pin, 1);
+    spi_deselect(&dev);
 }
 
 static void wizchip_critical_section_lock(void)
@@ -78,12 +79,6 @@ static bool wizchip_gpio_interrupt_callback (uint_fast8_t id, bool level)
 static void add_pin (xbar_t *gpio, void *data)
 {
   if(gpio->group == PinGroup_SPI) switch(gpio->function) {
-
-        case Output_SPICS:
-            hw.cs.port = (GPIO_TypeDef *)gpio->port;
-            hw.cs.pin = gpio->pin;
-//            hal.periph_port.set_pin_description(gpio->function, gpio->group, "WizNet W5x00 CS");
-            break;
 
         case Output_SPIRST:
             hw.rst.port = (GPIO_TypeDef *)gpio->port;
@@ -117,14 +112,14 @@ wizchip_init_err_t wizchip_initialize (void)
 
     wizchip_deselect();
 
-    spi_init();
+    spi_start(&dev);
     wizchip_reset();
 
     reg_wizchip_cris_cbfunc(wizchip_critical_section_lock, wizchip_critical_section_unlock);
     reg_wizchip_cs_cbfunc(wizchip_select, wizchip_deselect);
     reg_wizchip_spi_cbfunc(spi_get_byte, (void (*)(uint8_t))spi_put_byte);
 #ifndef USE_SPI_DMA
-    reg_wizchip_spiburst_cbfunc(spi_read, spi_write);
+    reg_wizchip_spiburst_cbfunc((void (*)(uint8_t*, uint16_t))spi_read, (void (*)(uint8_t*, uint16_t))spi_write);
 #endif
 
     /* W5x00 initialize */

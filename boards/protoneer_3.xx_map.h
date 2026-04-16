@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2024 Terje Io
+  Copyright (c) 2020-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -168,6 +168,8 @@
 #define SPI_IRQ_PIN             2
 #define SPI_RST_PORT            GPIOB
 #define SPI_RST_PIN             1
+#define WIZNET_CS_PORT          SPI_CS_PORT
+#define WIZNET_CS_PIN           SPI_CS_PIN
 #endif
 
 /**/

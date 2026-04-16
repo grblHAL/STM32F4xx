@@ -214,6 +214,8 @@
 #define SPI_IRQ_PIN                 11                              // ESP-IO4
 #define SPI_RST_PORT                GPIOC
 #define SPI_RST_PIN                 14                              // ESP-RST
+#define WIZNET_CS_PORT              SPI_CS_PORT
+#define WIZNET_CS_PIN               SPI_CS_PIN
 #endif
 
 #if TRINAMIC_UART_ENABLE
