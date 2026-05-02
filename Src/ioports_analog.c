@@ -242,7 +242,7 @@ static bool init_pwm (xbar_t *output, pwm_config_t *config, bool persistent)
 
         pwm_out_t *pwm;
 
-        if((pwm = calloc(sizeof(1, pwm_out_t)))) {
+        if((pwm = calloc(1, sizeof(pwm_out_t)))) {
             if((pwm->port = pwm_claim((GPIO_TypeDef *)output->port, output->pin))) {
                 pwm_enable(pwm->port);
                 aux_out_analog[output->id].pwm = pwm;
