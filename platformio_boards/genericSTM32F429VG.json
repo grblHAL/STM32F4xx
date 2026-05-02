@@ -18,7 +18,7 @@
     "libopencm3",
     "zephyr"
   ],
-  "name": "STM32F429VG (128k RAM, 64k CCM RAM, 1024k Flash)",
+  "name": "STM32F429VG (192k RAM, 64k CCM RAM, 1024k Flash)",
   "upload": {
     "maximum_ram_size": 262144,
     "maximum_size": 1048576,
