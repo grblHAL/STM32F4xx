@@ -31,6 +31,55 @@ static void MX_GPIO_Init (void);
 
 int main (void)
 {
+#if defined(STM32U585xx)
+    /* ----------------------------------------------------------------
+     * Arduino UNO Q (STM32U585) クロック設定
+     * MSIS(4MHz) → PLL1(M=1,N=80,R=2) → SYSCLK 160MHz
+     * 出典: boards/arduino/uno_q/arduino_uno_q-common.dtsi
+     * ---------------------------------------------------------------- */
+
+    /* Range1: 160MHz 動作の必須条件 */
+    if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK) {
+        Error_Handler();
+    }
+
+    RCC_OscInitTypeDef RCC_OscInitStruct_U5 = {
+        .OscillatorType      = RCC_OSCILLATORTYPE_MSI,
+        .MSIState            = RCC_MSI_ON,
+        .MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT,
+        .MSIClockRange       = RCC_MSIRANGE_4,       /* 4 MHz */
+        .PLL.PLLState        = RCC_PLL_ON,
+        .PLL.PLLSource       = RCC_PLLSOURCE_MSI,
+        .PLL.PLLMBOOST       = RCC_PLLMBOOST_DIV1,  /* 低周波入力のためブースト不要 */
+        .PLL.PLLM            = 1,
+        .PLL.PLLN            = 80,
+        .PLL.PLLP            = 2,
+        .PLL.PLLQ            = 2,
+        .PLL.PLLR            = 2,   /* SYSCLK = 4 x 80 / 2 = 160 MHz */
+        .PLL.PLLFRACN        = 0,
+    };
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct_U5) != HAL_OK) {
+        Error_Handler();
+    }
+
+    RCC_ClkInitTypeDef RCC_ClkInitStruct_U5 = {
+        .ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                        | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2
+                        | RCC_CLOCKTYPE_PCLK3,  /* U5 固有の APB3 */
+        .SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK,
+        .AHBCLKDivider  = RCC_SYSCLK_DIV1,
+        .APB1CLKDivider = RCC_HCLK_DIV1,   /* TIM2/3 = 160 MHz */
+        .APB2CLKDivider = RCC_HCLK_DIV1,
+        .APB3CLKDivider = RCC_HCLK_DIV1,
+    };
+    /* FLASH_LATENCY_4: VOS1 + 160 MHz の必要値 (RM0456 Table 29) */
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct_U5, FLASH_LATENCY_4) != HAL_OK) {
+        Error_Handler();
+    }
+
+    return; /* F4xx 用コードをスキップ */
+
+#endif /* STM32U585xx */
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 #ifdef UF2_BOOTLOADER
     HAL_RCC_DeInit();

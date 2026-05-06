@@ -48,10 +48,17 @@
 
 #include "timers.h"
 
-#define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
+#ifdef STM32U585xx
+  /* Cortex-M33 にはビットバンドがないため BSRR/BRR ベースの代替を使用 */
+  /* bitband_compat.h が DIGITAL_IN / DIGITAL_OUT を再定義する          */
+  #include "bitband_compat.h"
+#else
+  /* Cortex-M4 (STM32F4xx) 用 ― 従来通り */
+  #define BITBAND_PERI(x, b) (*((__IO uint8_t *) (PERIPH_BB_BASE + (((uint32_t)(volatile const uint32_t *)&(x)) - PERIPH_BASE)*32 + (b)*4)))
 
-#define DIGITAL_IN(port, pin) BITBAND_PERI((port)->IDR, pin)
-#define DIGITAL_OUT(port, pin, on) { BITBAND_PERI((port)->ODR, pin) = on; }
+  #define DIGITAL_IN(port, pin) BITBAND_PERI((port)->IDR, pin)
+  #define DIGITAL_OUT(port, pin, on) { BITBAND_PERI((port)->ODR, pin) = on; }
+#endif
 
 #define timer(t) timerN(t)
 #define timerN(t) TIM ## t
@@ -197,6 +204,8 @@
   #include "boards/stm32f407vet6_dev_board.h"
 #elif defined(BOARD_MY_MACHINE)
   #include "boards/my_machine_map.h"
+#elif defined(BOARD_UNO_Q_CNC)
+  #include "boards/uno_q_cnc_map.h"
 #else // default board
   #include "boards/generic_map.h"
 #endif
