@@ -1,775 +1,615 @@
 {
-  "caps":
-  {
-    "informal": 1,
-    "axes": 6,
-    "usb_cdc": 1,
-    "uart": 1,
-    "spindle_pwm": 1,
-    "spindle_dir": 1,
-    "spindle_encoder": 1,
-    "spindle_sync": 1,
-    "serial_ports": 2,
-    "eeprom": 1,
-    "i2c_strobe": 1,
-    "ganged_axes": 1,
-    "auto_square": 1,
-    "digital_in": 7,
-    "digital_out": 8,
-    "analog_in": 2,
-    "analog_out": 2,
-    "analog_pwm_out": 2,
-    "probe": 1,
-    "spi_strobe": 1,
-    "safety_door": 1,
-    "neopixels": 1,
-    "estop": 1,
-    "mpg_mode": 1,
-    "sdcard": 1,
-    "ethernet": 1,
-    "wiznet": 1,
-    "rgb_out": 2,
-    "mcp3221_adc": 1,
-    "pio_board": "genericSTM32F407VGT6",
-    "ldscript": "STM32F407VGTX_FLASH.ld",
-    "plugins": [
-      { "id": "bluetooth" },
-      { "id": "eeprom" },
-      { "id": "keypad" },
-      { "id": "macros" },
-      { "id": "laser_ppi" },
-      { "id": "laser_cluster" },
-      { "id": "laser_coolant" },
-      { "id": "laser_overdrive" },
-      { "id": "motors" },
-      { "id": "odometer" },
-      { "id": "sdcard" },
-      { "id": "webui" },
-      { "id": "fans" },
-      { "id": "networking" },
-      { "id": "spindle" },
-      { "id": "modbus" },
-      { "id": "openpnp" },
-      { "id": "rgb_leds" },
-      { "id": "eventout" },
-      { "id": "homing_pulloff" },
-      { "id": "feed_override" },
-      { "id": "pwm_servo" },
-      { "id": "bltouch" },
-      { "id": "esp_at" },
-      { "id": "embroidery" }
-    ]
-  },
-  "symbols": {
-    "USE_HAL_DRIVER": ""
-  },
-  "symbols_networking": {
-    "ETH_TX_DESC_CNT": 12,
-    "TCP_MSS": 1460,
-    "TCP_SND_BUF": 5840,
-    "LWIP_NUM_NETIF_CLIENT_DATA": 2,
-    "LWIP_HTTPD_CUSTOM_FILES": 0,
-    "MEM_SIZE": 16384,
-    "LWIP_IGMP": 1,
-    "LWIP_MDNS_RESPONDER": 1,
-    "LWIP_NETIF_STATUS_CALLBACK": 1,
-    "LWIP_HTTPD_DYNAMIC_HEADERS": 1,
-    "LWIP_HTTPD_DYNAMIC_FILE_READ": 1,
-    "LWIP_HTTPD_SUPPORT_V09": 0,
-    "LWIP_HTTPD_SUPPORT_11_KEEPALIVE": 1,
-    "LWIP_HTTPD_CGI_ADV": 1,
-    "LWIP_HTTPD_SUPPORT_POST": 1,
-    "LWIP_HTTPD_SUPPORT_WEBDAV": 1
-  },
-  "boards": [
+  "vendors": [
+    { 
+      "name": "Sienci",
+      "vendorURL": "https://sienci.com",
+      "profilesURL": "https://github.com/Sienci-Labs/grblhal-profiles/"
+	}
+  ],
+  "drivers": [
     {
-      "name": "Devtronic CNC Controller V2 (BlackPill F411)",
-      "symbol": "BOARD_DEVTRONIC_CNC_V2",
-      "URL": "https://github.com/Devtronic-US/CNC-Controller",
-      "MAP": "boards/Devtronic_CNC_Controller_V2_map.h",
-      "caps": {
-        "axes": 5,
-        "digital_in": 1,
-        "digital_out": 2,
-        "eeprom": 256,
-        "fram": 1,
-        "i2c": 1,
-        "i2c_strobe": 1,
-        "spindle_sync": 1,
-        "keypad": 1,
-        "pio_board": "blackpill_f411ce",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": ""
-      }
+      "name": "iMXRT1062 (Teensy 4.x)",
+      "folder": "iMXRT1062",
+      "driverURL": "./iMXRT1062"
     },
     {
-      "name": "Devtronic CNC Controller (BlackPill F411)",
-      "symbol": "BOARD_DEVTRONIC_CNC",
-      "URL": "https://github.com/Devtronic-US/CNC-Controller",
-      "MAP": "boards/Devtronic_CNC_Controller_map.h",
-      "caps": {
-        "axes": 5,
-        "digital_in": 1,
-        "digital_out": 2,
-        "eeprom": 16,
-        "fram": 1,
-        "i2c": 1,
-        "i2c_strobe": 1,
-        "spindle_sync": 1,
-        "keypad": 1,
-        "pio_board": "blackpill_f411ce",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": ""
-      }
+      "name": "STM32F1xx",
+      "folder": "STM32F1xx",
+      "driverURL": "https://github.com/grblHAL/STM32F1xx"
     },
     {
-      "name": "BlackPill (STM32F401)",
-      "symbol": "BOARD_BLACKPILL",
-      "MAP": "boards/blackpill_map.h",
-      "URL": "",
-      "caps": {
-        "axes": 4,
-        "serial_ports": 0,
-        "digital_in": 1,
-        "digital_out": 2,
-        "spindle_sync": 1,
-        "pio_board": "blackpill_f401cc",
-        "ldscript": "STM32F401CCUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F401xC": ""
-      }
+      "name": "STM32F4xx",
+      "folder": "STM32F4xx",
+      "driverURL": "./STM32F4xx"
     },
     {
-      "name": "BlackPill (STM32F411)",
-      "symbol": "BOARD_BLACKPILL",
-      "URL": "",
-      "MAP": "boards/blackpill_map.h",
-      "caps": {
-        "axes": 4,
-        "serial_ports": 0,
-        "digital_in": 1,
-        "digital_out": 2,
-        "spindle_sync": 1,
-        "pio_board": "blackpill_f411ce",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": ""
-      }
+      "name": "STM32F7xx",
+      "folder": "STM32F7xx",
+      "driverURL": "https://github.com/grblHAL/STM32F7xx"
     },
     {
-      "name": "BlackPill Alt. 2 (STM32F411)",
-      "symbol": "BOARD_BLACKPILL_ALT2",
-      "URL": "",
-      "MAP": "boards/blackpill_alt2_map.h",
-      "caps": {
-        "axes": 4,
-        "digital_in": 1,
-        "digital_out": 2,
-        "eeprom": 1,
-        "fram": 0,
-        "i2c": 1,
-        "i2c_strobe": 1,
-        "spindle_sync": 1,
-        "keypad": 1,
-        "pio_board": "blackpill_f411ce",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": ""
-      }
+      "name": "STM32H7xx",
+      "folder": "STM32H7xx",
+      "driverURL": "https://github.com/dresco/STM32H7xx"
     },
     {
-      "name": "BTT SKR-2 STM32F407",
-      "symbol": "BOARD_BTT_SKR_20",
-      "URL": "https://github.com/bigtreetech/SKR-2",
-      "MAP": "boards/btt_skr_2.0_map.h",
-      "caps": {
-        "uart": 0,
-        "axes": 5,
-        "serial_ports": 2,
-        "digital_in": 1,
-        "sdcard": 1,
-        "i2c": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_n": 1,
-        "wiznet": 1,
-        "ldscript": "STM32F407VGTX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F407xx": "",
-          "HSE_VALUE": 8000000
-      }
+      "name": "ESP32",
+      "folder": "ESP32",
+      "driverURL": "https://github.com/grblHAL/ESP32"
     },
     {
-      "name": "BTT SKR-2 STM32F407 (Bootloader)",
-      "symbol": "BOARD_BTT_SKR_20",
-      "URL": "https://github.com/bigtreetech/SKR-2",
-      "MAP": "boards/btt_skr_2.0_map.h",
-      "caps": {
-        "uart": 0,
-        "axes": 5,
-        "serial_ports": 2,
-        "digital_in": 1,
-        "sdcard": 1,
-        "i2c": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_n": 1,
-        "wiznet": 1,
-        "ldscript": "STM32F407VGTX_BL32K_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F407xx": "",
-          "HSE_VALUE": 8000000,
-          "HAS_BOOTLOADER": ""
-      }
+      "name": "SAM3X8E (Arduino Due)",
+      "folder": "SAM3X8E",
+      "driverURL": "https://github.com/grblHAL/SAM3X8E"
     },
     {
-      "name": "BTT SKR PRO v1.2",
-      "symbol": "BOARD_BTT_SKR_PRO_1_2",
-      "URL": "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/tree/master/SKR-PRO-V1.2",
-      "MAP": "boards/btt_skr_pro_v1_1_map.h",
-      "caps": {
-        "axes": 6,
-        "serial_ports": 3,
-        "digital_in": 4,
-        "digital_out": 6,
-        "motor_fault": 1,
-        "safety_door": 1,
-        "eeprom": 1,
-        "fram": 1,
-        "sdcard": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_n": 1
-      },
-      "symbols": {
-          "STM32F407xx": "",
-          "HSE_VALUE": 8000000
-      }
+      "name": "RP2040 (Pi Pico & Pi Pico W)",
+      "folder": "RP2040",
+      "driverURL": "./RP2040"
     },
     {
-      "name": "BTT SKR PRO v1.2 (Bootloader)",
-      "symbol": "BOARD_BTT_SKR_PRO_1_2",
-      "URL": "https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/tree/master/SKR-PRO-V1.2",
-      "MAP": "boards/btt_skr_pro_v1_1_map.h",
-      "caps": {
-        "axes": 6,
-        "serial_ports": 3,
-        "digital_in": 4,
-        "digital_out": 6,
-        "motor_fault": 1,
-        "safety_door": 1,
-        "eeprom": 1,
-        "fram": 1,
-        "sdcard": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_n": 1,
-        "ldscript": "STM32F407VGTX_BL32K_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F407xx": "",
-          "HSE_VALUE": 8000000,
-          "HAS_BOOTLOADER": ""
-      }
+      "name": "Simulator",
+      "folder": "Simulator",
+      "driverURL": "https://github.com/grblHAL/Simulator"
+    }
+  ],
+  "default_caps": [
+    { "key": "axes",               "type": "numeric", "derived": true,  "inherited": false, "label": "Max number of axes" },
+    { "key": "motors",             "type": "numeric", "derived": true,  "inherited": false, "label": "Max number of motors" },
+    { "key": "step_injection",     "type": "boolean", "derived": false, "inherited": false, "label": "Step injection" },
+    { "key": "ganged_axes",        "type": "numeric", "derived": true,  "inherited": false, "label": "Max number ganged axes" },
+    { "key": "auto_square",        "type": "numeric", "derived": true,  "inherited": false, "label": "Max number auto squared axes" },
+    { "key": "usb_cdc",            "type": "boolean", "derived": false, "inherited": true,  "label": "Native USB connection" },
+    { "key": "serial_ports",       "type": "numeric", "derived": true,  "inherited": false, "label": "Number of serial ports" },
+    { "key": "probe",              "type": "boolean", "derived": false, "inherited": true,  "label": "Probe input" },
+    { "key": "estop",              "type": "boolean", "derived": false, "inherited": true,  "label": "Reset input as emergency stop" },
+    { "key": "control_inputs",     "type": "numeric", "derived": false, "inherited": true,  "label": "Control inputs" },
+    { "key": "safety_door",        "type": "boolean", "derived": false, "inherited": true,  "label": "Safety door input" },
+    { "key": "mpg_mode",           "type": "boolean", "derived": false, "inherited": true,  "label": "MPG mode input" },
+    { "key": "motor_warning",      "type": "boolean", "derived": false, "inherited": false, "label": "Motor warning input" },
+    { "key": "motor_fault",        "type": "boolean", "derived": false, "inherited": false, "label": "Motor fault input" },
+    { "key": "modbus",             "type": "boolean", "derived": true,  "inherited": false, "label": "ModBus support" },
+    { "key": "modbus_rtu_dir",     "type": "boolean", "derived": false, "inherited": false, "label": "ModBus RTU dir" },
+    { "key": "i2c_ports",          "type": "numeric", "derived": true,  "inherited": false, "label": "Number of I2C ports" },
+    { "key": "i2c_strobe",         "type": "boolean", "derived": false, "inherited": false, "label": "I2C strobe input" },
+    { "key": "eeprom",             "type": "numeric", "derived": false, "inherited": false, "label": "I2C EEPROM/FRAM supported" },
+    { "key": "digital_in",         "type": "numeric", "derived": false, "inherited": false, "label": "Number of digital inputs" },
+    { "key": "digital_out",        "type": "numeric", "derived": false, "inherited": false, "label": "Number of digital outputs" },
+    { "key": "analog_in",          "type": "numeric", "derived": false, "inherited": false, "label": "Number of analog inputs" },
+    { "key": "analog_out",         "type": "numeric", "derived": false, "inherited": false, "label": "Number of analog outputs" },
+    { "key": "analog_pwm_out",     "type": "numeric", "derived": false, "inherited": false, "label": "Number of analog PWM outputs" },
+    { "key": "frequency_in",       "type": "numeric", "derived": false, "inherited": false, "label": "Number of frequency inputs" },
+    { "key": "rgb_out",            "type": "boolean", "derived": false, "inherited": false, "label": "RGB LED support" },
+    { "key": "neopixels",          "type": "boolean", "derived": false, "inherited": false, "label": "Neopixel support" },
+    { "key": "sdcard",             "type": "boolean", "derived": false, "inherited": false, "label": "SD card" },
+    { "key": "littlefs",           "type": "boolean", "derived": false, "inherited": true,  "label": "Flash based filing system" },
+    { "key": "i2c",                "type": "boolean", "derived": true,  "inherited": false, "label": "" },
+    { "key": "networking",         "type": "boolean", "derived": true,  "inherited": false, "label": "" },
+    { "key": "ethernet",           "type": "boolean", "derived": false, "inherited": false, "label": "Ethernet" },
+    { "key": "wiznet",             "type": "boolean", "derived": false, "inherited": false, "label": "Wiznet ethernet module" },
+    { "key": "wifi",               "type": "boolean", "derived": false, "inherited": false, "label": "WiFi" },
+    { "key": "webui",              "type": "boolean", "derived": true,  "inherited": false, "label": "WebUI" },
+    { "key": "bluetooth",          "type": "boolean", "derived": false, "inherited": false, "label": "Native Bluetooth" },
+    { "key": "spindle_pwm",        "type": "numeric", "derived": false, "inherited": true,  "label": "PWM spindles" },
+    { "key": "pwm_spindle_aux",    "type": "numeric", "derived": false, "inherited": true,  "label": "" },
+    { "key": "spindle_sync",       "type": "boolean", "derived": false, "inherited": false, "label": "Spindle sync" },
+    { "key": "hc05",               "type": "boolean", "derived": true,  "inherited": false, "label": "HC-05 Bluetooth module" },
+    { "key": "spindle_dir",        "type": "numeric", "derived": true,  "inherited": false, "label": "" },
+    { "key": "trinamic_spi_cs",    "type": "boolean", "derived": false, "inherited": false, "label": "" },
+    { "key": "trinamic_spi_chain", "type": "boolean", "derived": false, "inherited": false, "label": "" },
+    { "key": "trinamic_uart_n",    "type": "boolean", "derived": false, "inherited": false, "label": "" },
+    { "key": "trinamic_uart_addr", "type": "boolean", "derived": false, "inherited": false, "label": "" }
+  ],
+  "tabs": [
+    { "tab_id": 0, "name": "General" },
+    { "tab_id": 1, "name": "Plugins" },
+    { "tab_id": 2, "name": "Network/WebUI" },
+    { "tab_id": 3, "name": "Advanced features" },
+    { "tab_id": 4, "name": "3rd party plugins" },
+    { "tab_id": 5, "name": "Optional inputs" },
+    { "tab_id": 6, "name": "I/O expansion" }
+  ],
+  "resource_monitor": [
+    "axes",
+    "motors",
+    "auto_square",
+    "serial_ports",
+    "analog_in",
+    "analog_out",
+    "digital_in",
+    "digital_out",
+    "control_inputs"
+  ],
+  "driver": [
+    { "id": "usb_cdc", "name": "Native USB communication", "symbol": { "name": "USB_SERIAL_CDC", "type": "uint", "min": 0, "max": 2 } }
+  ],
+  "core" : [
+    { "id": "usb_cdc", "name": "Connection", "symbol": { "name": "USB_SERIAL_CDC", "type": "dropdown" },
+      "options": [
+        { "id": "usb_cdc", "name": "Native USB", "symbol": { "name": "USB_SERIAL_CDC", "value": 1 }, "resources": { "usb_cdc": 1, "serial_ports": 0 } },
+        { "id": "uart", "name": "(Virtual) UART", "symbol": { "name": "USB_SERIAL_CDC", "value": 0 }, "resources": { "usb_cdc": 0, "serial_ports": 1 } }
+      ]
     },
-    {
-      "name": "BTT Octopus Pro 1.1 F429",
-      "symbol": "BOARD_BTT_OCTOPUS_PRO",
-      "notes": "Untested, may not work.",
-      "URL": "https://github.com/bigtreetech/BIGTREETECH-OCTOPUS-Pro",
-      "MAP": "boards/btt_octopus_pro_map.h",
-      "caps": {
-        "axes": 8,
-        "eeprom": -32,
-        "fram": 0,
-        "safety_door": 1,
-        "serial_ports": 3,
-        "sdcard": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_addr": 1,
-        "pio_board": "nucleo_f429zi",
-        "ldscript": "STM32F429VGTX_NONVS_FLASH.ld"
-      },
-      "symbols" : {
-        "STM32F429xx": "",
-        "HSE_VALUE": 12000000
-      }
+    { "id": "n_axis", "name": "Number of axes", "symbol": { "name": "N_AXIS", "type": "dropdown", "min": 3, "max": 8 },
+      "options": [
+        { "name": "3", "symbol": { "name": "X_AXIS_OPT" }, "resources": { "motors": 3 } }
+      ]
     },
-    {
-      "name": "BTT Octopus Pro 1.1 F429 (32K Bootloader)",
-      "symbol": "BOARD_BTT_OCTOPUS_PRO",
-      "notes": "Untested, may not work.",
-      "URL": "https://github.com/bigtreetech/BIGTREETECH-OCTOPUS-Pro",
-      "MAP": "boards/btt_octopus_pro_map.h",
-      "caps": {
-        "axes": 8,
-        "eeprom": -32,
-        "fram": 0,
-        "safety_door": 1,
-        "serial_ports": 3,
-        "sdcard": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_addr": 1,
-        "pio_board": "nucleo_f429zi",
-        "ldscript": "STM32F429VGTX_BL32K_NONVS_FLASH.ld"
-      },
-      "symbols" : {
-        "STM32F429xx": "",
-        "HSE_VALUE": 12000000
-      }
+    { "id": "n_axis", "name": "Remap ABC to UVW", "symbol": { "name": "AXIS_REMAP_ABC2UVW", "value": 1 },
+      "resources": { "axes": 4 }
     },
-    {
-      "name": "BTT Octopus Pro 1.1 F446",
-      "symbol": "BOARD_BTT_OCTOPUS_PRO",
-      "notes": "Untested, may not work.",
-      "URL": "https://github.com/bigtreetech/BIGTREETECH-OCTOPUS-Pro",
-      "MAP": "boards/btt_octopus_pro_map.h",
-      "caps": {
-        "axes": 8,
-        "eeprom": -32,
-        "fram": 0,
-        "safety_door": 1,
-        "serial_ports": 3,
-        "sdcard": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_addr": 1,
-        "pio_board": "nucleo_f446ze",
-        "ldscript": "STM32F446ZETX_NONVS_FLASH.ld"
-      },
-      "symbols" : {
-        "STM32F446xx": "",
-        "HSE_VALUE": 12000000
-      }
+    { "id": "x_axis", "name": "X-axis", "symbol": { "name": "X_AXIS_OPT", "type": "dropdown" },
+      "options": [
+        { "name": "Single motor", "symbol": { "name": "X_AXIS_OPT" }, "resources": { "auto_square": 0, "motors": 0 } },
+        { "name": "Ganged motors", "symbol": { "name": "X_GANGED", "value": 1 }, "resources": { "auto_square": 0, "motors": 1 } },
+        { "name": "Auto-squared", "symbol": { "name": "X_AUTO_SQUARE", "value": 1 }, "resources": { "auto_square": 1, "motors": 1 } }
+      ]
     },
-    {
-      "name": "BTT Octopus Pro 1.1 F446 (32K Bootloader)",
-      "symbol": "BOARD_BTT_OCTOPUS_PRO",
-      "notes": "Untested, may not work.",
-      "URL": "https://github.com/bigtreetech/BIGTREETECH-OCTOPUS-Pro",
-      "MAP": "boards/btt_octopus_pro_map.h",
-      "caps": {
-        "axes": 8,
-        "eeprom": -32,
-        "fram": 0,
-        "safety_door": 1,
-        "serial_ports": 3,
-        "sdcard": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_addr": 1,
-        "pio_board": "nucleo_f446ze",
-        "ldscript": "STM32F446ZETX_BL32K_NONVS_FLASH.ld"
-      },
-      "symbols" : {
-        "STM32F446xx": "",
-        "HSE_VALUE": 12000000
-      }
+    { "id": "y_axis", "name": "Y-axis", "symbol": { "name": "Y_AXIS_OPT", "type": "dropdown" },
+      "options": [
+        { "name": "Single motor", "symbol": { "name": "Y_AXIS_OPT" }, "resources": { "auto_square": 0, "motors": 0 } },
+        { "name": "Ganged motors", "symbol": { "name": "Y_GANGED", "value": 1 }, "resources": { "auto_square": 0, "motors": 1 } },
+        { "name": "Auto-squared", "symbol": { "name": "Y_AUTO_SQUARE", "value": 1 }, "resources": { "auto_square": 1, "motors": 1 } }
+      ]
     },
-    {
-      "name": "MKS Robin Nano 3.0 (48K Bootloader)",
-      "symbol": "BOARD_MKS_ROBIN_NANO_30",
-      "URL": "https://github.com/makerbase-mks/MKS-Robin-Nano-V3.X",
-      "MAP": "boards/mks_robin_nano_v3.0_map.h",
-      "caps": {
-        "axes": 5,
-        "motor_fault": 1,
-        "safety_door": 1,
-        "eeprom": 32,
-        "sdcard": 1,
-        "trinamic_spi_cs": 1,
-        "trinamic_uart_n": 1,
-        "ldscript": "STM32F407VGTX_BL48K_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F407xx": "",
-          "HSE_VALUE": 8000000,
-          "HAS_BOOTLOADER": ""
-      }
+    { "id": "z_axis", "name": "Z-axis", "symbol": { "name": "Z_AXIS_OPT", "type": "dropdown" },
+      "options": [
+        { "name": "Single motor", "symbol": { "name": "Z_AXIS_OPT" }, "resources": { "auto_square": 0, "motors": 0 } },
+        { "name": "Ganged motors", "symbol": { "name": "Z_GANGED", "value": 1 }, "resources": { "auto_square": 0, "motors": 1 } },
+        { "name": "Auto-squared", "symbol": { "name": "Z_AUTO_SQUARE", "value": 1 }, "resources": { "auto_square": 1, "motors": 1 } }
+      ]
     },
-    {
-      "name": "CNC 3040 (STM32F401)",
-      "symbol": "BOARD_CNC3040",
-      "MAP": "boards/cnc3040_map.h",
-      "URL": "https://github.com/shaise/GrblCNC",
-      "caps": {
-        "axes": 5,
-        "auto_square": 0,
-        "digital_in": 1,
-        "serial_ports": 0,
-        "spindle_dir": 0,
-        "pio_board": "blackpill_f401cc",
-        "ldscript": "STM32F401CCUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F401xC": ""
-      }
+    { "id": "probe", "name": "Probe input", "symbol": { "name": "PROBE_ENABLE", "type": "bool" }, "resources": { "probe": 1 } },
+    { "id": "compat_level", "tab_id": 3, "name": "Compatibility level", "symbol": { "name": "COMPATIBILITY_LEVEL", "type": "dropdown" }, "URL": "https://github.com/grblHAL/core/wiki/Compatibility-level",
+      "options": [
+        { "name": "grblHAL", "symbol": { "name": "COMPATIBILITY_LEVEL" } },
+        { "name": "Grbl id (1)", "symbol": { "name": "COMPATIBILITY_LEVEL", "value": 1 } },
+        { "name": "Grbl id + settings (2)", "symbol": { "name": "COMPATIBILITY_LEVEL", "value": 2 } },
+        { "name": "Grbl complete (10)", "symbol": { "name": "COMPATIBILITY_LEVEL", "value": 10 } }
+      ]
     },
-    {
-      "name": "CNC 3040 (STM32F411)",
-      "symbol": "BOARD_CNC3040",
-      "URL": "https://github.com/shaise/GrblCNC",
-      "MAP": "boards/cnc3040_map.h",
-      "caps": {
-        "axes": 5,
-        "auto_square": 0,
-        "digital_in": 1,
-        "serial_ports": 0,
-        "spindle_dir": 0,
-        "pio_board": "blackpill_f411ce",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": ""
-      }
+    { "id": "e_stop", "tab_id": 3, "name": "Reset input as E-Stop", "symbol": { "name": "ESTOP_ENABLE", "type": "bool" }, "resources": { "estop": 1 } },
+    { "id": "tool_offset", "tab_id": 3, "name": "TLO report", "symbol": { "name": "TOOL_LENGTH_OFFSET_AXIS", "type": "dropdown" },
+      "options": [
+        { "name": "All axes", "symbol": { "name": "TOOL_LENGTH_OFFSET_AXIS" } },
+        { "name": "Z-axis", "symbol": { "name": "TOOL_LENGTH_OFFSET_AXIS", "value": 2 } },
+        { "name": "X-axis", "symbol": { "name": "TOOL_LENGTH_OFFSET_AXIS", "value": 0 } },
+        { "name": "Y-axis", "symbol": { "name": "TOOL_LENGTH_OFFSET_AXIS", "value": 1 } }
+      ]
     },
-    {
-      "name": "Fysetc S6 V2.0",
-      "notes": "This board comes with different EEPROM sizes, select the matching one in the Plugins tab.",
-      "symbol": "BOARD_FYSETC_S6",
-      "URL": "https://wiki.fysetc.com/FYSETC_S6/",
-      "MAP": "boards/fysetc_s6_map.h",
-      "caps": {
-        "axes": 6,
-        "auto_square": 0,
-        "safety_door": 0,
-        "eeprom": 16,
-        "fram": 0,
-        "sdcard": 1,
-        "rgb_out": 1,
-        "trinamic_uart_n": 1,
-        "pio_board": "fysetc_s6",
-        "ldscript": "STM32F446RETX_NO_BL_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F446xx": "",
-          "HSE_VALUE": 12000000
-      }
+    { "id": "tooltable", "tab_id": 3, "name": "Tool table", "symbol": {"name": "N_TOOLS", "type": "dropdown" },
+      "options": [
+        { "name": "No", "symbol": { "name": "N_TOOLS" } },
+        { "name": "8 tools", "symbol": { "name": "N_TOOLS", "value": 8 } },
+        { "name": "12 tools", "symbol": { "name": "N_TOOLS", "value": 12 } },
+        { "name": "16 tools", "symbol": { "name": "N_TOOLS", "value": 16 } },
+        { "name": "24 tools", "symbol": { "name": "N_TOOLS", "value": 24 } },
+        { "name": "32 tools", "symbol": { "name": "N_TOOLS", "value": 32 } },
+        { "name": "File based", "symbol": { "name": "TOOLTABLE_ENABLE", "value": 1 } }
+      ]
     },
-    {
-      "name": "Minimal BlackPill (STM32F401)",
-      "symbol": "BOARD_MINI_BLACKPILL",
-      "URL": "https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL",
-      "MAP": "boards/mini_blackpill_map.h",
-      "caps": {
-        "axes": 4,
-        "auto_square": 0,
-        "digital_in": 1,
-        "digital_out": 2,
-        "pio_board": "blackpill_f401cc",
-        "ldscript": "STM32F401CCUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F401xC": ""
-      }
+    { "id": "jerk", "tab_id": 3, "name": "Third order acceleration (jerk)", "symbol": { "name": "ENABLE_JERK_ACCELERATION", "type": "bool" }, "URL": "https://github.com/grblHAL/core/wiki/Jerk-acceleration" },
+    { "id": "accel_tics", "tab_id": 3, "name": "Accel. tics per second", "symbol": {"name": "ACCELERATION_TICKS_PER_SECOND", "type": "dropdown", "value": 100 },
+      "options": [
+        { "name": "Default (100)", "symbol": { "name": "ACCELERATION_TICKS_PER_SECOND", "value": 100 } },
+        { "name": "200", "symbol": { "name": "ACCELERATION_TICKS_PER_SECOND", "value": 200 }, "symbols": [ { "name": "SEGMENT_BUFFER_SIZE", "value": "20" } ] },
+        { "name": "300", "symbol": { "name": "ACCELERATION_TICKS_PER_SECOND", "value": 300 }, "symbols": [ { "name": "SEGMENT_BUFFER_SIZE", "value": "30" } ] },
+        { "name": "400", "symbol": { "name": "ACCELERATION_TICKS_PER_SECOND", "value": 400 }, "symbols": [ { "name": "SEGMENT_BUFFER_SIZE", "value": "40" } ] },
+        { "name": "500", "symbol": { "name": "ACCELERATION_TICKS_PER_SECOND", "value": 500 }, "symbols": [ { "name": "SEGMENT_BUFFER_SIZE", "value": "50" } ] }
+      ]
     },
-    {
-      "name": "Minimal BlackPill (STM32F411)",
-      "symbol": "BOARD_MINI_BLACKPILL",
-      "URL": "https://github.com/avizienis/Minimal-Black-Pill--STM32F4xx-BOB-for-grblHAL",
-      "MAP": "boards/mini_blackpill_map.h",
-      "caps": {
-        "axes": 4,
-        "auto_square": 0,
-        "digital_in": 1,
-        "digital_out": 2,
-        "pio_board": "blackpill_f411ce",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": ""
-      }
+    { "id": "g187", "tab_id": 3, "name": "G187 acceleration profiles", "symbol": { "name": "ENABLE_ACCELERATION_PROFILES", "type": "bool" }, "URL": "https://github.com/grblHAL/core/wiki/Jerk-acceleration" },
+    { "id": "backlash_comp", "tab_id": 3, "name": "Backlash compensation", "symbol": { "name": "ENABLE_BACKLASH_COMPENSATION", "type": "bool" } },
+    { "id": "disable_rst_all", "tab_id": 3, "name": "Disable $RST=*, reset all settings", "symbol": { "name": "ENABLE_RESTORE_NVS_WIPE_ALL", "type": "bool" } },
+    { "id": "disable_rst_dflt", "tab_id": 3, "name": "Disable $RST=$, reset core settings", "symbol": { "name": "ENABLE_RESTORE_NVS_DEFAULT_SETTINGS", "type": "bool" } },
+    { "id": "sleep", "tab_id": 3, "name": "Sleep mode", "symbol": { "name": "DEFAULT_SLEEP_ENABLE", "type": "bool" } },
+    { "id": "spindle_linearization", "tab_id": 3, "name": "Spindle linearization", "symbol": { "name": "ENABLE_SPINDLE_LINEARIZATION", "type": "bool" } },
+    { "id": "lathe_uvw_mode", "tab_id": 3, "name": "Lathe UVW mode", "symbol": { "name": "LATHE_UVW_OPTION", "type": "bool" }, "URL": "https://www.cnctrainingcentre.com/haas-turn/u-and-w-on-a-cnc-lathe-incremental-programming/" },
+    { "id": "spindle_sync", "tab_id": 3, "name": "Spindle sync", "symbol": { "name": "SPINDLE_SYNC_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/core/wiki/Spindle-sync",
+      "resources": { "spindle_sync": 1 },
+      "options": [
+        { "id": "pid_log", "name": "Log for tuning", "symbol": { "name": "PID_LOG", "type": "bool", "value": 1000 } }
+      ]
     },
-    {
-      "name": "Protoneer v3/Nucleo-64 (STM32F411)",
-      "symbol": "BOARD_PROTONEER_3XX",
-      "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
-      "MAP": "boards/protoneer_3.xx_map.h",
-      "caps": {
-        "axes": 4,
-        "auto_square": 0,
-        "usb_cdc": 0,
-        "spindle_sync": 1,
-        "wiznet": 1,
-        "pio_board": "nucleo_f411re",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": "",
-          "NUCLEO_F411": "",
-	      "PROTONEER_SPINDLE_PWM": "",
-          "RTC_ENABLE": 1
-      }
+    { "id": "probe_overshoot", "tab_id": 3, "name": "Minimize probe overshoot", "symbol": { "name": "MINIMIZE_PROBE_OVERSHOOT", "type": "bool" } },
+    { "id": "ngc_expressions", "tab_id": 3, "name": "RS274 NGC expression support", "symbol": { "name": "NGC_EXPRESSIONS_ENABLE", "type": "bool" },
+      "URL": "https://github.com/grblHAL/core/wiki/Expressions-and-flow-control",
+      "tooltip": "RS274 NGC + LinuxCNC extensions. Conditionals, looping and subroutines are supported when streaming from a SD card."
     },
-    {
-      "name": "Protoneer v3/Nucleo-64 (STM32F446)",
-      "symbol": "BOARD_PROTONEER_3XX",
-      "URL": "https://blog.protoneer.co.nz/arduino-cnc-shield/",
-      "MAP": "boards/protoneer_3.xx_map.h",
-      "caps": {
-        "axes": 4,
-        "auto_square": 0,
-        "usb_cdc": 0,
-        "spindle_sync": 1,
-        "wiznet": 1,
-        "pio_board": "nucleo_f446re",
-        "ldscript": "STM32F446RETX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F446xx": "",
-          "NUCLEO_F446": "",
-	      "PROTONEER_SPINDLE_PWM": "",
-          "RTC_ENABLE": 1
-      }
+    { "id": "rotary_fix", "tab_id": 3, "name": "Rotary axis feed rate fix", "symbol": { "name": "ROTARY_FIX", "type": "bool" }, "URL": "https://github.com/grblHAL/core/discussions/241" },
+    { "id": "kinematics", "tab_id": 3, "name": "Kinematics", "symbol": { "name": "KINEMATICS_API", "type": "dropdown" },
+      "options": [
+        { "name": "Cartesian", "symbol": { "name": "CARTESIAN" } },
+        { "name": "CoreXY", "symbol": { "name": "COREXY", "value": "1" } },
+        { "name": "Delta", "symbol": { "name": "DELTA_ROBOT", "value": "1" } },
+        { "name": "Polar", "symbol": { "name": "POLAR_ROBOT", "value": "1" } },
+        { "name": "Wall plotter", "symbol": { "name": "WALL_PLOTTER", "value": "1" } }
+      ]
     },
-    {
-      "name": "Flexi-HAL",
-      "symbol": "BOARD_FLEXI_HAL",
-      "URL": "https://github.com/Expatria-Technologies/Flexi-HAL",
-      "MAP": "boards/flexi_hal_map.h",
-      "caps": {
-        "axes": 5,
-        "digital_in": 5,
-        "digital_out": 4,
-        "serial_ports": 2,
-        "eeprom": -128,
-        "fram": 0,
-        "i2c": 1,
-        "i2c_strobe": 1,
-        "sdcard": 1,
-        "keypad": 1,
-        "wiznet": 5500,
-        "pio_board": "genericSTM32F446RE",
-        "ldscript": "FLEXI_STM32F446RETX_BL_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F446xx": "",
-          "HAS_BOOTLOADER": "",
-          "UF2_BOOTLOADER": ""
-      }
+    { "id": "mpgdro", "tab_id": 1, "name": "MPG & DRO mode", "symbol": { "name": "MPG_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/core/wiki/MPG-and-DRO-interfaces",
+       "options": [
+        { "name": "Disabled", "symbol": { "name": "MPG_ENABLE" }, "resources": { "serial_ports": 0 } },
+        { "name": "Auxiliary input switchover", "symbol": { "name": "MPG_ENABLE", "value": 1 }, "resources": { "digital_in": 1, "serial_ports": 1 } },
+        { "name": "Real time command switchover", "symbol": { "name": "MPG_ENABLE", "value": 2 }, "resources": { "serial_ports": 1 } }
+      ]
+    }
+  ],
+  "spindles": [
+    { "id": "pwm", "name": "PWM", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 11 }, "is_driver_spindle": 1,
+      "resources": { "spindle_pwm": 1, "spindle_dir": 1, "modbus_rtu": 0 }
     },
-    {
-      "name": "SuperLongBoard (SLB)",
-      "notes": "Preliminary - not tested in a machine.",
-      "symbol": "BOARD_LONGBOARD32",
-      "URL": "https://resources.sienci.com/view/slb-welcome/",
-      "MAP": "boards/longboard32_map.h",
-      "caps": {
-        "axes": 5,
-        "usb_cdc": 1,
-        "serial_ports": 2,
-        "safety_door": 1,
-        "digital_in": 7,
-        "digital_out": 5,
-        "eeprom": 128,
-        "fram": 0,
-        "i2c_strobe": 1,
-        "sdcard": 1,
-        "spindle_pwm": 2,
-        "spindle_sync": 0,
-        "rgb_out": 2,
-        "trinamic": 2660,
-        "trinamic_spi_cs": 1,
-        "wiznet": 5500,
-		    "control_inputs": 1,
-		    "modbus_rtu_dir": 1,
-        "pio_board": "genericSTM32F412VG",
-        "ldscript": "STM32F412VGTX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F412Vx": "",
-          "STEP_PULSE_LATENCY": 1.3,
-          "TRINAMIC_DYNAMIC_CURRENT": 1,
-          "RTC_ENABLE": 1,
-          "TMC_X_ENABLE": 1,
-          "TMC_Y_ENABLE": 1,
-          "TMC_Z_ENABLE": 1
-      }
+    { "id": "pwmnodir", "name": "PWM (no direction)", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 12 }, "is_driver_spindle": 1,
+      "resources": { "spindle_pwm": 1, "spindle_dir": 0, "modbus_rtu": 0 }
     },
-    {
-      "name": "SuperLongBoard External (SLB EXT)",
-      "notes": "Preliminary - not tested in a machine.",
-      "symbol": "BOARD_LONGBOARD32_EXT",
-      "URL": "https://resources.sienci.com/view/slb-welcome/",
-      "MAP": "boards/longboard32_map.h",
-      "caps": {
-        "axes": 5,
-        "usb_cdc": 1,
-        "serial_ports": 2,
-        "safety_door": 1,
-        "digital_in": 7,
-        "digital_out": 5,
-        "eeprom": 128,
-        "fram": 0,
-        "i2c_strobe": 1,
-        "sdcard": 1,
-        "spindle_pwm": 2,
-        "spindle_sync": 0,
-        "rgb_out": 2,
-        "wiznet": 5500,
-		"control_inputs": 1,
-		"modbus_rtu_dir": 1,
-        "pio_board": "genericSTM32F412VG",
-        "ldscript": "STM32F412VGTX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F412Vx": "",
-          "STEP_PULSE_LATENCY": 1.3,
-          "RTC_ENABLE": 1
-      }
+    { "id": "pwm2", "name": "PWM 2", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 13 }, "is_driver_spindle": 1,
+      "resources": { "spindle_pwm": 2, "spindle_dir": 0, "modbus_rtu": 0 }
     },
-    {
-      "name": "JZ-F407VET6 Industrial Control Board",
-      "notes": "Preliminary - pin map subject to change.",
-      "symbol": "BOARD_STM32F407VET6_DEV",
-      "URL": "https://github.com/yym36100/stm32f407_industrial_control_board",
-      "MAP": "boards/stm32f407vet6_dev_board.h",
-      "caps": {
-        "axes": 5,
-        "usb_cdc": 1,
-        "serial_ports": 2,
-        "safety_door": 0,
-        "digital_in": 0,
-        "digital_out": 0,
-        "eeprom": 0,
-        "fram": 0,
-        "i2c_strobe": 0,
-        "sdcard": 1,
-        "spindle_sync": 0,
-        "rgb_out": 0,
-        "ethernet": 1,
-        "pio_board": "genericSTM32F407VET6",
-        "ldscript": "STM32F407VETX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F407xx": "",
-          "HSE_VALUE": 25000000
-      }
+    { "id": "pwm2_nodir", "name": "PWM 2 (no direction)", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 14 }, "is_driver_spindle": 1,
+      "resources": { "spindle_pwm": 2, "spindle_dir": 1, "modbus_rtu": 0 }
     },
-    {
-      "name": "Nucleo-64 CNC Breakout (STM32F401)",
-      "symbol": "BOARD_MORPHO_CNC",
-      "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
-      "MAP": "boards/st_morpho_map.h",
-      "caps": {
-        "axes": 4,
-        "usb_cdc": 0,
-        "serial_ports": 2,
-        "safety_door": 1,
-        "digital_in": 4,
-        "digital_out": 6,
-        "eeprom": 1,
-        "fram": 1,
-        "i2c_strobe": 1,
-        "sdcard": 1,
-        "spindle_sync": 1,
-        "trinamic_spi_chain": 1,
-        "trinamic_uart_addr": 1,
-        "wiznet": 1,
-        "pio_board": "nucleo_f401re",
-        "ldscript": "STM32F401CCUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F401xE": "",
-          "NUCLEO_F401": ""
-      }
+    { "id": "pwm3", "name": "PWM 3", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 15 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 3, "spindle_dir": 0, "modbus_rtu": 0 }
     },
-    {
-      "name": "Nucleo-64 CNC Breakout (STM32F411)",
-      "symbol": "BOARD_MORPHO_CNC",
-      "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
-      "MAP": "boards/st_morpho_map.h",
-      "caps": {
-        "axes": 4,
-        "usb_cdc": 0,
-        "serial_ports": 2,
-        "safety_door": 1,
-        "digital_in": 4,
-        "digital_out": 6,
-        "eeprom": 1,
-        "fram": 1,
-        "i2c_strobe": 1,
-        "sdcard": 1,
-        "spindle_sync": 1,
-        "trinamic_spi_chain": 1,
-        "trinamic_uart_addr": 1,
-        "wiznet": 1,
-        "pio_board": "nucleo_f411re",
-        "ldscript": "STM32F411CEUX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F411xE": "",
-          "NUCLEO_F411": "",
-          "RTC_ENABLE": 1
-      }
+    { "id": "pwm3_nodir", "name": "PWM 3 (no direction)", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 16 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 3, "spindle_dir": 1, "modbus_rtu": 0 }
     },
-    {
-      "name": "Nucleo-64 CNC Breakout (STM32F446)",
-      "symbol": "BOARD_MORPHO_CNC",
-      "URL": "https://github.com/terjeio/CNC_Breakout_Nucleo64",
-      "MAP": "boards/st_morpho_map.h",
-      "caps": {
-        "axes": 4,
-        "usb_cdc": 0,
-        "serial_ports": 2,
-        "safety_door": 1,
-        "digital_in": 4,
-        "digital_out": 6,
-        "eeprom": 1,
-        "fram": 1,
-        "i2c_strobe": 1,
-        "sdcard": 1,
-        "spindle_sync": 1,
-        "trinamic_spi_chain": 1,
-        "trinamic_uart_addr": 1,
-        "wiznet": 1,
-        "pio_board": "nucleo_f446re",
-        "ldscript": "STM32F446RETX_FLASH.ld"
-      },
-      "symbols": {
-          "STM32F446xx": "",
-          "NUCLEO_F446": "",
-          "RTC_ENABLE": 1
-      }
+    { "id": "pwmclone", "name": "PWM cloned", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 17 }, "is_driver_spindle": 1,
+      "resources": { "spindle_pwm": 1, "spindle_dir": 1, "modbus_rtu": 0 }
     },
-    {
-      "name": "Generic Uno/Nucleo-64 (STM32F411)",
-      "symbol": "BOARD_GENERIC_UNO",
-      "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
-      "MAP": "boards/uno_map.h",
-      "caps": {
-        "usb_cdc": 0,
-        "ganged_axes": 0,
-        "safety_door": 0,
-        "pio_board": "nucleo_f411re",
-        "ldscript": "STM32F411CEUX_FLASH.ld"    
-      },
-      "symbols": {
-          "STM32F411xE": "",
-          "NUCLEO_F411": "",
-          "RTC_ENABLE": 1
-      }
+    { "id": "onoff", "name": "On/Off", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 7 }, "is_driver_spindle": 1,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 0 }
     },
-    {
-      "name": "Generic Uno/Nucleo-64 (STM32F446)",
-      "symbol": "BOARD_GENERIC_UNO",
-      "URL": "https://www.makerfabs.com/arduino-cnc-shield-v3.html",
-      "MAP": "boards/uno_map.h",
-      "caps": {
-        "usb_cdc": 0,
-        "ganged_axes": 0,
-        "safety_door": 0,
-        "pio_board": "nucleo_f446re",
-        "ldscript": "STM32F446RETX_FLASH.ld"    
-      },
-      "symbols": {
-          "STM32F446xx": "",
-          "NUCLEO_F446": "",
-          "RTC_ENABLE": 1
+    { "id": "onoffdir", "name": "On/Off + dir", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 8 }, "is_driver_spindle": 1,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 1, "modbus_rtu": 0 }
+    },
+    { "id": "huanyang1", "name": "Huanyang v1", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 1 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    },
+    { "id": "huanyang2", "name": "Huanyang P2A", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 2 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    },
+    { "id": "gs20", "name": "Durapulse GS20", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 3 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    },
+    { "id": "ys620", "name": "Yalang YS620", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 4 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    },
+    { "id": "modvfd", "name": "MODVFD", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 5 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    },
+    { "id": "h100", "name": "H-100", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 6 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    },
+    { "id": "nowforever", "name": "NowForever", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 20 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    },
+    { "id": "stepper", "name": "Stepper (experimental)", "symbol": { "name": "SPINDLE_N_ENABLE", "value": 19 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 0 }
+    },
+    { "id": "spdall", "name": "All", "symbol": { "name": "SPINDLE_N_ENABLE", "value": -1 }, "is_driver_spindle": 0,
+      "resources": { "spindle_pwm": 0, "spindle_dir": 0, "modbus_rtu": 1 }
+    }
+  ],
+  "plugins": [
+    { "id": "motors", "name": "Trinamic drivers", "symbol": { "name": "TRINAMIC_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_motor#readme",
+      "options": [
+        { "name": "Disabled", "symbol": { "name": "TRINAMIC_ENABLE" }, "resources": { "serial_ports": 0, "soft_uart": 0, "spi": 0 } },
+        { "name": "TMC2130, R sense: 110 mΩ", "symbol": { "name": "TRINAMIC_ENABLE", "value": 2130 }, "tmc_com": "spi", "trinamic_r_sense": 110 },
+        { "name": "TMC2209, R sense: 110 mΩ", "symbol": { "name": "TRINAMIC_ENABLE", "value": 2209 }, "tmc_com": "uart", "trinamic_r_sense": 110 },
+        { "name": "TMC2240, Rref: 12 KΩ", "symbol": { "name": "TRINAMIC_ENABLE", "value": 2240 }, "tmc_com": "spi", "trinamic_r_ref": 12 },
+        { "name": "TMC2660, R sense: 50 mΩ", "symbol": { "name": "TRINAMIC_ENABLE", "value": 2660 }, "tmc_com": "spi", "trinamic_r_sense": 50 },
+        { "name": "TMC5160, R sense: 75 mΩ", "symbol": { "name": "TRINAMIC_ENABLE", "value": 5160 }, "tmc_com": "spi", "trinamic_r_sense": 75 },
+        { "name": "TMC5160, R sense: 50 mΩ", "symbol": { "name": "TRINAMIC_ENABLE", "value": 5160 }, "tmc_com": "spi", "trinamic_r_sense": 50 },
+        { "name": "TMC5160, R sense: 22 mΩ", "symbol": { "name": "TRINAMIC_ENABLE", "value": 5160 }, "tmc_com": "spi", "trinamic_r_sense": 22 }
+      ]
+    },
+    { "id": "motors", "name": "Trinamic mode", "symbol": { "name": "TRINAMIC_MODE", "type": "dropdown" },
+       "options": [
+        { "name": "set by board", "symbol": { "name": "TRINAMIC_MODE" } },
+        { "name": "SPI common CS", "symbol": { "name": "TRINAMIC_SPI_ENABLE", "value": 1 }, "tmc_mode": "spi_chained", "resources": { "serial_ports": 0, "soft_uart": 0, "spi": 1 } },
+        { "name": "SPI separate CS", "symbol": { "name": "TRINAMIC_SPI_ENABLE", "value": 2 }, "tmc_mode": "spi_cs", "resources": { "serial_ports": 0, "soft_uart": 0, "spi": 1 } },
+        { "name": "UART soft adress", "symbol": { "name": "TRINAMIC_UART_ENABLE", "value": 1 }, "tmc_mode": "uart_addr", "resources": { "serial_ports": 1, "soft_uart": 0, "spi": 0 } },
+        { "name": "UART hard adress", "symbol": { "name": "TRINAMIC_UART_ENABLE", "value": 2 }, "tmc_mode": "uart_n", "resources": { "serial_ports": 0, "soft_uart": 1, "spi": 0 } }
+      ]
+    },
+    { "id": "motors", "name": "Add extended settings", "symbol": { "name": "TRINAMIC_EXTENDED_SETTINGS", "type": "bool" } },
+    { "id": "eeprom", "tab_id": 1, "name": "Settings EEPROM", "symbol": {"name": "EEPROM_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugin_EEPROM#readme",
+      "resources": { "i2c": 1 },
+      "options": [
+        { "name": "No", "symbol": { "name": "EEPROM_ENABLE" }, "resources": { "i2c": 0 } },
+        { "name": "24x16 (2K)", "symbol": { "name": "EEPROM_ENABLE", "value": 16 }, "resources": { "i2c": 1 } },
+        { "name": "24x32 (4K)", "symbol": { "name": "EEPROM_ENABLE", "value": 32 }, "resources": { "i2c": 1 } },
+        { "name": "24x64 (8K)", "symbol": { "name": "EEPROM_ENABLE", "value": 64 }, "resources": { "i2c": 1 } },
+        { "name": "24x128 (16K)", "symbol": { "name": "EEPROM_ENABLE", "value": 128 }, "resources": { "i2c": 1 } },
+        { "name": "24x256 (32K)", "symbol": { "name": "EEPROM_ENABLE", "value": 256 }, "resources": { "i2c": 1 } }
+      ]
+    },
+    { "id": "eeprom", "tab_id": 1, "name": "EEPROM is FRAM", "symbol": {"name": "EEPROM_IS_FRAM", "type": "bool" } },
+    { "id": "spindle", "name": "Spindle 1", "symbol": { "name": "SPINDLE0_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_spindle#readme",
+      "options": [
+        { "id": "none", "name": "Disabled", "symbol": { "name": "SPINDLE0_ENABLE", "value": 0 }, "resources": { "serial_ports": 0 } }
+     ]
+    },
+    { "id": "spindle", "name": "Spindle 2", "symbol": { "name": "SPINDLE1_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_spindle#readme",
+      "options": [
+        { "id": "none", "name": "Disabled", "symbol": { "name": "SPINDLE1_ENABLE", "value": 0 }, "resources": { "serial_ports": 0 } }
+      ]
+    },
+    { "id": "spindle", "name": "Spindle 3", "symbol": { "name": "SPINDLE2_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_spindle#readme",
+      "options": [
+        { "id": "none", "name": "Disabled", "symbol": { "name": "SPINDLE2_ENABLE", "value": 0 }, "resources": { "serial_ports": 0 } }
+      ]
+    },
+    { "id": "spindle", "name": "Spindle 4", "symbol": { "name": "SPINDLE3_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_spindle#readme",
+      "options": [
+        { "id": "none", "name": "Disabled", "symbol": { "name": "SPINDLE3_ENABLE", "value": 0 }, "resources": { "serial_ports": 0 } }
+      ]
+    },
+    { "id": "spindle", "name": "Enable selected spindles simultaneously", "symbol": { "name": "N_SYS_SPINDLE", "type": "bool" } },
+    { "id": "modbus", "name": "ModBus RTU", "symbol": { "name": "MODBUS_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_spindle#readme",
+      "resources": { "serial_ports": 1 }, 
+      "options": [
+        { "id": "modbusoff", "name": "Disabled", "symbol": { "name": "MODBUS_BAUDRATE", "value": -1 }, "resources": { "serial_ports": 0 } },
+        { "id": "modbus0", "name": "2400 baud", "symbol": { "name": "MODBUS_BAUDRATE", "value": 0 }, "resources": { "serial_ports": 1 } },
+        { "id": "modbus1", "name": "4800 baud", "symbol": { "name": "MODBUS_BAUDRATE", "value": 1 }, "resources": { "serial_ports": 1 } },
+        { "id": "modbus2", "name": "9600 baud", "symbol": { "name": "MODBUS_BAUDRATE", "value": 2 }, "resources": { "serial_ports": 1 } },
+        { "id": "modbus3", "name": "19200 baud", "symbol": { "name": "MODBUS_BAUDRATE", "value": 3 }, "resources": { "serial_ports": 1 } },
+        { "id": "modbus4", "name": "38400 baud", "symbol": { "name": "MODBUS_BAUDRATE", "value": 4 }, "resources": { "serial_ports": 1 } },
+        { "id": "modbus5", "name": "115200 baud", "symbol": { "name": "MODBUS_BAUDRATE", "value": 5 }, "resources": { "serial_ports": 1 } }
+      ]
+    },
+    { "id": "modbus", "name": "ModBus RX/TX direction output", "symbol": { "name": "MODBUS_DIR_AUX", "type": "bool" },
+      "resources": { "digital_out": 1 }
+    },
+    { "id": "webui", "tab_id": 2, "name": "WebUI", "symbol": { "name": "WEBUI_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugin_WebUI#readme",
+      "resources": { "networking": 1, "sdcard": 1, "webui": 1 },
+      "options": [
+        { "id": "webui3", "name": "Disabled", "symbol": { "name": "WEBUI_ENABLE" }, "resources": { "networking": 0, "sdcard": 0 } },
+        { "id": "webui3", "name": "v3", "symbol": { "name": "WEBUI_ENABLE", "value": 3 } },
+        { "id": "webui23", "name": "v2+v3", "symbol": { "name": "WEBUI_ENABLE", "value": 1 } },
+        { "id": "webui2", "name": "v2", "symbol": { "name": "WEBUI_ENABLE", "value": 2 } }
+      ]
+    },
+    { "id": "webui", "tab_id": 2, "name": "WebUI authentication", "symbol": { "name": "WEBUI_AUTH_ENABLE", "type": "bool" } },
+    { "id": "networking", "tab_id": 2, "name": "Networking", "symbol": { "name": "NETWORKING_ENABLE", "type": "dropdown" }, "pio_env": 1, "URL": "https://github.com/grblHAL/Plugin_networking#readme",
+      "options": [
+        { "id": "networking_off", "name": "Disabled", "symbol": { "name": "NETWORKING_ENABLE", "value": 0 } },
+        { "id": "ethernet", "name": "Ethernet", "symbol": { "name": "ETHERNET_ENABLE", "value": 1 }, "resources": { "ethernet": 1 } },
+        { "id": "wifi", "name": "WiFi", "symbol": { "name": "WIFI_ENABLE", "value": 1 }, "resources": { "wifi": 1 } },
+        { "id": "wiznet_5100S", "name": "WIZ810SMJ (W5100S)", "symbol": { "name": "_WIZCHIP_", "value": 5105 }, "resources": { "wiznet": 1 } },
+        { "id": "wiznet_5500", "name": "WIZ550io (W5500)", "symbol": { "name": "_WIZCHIP_", "value": 5500 }, "resources": { "wiznet": 1 } }
+      ],
+      "suboptions": [
+        { "id": "telnetd", "name": "Telnet server", "symbol": { "name": "TELNET_ENABLE", "type": "bool" } },
+        { "id": "websocked", "name": "WebSocket server", "symbol": { "name": "WEBSOCKET_ENABLE", "type": "bool" } },
+        { "id": "ftpd", "name": "FTP server", "symbol": { "name": "FTP_ENABLE", "type": "bool" }, "resources": { "sdcard": 1 } },
+        { "id": "httpd", "name": "HTTP server", "symbol": { "name": "HTTP_ENABLE", "type": "bool" }, "resources": { "sdcard": 1 } },
+        { "id": "webdav", "name": "WebDAV protocol", "symbol": { "name": "WEBDAV_ENABLE", "type": "bool" }, "resources": { "sdcard": 1 } },
+        { "id": "mdns", "name": "mDNS protocol", "symbol": { "name": "MDNS_ENABLE", "type": "bool" } },
+        { "id": "ssdpd", "name": "SSDP protocol", "symbol": { "name": "SSDP_ENABLE", "type": "bool" } }
+      ]
+    },
+    { "id": "wifi_networking", "tab_id": 2, "name": "WiFi mode", "symbol": { "name": "WIFI_MODE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugin_networking#readme",
+      "resources": { "wifi": 1 },
+      "options": [
+        { "id": "wifi_sta", "name": "Station (STA)", "symbol": { "name": "WIFI_SOFTAP", "value": 0 } },
+        { "id": "wifi_ap", "name": "Access Point (AP)", "symbol": { "name": "WIFI_SOFTAP", "value": 1 } },
+        { "id": "wifi_apsta", "name": "Access point + station", "symbol": { "name": "WIFI_SOFTAP", "value": 1 } }
+      ]
+    },
+    { "id": "sdcard", "tab_id": 1, "name": "SD card", "symbol": { "name": "SDCARD_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugin_SD_card#readme",
+      "options": [
+        { "name": "Disabled", "symbol": { "name": "SDCARD_ENABLE" } },
+        { "name": "Enable", "symbol": { "name": "SDCARD_ENABLE", "value": 1 } },
+        { "name": "With YModem", "symbol": { "name": "SDCARD_ENABLE", "value": 2 } }
+      ]
+    },
+    { "id": "encoder", "tab_id": 1, "name": "Encoder", "symbol": { "name": "ENCODER_ENABLE", "type": "bool" }, "resources": { "digital_in": 3}, "URL": "https://github.com/grblHAL/Plugin_encoder#readme" },
+    { "id": "fans", "tab_id": 1, "name": "Fan", "symbol": { "name": "FANS_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugin_fans#readme",
+      "resources": { "digital_out": 1}
+    },
+    { "id": "keypad", "tab_id": 1, "name": "Keypad", "symbol": { "name": "KEYPAD_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugin_I2C_keypad#readme",
+       "options": [
+        { "name": "Disabled", "symbol": { "name": "KEYPAD_ENABLE" }, "resources": { "i2c": 0, "digital_in": 0, "serial_ports": 0 } },
+        { "name": "I2C", "symbol": { "name": "KEYPAD_ENABLE", "value": 1 }, "resources": { "i2c_ports": 1, "i2c_strobe": 1, "serial_ports": 0 } },
+        { "name": "UART", "symbol": { "name": "KEYPAD_ENABLE", "value": 2 }, "resources": { "i2c_ports": 0, "digital_in": 0, "serial_ports": 1 } }
+      ]
+    },
+    { "id": "macros", "tab_id": 1, "name": "Macros", "symbol": { "name": "MACROS_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugin_I2C_keypad#readme",
+       "options": [
+        { "name": "Disabled", "symbol": { "name": "MACROS_ENABLE" } },
+        { "name": "Bound to aux port(s)", "symbol": { "name": "MACROS_ENABLE", "value": 1 } },
+        { "name": "Bound to keypad plugin", "symbol": { "name": "MACROS_ENABLE", "value": 2 } },
+        { "name": "Both aux and keypad", "symbol": { "name": "MACROS_ENABLE", "value": 3 } }
+      ]
+    },
+    { "id": "macros", "tab_id": 1, "name": "Number of macros", "symbol": { "name": "N_MACROS", "type": "dropdown", "min": 1, "max": 8 },
+      "options": [
+        { "name": "1", "symbol": { "name": "N_MACROS", "value": 1 } },
+        { "name": "2", "symbol": { "name": "N_MACROS", "value": 2 } },
+        { "name": "3", "symbol": { "name": "N_MACROS", "value": 3 } },
+        { "name": "4", "symbol": { "name": "N_MACROS", "value": 4 } },
+        { "name": "5", "symbol": { "name": "N_MACROS", "value": 5 } },
+        { "name": "6", "symbol": { "name": "N_MACROS", "value": 6 } },
+        { "name": "7", "symbol": { "name": "N_MACROS", "value": 7 } },
+        { "name": "8", "symbol": { "name": "N_MACROS", "value": 8 } }
+      ]
+    },
+    { "id": "bluetooth", "tab_id": 1, "name": "Bluetooth", "symbol": { "name": "BLUETOOTH_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_Bluetooth#readme",
+      "options": [
+        { "id": "bluetooth_off", "name": "Disabled", "symbol": { "name": "BLUETOOTH_ENABLE", "value": 0 } },
+        { "id": "bluetooth", "name": "Native", "symbol": { "name": "BLUETOOTH_ENABLE", "value": 1 }, "resources": { "bluetooth": 1 } },
+        { "id": "bluetooth_hc05", "tab_id": 1, "name": "HC-05 bridge", "symbol": { "name": "BLUETOOTH_ENABLE", "value": 2 }, "resources": { "hc05": 1, "serial_ports": 1, "digital_in": 1 }, "URL": "https://github.com/grblHAL/Plugins_Bluetooth#readme" }
+      ]
+    },
+    { "id": "rgb_leds", "tab_id": 1, "name": "RGB LEDs", "symbol": { "name": "RGB_LED_ENABLE", "type": "dropdown" }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#rgb-led-strips",
+      "resources": { "rgb_out": 1 },
+      "options": [
+        { "id": "rgb_leds_off", "name": "Disabled", "symbol": { "name": "RGB_LED_ENABLE", "value": 0 } },
+        { "id": "rgb_leds_m150", "name": "M150 LED control", "symbol": { "name": "RGB_LED_ENABLE", "value": 2 }, "resources": { "rgb_out": 1 } }
+      ]
+    },
+    { "id": "eventout", "tab_id": 1, "name": "Event triggers", "symbol": { "name": "EVENTOUT_ENABLE", "type": "dropdown", "min": 1, "max": 8 }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#bind-events-to-aux-output-ports",
+      "resources": { "digital_out": 1 },
+      "options": [
+        { "name": "Disabled", "symbol": { "name": "EVENTOUT_ENABLE", "value": 0 } },
+        { "name": "1", "symbol": { "name": "N_EVENTS", "value": 1 }, "resources": { "digital_out": 1 } },
+        { "name": "2", "symbol": { "name": "N_EVENTS", "value": 2 }, "resources": { "digital_out": 2 } },
+        { "name": "3", "symbol": { "name": "N_EVENTS", "value": 3 }, "resources": { "digital_out": 3 } },
+        { "name": "4", "symbol": { "name": "N_EVENTS", "value": 4 }, "resources": { "digital_out": 4 } },
+        { "name": "5", "symbol": { "name": "N_EVENTS", "value": 5 }, "resources": { "digital_out": 5 } },
+        { "name": "6", "symbol": { "name": "N_EVENTS", "value": 6 }, "resources": { "digital_out": 6 } },
+        { "name": "7", "symbol": { "name": "N_EVENTS", "value": 7 }, "resources": { "digital_out": 7 } },
+        { "name": "8", "symbol": { "name": "N_EVENTS", "value": 8 }, "resources": { "digital_out": 8 } }
+      ]
+    },
+    { "id": "laser_ppi", "tab_id": 1, "name": "Laser PPI", "symbol": { "name": "PPI_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_laser/#laser-ppi" },
+    { "id": "spindle_offset", "tab_id": 1, "name": "Laser spindle offset", "symbol": { "name": "SPINDLE_OFFSET", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_spindle/#Spindle-Offsets" },
+    { "id": "probe_relays", "tab_id": 1, "name": "Probe relays", "symbol": { "name": "PROBE_RELAYS", "type": "bool", "hide": 1 }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#probe-relays",
+      "resources": { "digital_out": 1 }
+	},
+    { "id": "laser_cluster", "tab_id": 1, "name": "LightBurn cluster", "symbol": { "name": "LB_CLUSTERS_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_laser/#lightburn-clusters" },
+    { "id": "laser_overdrive", "tab_id": 1, "name": "CO2 laser overdrive", "symbol": { "name": "LASER_OVD_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_laser#co2-laser-overdrive-for-dithered-engravings" },
+    { "id": "laser_coolant", "tab_id": 1, "name": "Laser coolant", "symbol": { "name": "COOLANT_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_laser/#laser-coolant",
+      "resources": { "digital_in": 1 }
+    },
+    { "id": "file_tooltable", "tab_id": 1, "name": "File based tooltable", "symbol": { "name": "TOOLTABLE_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#file-based-tooltable"
+      
+    },
+    { "id": "homing_pulloff", "tab_id": 1, "name": "Homing pulloff per axis", "symbol": { "name": "HOMING_PULLOFF_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#homing-pulloff"
+      
+    },
+    { "id": "feed_override", "tab_id": 1, "name": "Feed rate override (M220)", "symbol": { "name": "FEED_OVERRIDE_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#feed-override"
+      
+    },
+    { "id": "pwm_servo", "tab_id": 1, "name": "PWM servo (M280)", "symbol": { "name": "PWM_SERVO_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#pwm-servo",
+      "resources": { "analog_pwm_out": 1 }
+    },
+    { "id": "bltouch", "tab_id": 1, "name": "BLTouch probe (M401, M402)", "symbol": { "name": "BLTOUCH_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#bltouch-probe",
+      "resources": { "analog_pwm_out": 1 }
+    },
+    { "id": "esp_at", "tab_id": 1, "name": "ESP-AT", "symbol": { "name": "ESP_AT_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_misc/?tab=readme-ov-file#esp-at",
+      "resources": { "serial_ports": 1 }
+    },
+    { "id": "odometer", "tab_id": 1, "name": "Odometer", "symbol": { "name": "ODOMETER_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugin_odometer#readme" },
+    { "id": "openpnp", "tab_id": 1, "name": "OpenPNP", "symbol": { "name": "OPENPNP_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugin_openpnp#readme" },
+    { "id": "plasma", "tab_id": 1, "name": "Plasma/THC", "symbol": { "name": "PLASMA_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugin_plasma#readme",
+      "resources": { "analog_in": 0, "digital_in": 3 }
+    },
+    { "id": "embroidery", "tab_id": 1, "name": "Embroidery", "symbol": { "name": "EMBROIDERY_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugin_embroidery#readme",
+      "resources": { "sdcard": 1 }
+    }
+  ],
+  "signals": [
+    { "id": "reset", "name": "Reset/E-Stop", "symbol": { "name": "CONTROL_ENABLE_RST", "type": "bool", "hide": 1 }, "resources": { "control_inputs": 1 },
+	    "symbols": [ { "name": "CONTROL_INPUT", "value": 1, "hide": 1 } ]
+	  },
+      { "id": "feed_hold", "name": "Feed hold", "symbol": { "name": "CONTROL_ENABLE_FH", "type": "bool", "hide": 1 }, "resources": { "control_inputs": 1 },
+		"symbols": [ { "name": "CONTROL_INPUT", "value": 2, "hide": 1 } ]
+	  },
+      { "id": "cycle_start", "name": "Cycle start", "symbol": { "name": "CONTROL_ENABLE_CS", "type": "bool", "hide": 1 }, "resources": { "control_inputs": 1 },
+	    "symbols": [ { "name": "CONTROL_INPUT", "value": 4, "hide": 1 } ]
+	  },
+      { "id": "safety_door", "name": "Safety door", "symbol": { "name": "SAFETY_DOOR_ENABLE", "type": "bool" }, "resources": { "safety_door": 1, "digital_in": 1  } },
+      { "id": "toolsetter", "name": "Toolsetter", "symbol": { "name": "TOOLSETTER_ENABLE", "type": "bool" }, "resources": { "digital_in": 1  } },
+      { "id": "second_probe", "name": "Second probe", "symbol": { "name": "PROBE2_ENABLE", "type": "bool" }, "resources": { "digital_in": 1  } },
+      { "id": "limits_override", "name": "Limits override", "symbol": { "name": "LIMITS_OVERRIDE_ENABLE", "type": "bool" }, "resources": { "digital_in": 1 } },
+      { "id": "single_stepping", "name": "Single step G-code blocks", "symbol": { "name": "SINGLE_BLOCK_ENABLE", "type": "bool" }, "resources": { "digital_in": 1 } },
+      { "id": "block_delete", "name": "Block delete", "symbol": { "name": "BLOCK_DELETE_ENABLE", "type": "bool" }, "resources": { "digital_in": 1 } },
+      { "id": "stop_disable", "name": "Optional stop disable", "symbol": { "name": "STOP_DISABLE_ENABLE", "type": "bool" }, "resources": { "digital_in": 1 } },
+      { "id": "probe_disconnect", "name": "Probe disconnected", "symbol": { "name": "PROBE_DISCONNECT_ENABLE", "type": "bool" }, "resources": { "digital_in": 1 } },
+      { "id": "motor_fault", "name": "Motor fault", "symbol": { "name": "MOTOR_FAULT_ENABLE", "type": "bool" }, "resources": { "motor_fault": 1, "digital_in": 1 } }, 
+      { "id": "motor_warning", "name": "Motor warning", "symbol": { "name": "MOTOR_WARNING_ENABLE", "type": "bool" }, "resources": { "motor_warning": 1, "digital_in": 1 } },
+      { "id": "mcp3221_adc", "name": "MCP3221 I2C ADC", "symbol": { "name": "MCP3221_ENABLE", "type": "bool" }, "resources": { "i2c_ports": 1 } }
+  ],
+  "io_expansion": [
+      { "id": "mcp3221_adc", "name": "MCP3221 I2C ADC", "symbol": { "name": "MCP3221_ENABLE", "type": "bool" }, "resources": { "i2c_ports": 1 } },
+      { "id": "mcp4725_dac", "name": "MCP4725 I2C DAC", "symbol": { "name": "MCP4725_ENABLE", "type": "bool" }, "resources": { "i2c_ports": 1 } },
+      { "id": "pca9654e_io", "name": "PCA9654E I2C I/O expander", "symbol": { "name": "PCA9654E_ENABLE", "type": "bool" }, "resources": { "i2c_ports": 1 } },
+      { "id": "thcad", "name": "THCAD2", "symbol": { "name": "THCAD2_ENABLE", "type": "bool" }, "resources": { "frequency_in": 1 } },
+      { "id": "fnc_expander", "name": "FluidNC Airedale expander", "symbol": { "name": "FNC_EXPANDER_ENABLE", "type": "bool" }, "URL": "https://github.com/grblHAL/Plugins_misc/#fluidnc-io-expander",
+        "resources": { "serial_ports": 1 }
       }
+  ],
+  "thirdparty": [
+    { "id": "panel", "tab_id": 4, "name": "Panel", "symbol": { "name": "PANEL_ENABLE", "type": "bool" }, "thirdparty": 1, "URL": "https://github.com/dresco/Plugin_panel#readme",
+      "resources": { "modbus_rtu": 1 },
+      "symbols": [ { "name": "MODBUS_MAX_ADU_SIZE", "value": "64" } ]
+    },
+    { "id": "picoHAL", "tab_id": 4, "name": "PicoHAL", "symbol": { "name": "PICOHAL_ENABLE", "type": "bool" }, "thirdparty": 1, "URL": "https://github.com/Expatria-Technologies/Plugins_picoHAL",
+      "resources": { "modbus_rtu": 1 }
+    },
+    { "id": "probept", "tab_id": 4, "name": "Probing add-on", "symbol": { "name": "PROBE_PROTECT_ENABLE", "type": "bool" }, "thirdparty": 1, "URL": "https://github.com/Expatria-Technologies/grblhal_probe_plugin",
+      "resources": { "digital_in": 1 }
+    },
+    { "id": "fh_atc", "tab_id": 4, "name": "FlexiHAL ATC", "symbol": { "name": "FLEXIHAL_ATC", "type": "bool", "hide": 1 }, "thirdparty": 1, "URL": "https://github.com/Expatria-Technologies/flexihal_atc",
+      "resources": { "digital_in": 3,  "digital_out": 4 },
+      "symbols": [ { "name": "ATC_ENABLE", "value": "2" } ]
+    },
+    { "id": "sienci_atci", "tab_id": 4, "name": "Sienci ATCi", "symbol": { "name": "SIENCI_ATCI", "type": "bool", "hide": 1 }, "thirdparty": 1, "URL": "https://github.com/Sienci-Labs/sienci-atci-plugin#readme",
+      "resources": { "digital_in": 4 },
+      "symbols": [ { "name": "ATCI_ENABLE", "value": "1" } ]
+    },
+    { "id": "status_lights", "tab_id": 4, "name": "Status lights", "symbol": { "name": "STATUS_LIGHT_ENABLE", "type": "dropdown" }, "thirdparty": 1,
+      "options": [
+        { "name": "Disabled", "symbol": { "name": "STATUS_LIGHT_ENABLE" } },
+        { "id": "datron", "tab_id": 4, "name": "Datron style", "symbol": { "name": "STATUS_LIGHT_ENABLE", "value": 1 }, "thirdparty": 1, "URL": "https://github.com/5ocworkshop/grblhal-rgb-plugin#readme",
+          "resources": { "digital_out": 3 }
+        },
+        { "id": "sienci_rgb", "tab_id": 4, "name": "Sienci lights", "symbol": { "name": "STATUS_LIGHT_ENABLE", "value": 2 }, "thirdparty": 1, "URL": "https://github.com/Sienci-Labs/grblhal-rgb-plugin#readme",
+          "resources": { "rgb_out": 1 }
+        }
+      ]
+    },
+    { "id": "displays", "tab_id": 4, "name": "Display", "symbol": { "name": "DISPLAY_ENABLE", "type": "dropdown" },
+      "options": [
+        { "name": "Disabled", "symbol": { "name": "DISPLAY_ENABLE" } },
+        { "id": "expatria_i2c", "name": "I2C Interface", "symbol": { "name": "DISPLAY_ENABLE", "value": 9 }, "URL": "https://github.com/grblHAL/Plugin_I2C_keypad/display",
+          "resources": { "i2c": 1 }
+        },
+        { "id": "luc_i2c", "name": "I2C OLED #1 - SSD1306", "symbol": { "name": "DISPLAY_ENABLE", "value": 33 }, "thirdparty": 1, "URL": "https://github.com/luc-github/Plugin_oled_display#readme",
+          "resources": { "i2c": 1 }, "symbols": [ { "name": "DISPLAY_ENABLE", "value": 33 }, { "name": "DISPLAY_DRIVER", "value": 2 } ]
+        },
+        { "id": "luc_i2c", "name": "I2C OLED #1 - SH1106", "symbol": { "name": "DISPLAY_ENABLE", "value": 33 }, "thirdparty": 1, "URL": "https://github.com/luc-github/Plugin_oled_display#readme",
+          "resources": { "i2c": 1 }, "symbols": [ { "name": "DISPLAY_ENABLE", "value": 33 }, { "name": "DISPLAY_DRIVER", "value": 1 } ]
+        }
+      ]
+    },
+    { "id": "templates", "tab_id": 4, "name": "Template plugins", "symbol": { "name": "TEMPLATE_ENABLE", "type": "dropdown" }, "thirdparty": 1, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin",
+      "options": [
+        { "name": "None", "symbol": { "name": "TEMPLATE_ENABLE" } },
+        { "name": "Solenoid spindle", "symbol": { "name": "TEMPLATE_ENABLE", "value": 1 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/Solenoid_spindle",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Motor power monitor", "symbol": { "name": "TEMPLATE_ENABLE", "value": 3 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/Motor_power_monitor",
+          "resources": { "digital_in": 1 },
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Pause on SD file run", "symbol": { "name": "TEMPLATE_ENABLE", "value": 4 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/Pause_on_SD_file_run",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Adds support for FluidNC WebUI", "symbol": { "name": "TEMPLATE_ENABLE", "value": 5 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/FluidNC_ESP3D_cmd",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Add Modbus $ commands", "symbol": { "name": "TEMPLATE_ENABLE", "value": 6 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/Modbus_command",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Add Aux I/O state to realtime report", "symbol": { "name": "TEMPLATE_ENABLE", "value": 7 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/Realtime_report_aux_out_state",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Realtime report timestamp", "symbol": { "name": "TEMPLATE_ENABLE", "value": 8 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/Realtime_report_timestamp",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Stepper enable control", "symbol": { "name": "TEMPLATE_ENABLE", "value": 9 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/Stepper_enable_control",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "Prosessor load", "symbol": { "name": "TEMPLATE_ENABLE", "value": 10 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/MCU_load",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        },
+        { "name": "HPGL extension", "symbol": { "name": "TEMPLATE_ENABLE", "value": 11 }, "URL": "https://github.com/grblHAL/Templates/tree/master/my_plugin/hpgl",
+          "symbols": [ { "name": "ADD_MY_PLUGIN", "value": "1" } ]
+        }
+      ]
     }
   ]
 }
