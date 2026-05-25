@@ -387,6 +387,12 @@ static void spi_init (void)
 
 #endif // TRINAMIC_SPI_PORT
 
+#ifndef TRINAMIC_SPI_PORT
+static spi_slave_t dev = {
+    .f_clock = SPI_BAUDRATEPRESCALER_32
+};
+#endif
+
 #if TRINAMIC_SPI_ENABLE & TRINAMIC_SPI_CS_SINGLE
 
 #if TRINAMIC_SPI_ENABLE & TRINAMIC_SPI_20BIT
@@ -395,9 +401,6 @@ static void spi_init (void)
 
 static uint_fast8_t n_motors;
 static TMC_spi_datagram_t datagram[TMC_N_MOTORS_MAX];
-static spi_slave_t dev = {
-    .f_clock = SPI_BAUDRATEPRESCALER_32
-};
 
 TMC_spi_status_t tmc_spi_read (trinamic_motor_t driver, TMC_spi_datagram_t *reg)
 {
