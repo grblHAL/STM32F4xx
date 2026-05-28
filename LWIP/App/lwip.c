@@ -129,7 +129,10 @@ void MX_LWIP_Process(void)
 {
 /* USER CODE BEGIN 4_1 */
 /* USER CODE END 4_1 */
-  ethernetif_input(&gnetif);
+  /* Only process incoming frames when the link is established to prevent
+   * handling packets from unvalidated sources during uninitialized state */
+  if (netif_is_link_up(&gnetif))
+    ethernetif_input(&gnetif);
 
 /* USER CODE BEGIN 4_2 */
 /* USER CODE END 4_2 */
