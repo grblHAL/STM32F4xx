@@ -127,8 +127,13 @@
 //#define HOMING_PULLOFF_ENABLE   1 // Enable per axis homing pulloff distance settings.
 
 // IO expanders:
-//#define MCP3221_ENABLE          1 // MCP3221 I2C ADC input, default address is 0x9A (MCP3221_ADDRESS).
-//#define PCA9654E_ENABLE         1 // PCA9654E I2C digital I/O, default address is 0x40 (PCA9654E_ADDRESS).
+//#define MCP3221_ENABLE          1 // MCP3221 I2C 12 bit ADC input, default address is 0x9A (MCP3221_ADDRESS).
+//#define MCP4725_ENABLE          1 // MCP4725 I2C 12 bit DAC output, default address is 0xC0 (MCP3221_ADDRESS).
+//#define MCP23017_ENABLE         1 // MCP23017 I2C 16 channel digital I/O, default address is 0x40 (MCP23017_ADDRESS).
+                                    // 1: Port A as outputs, port B as inputs.
+                                    // 2: Port A and B as outputs.
+                                    // 3: Port A and B as inputs.
+//#define PCA9654E_ENABLE         1 // PCA9654E I2C 8 channel digital out, default address is 0x40 (PCA9654E_ADDRESS).
 //#define THCAD2_ENABLE           1 // Voltage to ferquency AD converter, available for PA1 and PB3.
 //#define FNC_EXPANDER_ENABLE     1 // FluidNC STM32F103 based I/O expander (Airedale)
 
