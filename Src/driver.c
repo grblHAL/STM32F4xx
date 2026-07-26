@@ -2486,6 +2486,46 @@ bool bmac_eth_get (uint8_t mac[6])
 
 // Initializes MCU peripherals for grblHAL use
 
+// IWDG is not vendored under Drivers/ in this tree, driven directly via registers.
+#define IWDG_KEY_UNLOCK  0x5555U
+#define IWDG_KEY_REFRESH 0xAAAAU
+#define IWDG_KEY_START   0xCCCCU
+#define IWDG_PR_DIV64    4U     // /64 prescaler
+#define IWDG_RELOAD      2000U  // ~4000 ms at nominal 32 kHz LSI / 64
+
+// If the previous boot ended in an IWDG reset, don't silently resume - the machine may
+// have been mid-motion. Raise the same alarm used for an unexpected reset/e-stop so the
+// user has to check position and $H before continuing.
+static void check_wdt_reset_cause (void)
+{
+    bool was_iwdg_reset = !!(RCC->CSR & RCC_CSR_IWDGRSTF);
+
+    RCC->CSR |= RCC_CSR_RMVF;
+
+    if(was_iwdg_reset)
+        task_run_on_startup(task_raise_alarm, (void *)Alarm_AbortCycle);
+}
+
+static void watchdog_init (void)
+{
+    check_wdt_reset_cause();
+
+    IWDG->KR = IWDG_KEY_UNLOCK;
+    IWDG->PR = IWDG_PR_DIV64;
+    IWDG->RLR = IWDG_RELOAD;
+
+    uint32_t timeout = 100000;
+    while((IWDG->SR & (IWDG_SR_PVU | IWDG_SR_RVU)) && --timeout);
+
+    IWDG->KR = IWDG_KEY_REFRESH;
+    IWDG->KR = IWDG_KEY_START;
+}
+
+static void watchdog_feed (void *data)
+{
+    IWDG->KR = IWDG_KEY_REFRESH;
+}
+
 static bool driver_setup (settings_t *settings)
 {
     uint32_t latency;
@@ -2585,6 +2625,9 @@ static bool driver_setup (settings_t *settings)
         sdcard_detect(true);
 #endif
 
+    watchdog_init();
+    task_add_systick(watchdog_feed, NULL);
+
     return IOInitDone;
 }
 
@@ -2666,10 +2709,13 @@ static status_code_t enter_dfu (sys_state_t state, char *args)
     report_message("Entering DFU Bootloader", Message_Warning);
     hal.delay_ms(100, NULL);
 
+    // Second word required, see SystemInit() in system_stm32f4xx.c.
     uint32_t *addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFFE0);
+    uint32_t *confirm = addr - 1;
 
     __disable_irq();
     *addr = 0xDEADBEEF;
+    *confirm = 0x21524110; /* ~0xDEADBEEF */
     __enable_irq();
     NVIC_SystemReset();
 
@@ -2711,10 +2757,13 @@ void stream_passthru_enter (void)
 {
     extern uint8_t _estack; /* Symbol defined in the linker script */
 
+    // Same double-word guard as enter_dfu() above.
     uint32_t *addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFE00);
+    uint32_t *confirm = addr - 1;
 
     __disable_irq();
     *addr = 0xDEADBEAD;
+    *confirm = 0x21524152; /* ~0xDEADBEAD */
 
 //    SCB_CleanDCache();
     NVIC_SystemReset();
@@ -2895,13 +2944,18 @@ bool driver_init (void)
 
     bool enterpt;
     uint32_t *addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFE00);
+    uint32_t *confirm = addr - 1;
 
-    if((enterpt = *addr == 0xDEADBEAD)) {
+    if((enterpt = *addr == 0xDEADBEAD && *confirm == 0x21524152)) {
         *addr = 0x0;
+        *confirm = 0x0;
         // Reduce USB IRQ priority to lower than the UART port!
         HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
         HAL_NVIC_SetPriority(OTG_HS_IRQn, 1, 0);
         HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+    } else {
+        *addr = 0x0;
+        *confirm = 0x0;
     }
 
     stream_passthru_init(COPROC_STREAM, 115200, enterpt);
@@ -3181,15 +3235,21 @@ void core_pin_debounce (void *pin)
     EXTI->IMR |= input->bit; // Reenable pin interrupt
 }
 
-static inline void core_pin_irq (uint32_t bit)
+// bits may have more than one bit set - EXTI9_5/EXTI15_10 share one vector across pins.
+static inline void core_pin_irq (uint32_t bits)
 {
     input_signal_t *input;
+    uint32_t bit;
 
-    if((input = pin_irq[__builtin_ffs(bit) - 1])) {
-        if(input->mode.debounce && task_add_delayed(core_pin_debounce, input, 40)) {
-            EXTI->IMR &= ~input->bit; // Disable pin interrupt
-        } else
-            core_pin_debounce(input);
+    while(bits) {
+        bit = bits & -bits; // isolate the lowest set bit
+        bits &= ~bit;
+        if((input = pin_irq[__builtin_ffs(bit) - 1])) {
+            if(input->mode.debounce && task_add_delayed(core_pin_debounce, input, 40)) {
+                EXTI->IMR &= ~input->bit; // Disable pin interrupt
+            } else
+                core_pin_debounce(input);
+        }
     }
 }
 
@@ -3209,19 +3269,24 @@ void aux_pin_debounce (void *pin)
     EXTI->IMR |= input->bit; // Reenable pin interrupt
 }
 
-static inline void aux_pin_irq (uint32_t bit)
+static inline void aux_pin_irq (uint32_t bits)
 {
     input_signal_t *input;
+    uint32_t bit;
 
-    if((input = pin_irq[__builtin_ffs(bit) - 1]) && input->group == PinGroup_AuxInput) {
-        if(input->mode.debounce && task_add_delayed(aux_pin_debounce, input, 40)) {
-            EXTI->IMR &= ~input->bit; // Disable pin interrupt
+    while(bits) {
+        bit = bits & -bits; // isolate the lowest set bit
+        bits &= ~bit;
+        if((input = pin_irq[__builtin_ffs(bit) - 1]) && input->group == PinGroup_AuxInput) {
+            if(input->mode.debounce && task_add_delayed(aux_pin_debounce, input, 40)) {
+                EXTI->IMR &= ~input->bit; // Disable pin interrupt
 #if SAFETY_DOOR_ENABLE
-            if(input->id == Input_SafetyDoor)
-                debounce.safety_door = input->mode.debounce;
+                if(input->id == Input_SafetyDoor)
+                    debounce.safety_door = input->mode.debounce;
 #endif
-        } else
-            ioports_event(input);
+            } else
+                ioports_event(input);
+        }
     }
 }
 
@@ -3365,7 +3430,7 @@ ISR_CODE void EXTI9_5_IRQHandler(void)
 #endif
 #if (LIMIT_MASK|SD_DETECT_BIT) & 0x03E0
         if(ifg & (LIMIT_MASK|SD_DETECT_BIT))
-            core_pin_irq(ifg);
+            core_pin_irq(ifg & (LIMIT_MASK|SD_DETECT_BIT));
 #endif
 #if AUXINPUT_MASK & 0x03E0
         if(ifg & aux_irq)
@@ -3395,7 +3460,7 @@ ISR_CODE void EXTI15_10_IRQHandler(void)
 #endif
 #if (LIMIT_MASK|SD_DETECT_BIT) & 0xFC00
         if(ifg & (LIMIT_MASK|SD_DETECT_BIT))
-            core_pin_irq(ifg);
+            core_pin_irq(ifg & (LIMIT_MASK|SD_DETECT_BIT));
 #endif
 #if AUXINPUT_MASK & 0xFC00
         if(ifg & aux_irq)
