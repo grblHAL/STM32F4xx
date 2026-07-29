@@ -81,114 +81,126 @@
 
 // Define homing/hard limit switch input pins.
 #define X_LIMIT_PORT                GPIOG
-#define X_LIMIT_PIN                 6       // MIN1
+#define X_LIMIT_PIN                 6           // MIN1
 #define Y_LIMIT_PORT                GPIOG
-#define Y_LIMIT_PIN                 9       // MIN2
+#define Y_LIMIT_PIN                 9           // MIN2
 #define Z_LIMIT_PORT                GPIOG
-#define Z_LIMIT_PIN                 10       // MIN3
+#define Z_LIMIT_PIN                 10          // MIN3
 #define LIMIT_INMODE                GPIO_BITBAND
 
 // Define ganged axis or A axis step pulse and step direction output pins.
 #if N_ABC_MOTORS > 0
-#define M3_AVAILABLE                        // Motor-4
+#define M3_AVAILABLE                            // Motor-4
 #define M3_STEP_PORT                GPIOG
 #define M3_STEP_PIN                 4
 #define M3_DIRECTION_PORT           GPIOC
 #define M3_DIRECTION_PIN            1
 #define M3_LIMIT_PORT               GPIOG
-#define M3_LIMIT_PIN                11       // MIN4
+#define M3_LIMIT_PIN                11          // MIN4
 #define M3_ENABLE_PORT              GPIOA
-#define M3_ENABLE_PIN               2       // EN for M3 motor
+#define M3_ENABLE_PIN               2           // EN for M3 motor
 #endif
 
 // Define ganged axis or B axis step pulse and step direction output pins.
 #if N_ABC_MOTORS > 1
-#define M4_AVAILABLE                        // Motor-5
+#define M4_AVAILABLE                            // Motor-5
 #define M4_STEP_PORT                GPIOF
 #define M4_STEP_PIN                 9
 #define M4_DIRECTION_PORT           GPIOF
 #define M4_DIRECTION_PIN            10
 #define M4_LIMIT_PORT               GPIOG
-#define M4_LIMIT_PIN                12       // MIN5
+#define M4_LIMIT_PIN                12          // MIN5
 #define M4_ENABLE_PORT              GPIOG
-#define M4_ENABLE_PIN               2      // EN for M4
+#define M4_ENABLE_PIN               2           // EN for M4
 #endif
 
 // Define ganged axis or C axis step pulse and step direction output pins.
 #if N_ABC_MOTORS > 2
-#define M5_AVAILABLE                        // Motor-6
+#define M5_AVAILABLE                            // Motor-6
 #define M5_STEP_PORT                GPIOC
 #define M5_STEP_PIN                 13
 #define M5_DIRECTION_PORT           GPIOF
 #define M5_DIRECTION_PIN            0
 #define M5_LIMIT_PORT               GPIOG
-#define M5_LIMIT_PIN                13      // MIN6
+#define M5_LIMIT_PIN                13          // MIN6
 #define M5_ENABLE_PORT              GPIOF
-#define M5_ENABLE_PIN               1       // EN for M5 motor
+#define M5_ENABLE_PIN               1           // EN for M5 motor
 #endif
 
 #if N_ABC_MOTORS > 3
-#define M6_AVAILABLE                        // Motor-7
+#define M6_AVAILABLE                            // Motor-7
 #define M6_STEP_PORT                GPIOE
 #define M6_STEP_PIN                 2
 #define M6_DIRECTION_PORT           GPIOE
 #define M6_DIRECTION_PIN            3
 #define M6_LIMIT_PORT               GPIOG
-#define M6_LIMIT_PIN                14      // MIN6
+#define M6_LIMIT_PIN                14          // MIN6
 #define M6_ENABLE_PORT              GPIOD
-#define M6_ENABLE_PIN               4       // EN for M5 motor
+#define M6_ENABLE_PIN               4           // EN for M5 motor
 #endif
 
 #if N_ABC_MOTORS > 4
-#define M7_AVAILABLE                        // Motor-8
+#define M7_AVAILABLE                            // Motor-8
 #define M7_STEP_PORT                GPIOE
 #define M7_STEP_PIN                 6
 #define M7_DIRECTION_PORT           GPIOA
 #define M7_DIRECTION_PIN            14
 #define M7_LIMIT_PORT               GPIOG
-#define M7_LIMIT_PIN                15      // MIN6
+#define M7_LIMIT_PIN                15          // MIN6
 #define M7_ENABLE_PORT              GPIOE
-#define M7_ENABLE_PIN               0       // EN for M5 motor
+#define M7_ENABLE_PIN               0           // EN for M5 motor
 #endif
 
-#define AUXOUTPUT0_PORT             GPIOA   // Spindle PWM - FAN0
+#define AUXOUTPUT0_PORT             GPIOA       // Spindle PWM - FAN0 (T1CH1)
 #define AUXOUTPUT0_PIN              8
 
-#define AUXOUTPUT1_PORT             GPIOE   // - FAN1
+#define AUXOUTPUT1_PORT             GPIOE       // - FAN1
 #define AUXOUTPUT1_PIN              5
 
-#define AUXOUTPUT2_PORT             GPIOD   // - FAN2
+#define AUXOUTPUT2_PORT             GPIOD       // - FAN2
 #define AUXOUTPUT2_PIN              12
 
-#define AUXOUTPUT3_PORT             GPIOD   // - FAN3
+#define AUXOUTPUT3_PORT             GPIOD       // - FAN3
 #define AUXOUTPUT3_PIN              13
 
-#define AUXOUTPUT4_PORT             GPIOD   // Spindle enable - FAN4
+#define AUXOUTPUT4_PORT             GPIOD       // Spindle enable - FAN4
 #define AUXOUTPUT4_PIN              14
 
-#define AUXOUTPUT5_PORT             GPIOE   // Spindle direction - FAN5
+#define AUXOUTPUT5_PORT             GPIOE       // Spindle direction - FAN5
 #define AUXOUTPUT5_PIN              15
 
-#define AUXOUTPUT6_PORT             GPIOA   // Coolant flood - HE0
+#define AUXOUTPUT6_PORT             GPIOA       // Coolant flood - HE0
 #define AUXOUTPUT6_PIN              0
 
-#define AUXOUTPUT7_PORT             GPIOA   // Coolant mist - HE1
+#define AUXOUTPUT7_PORT             GPIOA       // Coolant mist - HE1
 #define AUXOUTPUT7_PIN              3
 
-/*
-//we need more auxoutput ports defined in outputpin[] to use the full outputs
-#define AUXOUTPUT8_PORT             GPIOB   // - HE2
+#define AUXOUTPUT8_PORT             GPIOB       // - HE2
 #define AUXOUTPUT8_PIN              0
 
-#define AUXOUTPUT9_PORT             GPIOB   // - HE3
+#if RGB_LED_ENABLE
+
+#define LED_PWM_PORT                GPIOB_BASE  // - RGB (T2CH3)
+#define LED_PWM_PIN                 10
+
+#define AUXOUTPUT9_PORT             GPIOB       // - HE3
 #define AUXOUTPUT9_PIN              11
 
-#define AUXOUTPUT10_PORT            GPIOA   // - Bed-out
+#define AUXOUTPUT10_PORT            GPIOA       // - Bed-out
 #define AUXOUTPUT10_PIN             1
 
-#define AUXOUTPUT11_PORT            GPIOB   // - RGB
-#define AUXOUTPUT11_PIN             10
-*/
+#else
+
+#define AUXOUTPUT9_PORT             GPIOB       // - RGB
+#define AUXOUTPUT9_PIN              10
+
+#define AUXOUTPUT0_PWM_PORT         GPIOB       // - HE3 (T2CH4)
+#define AUXOUTPUT0_PWM_PIN          11
+
+#define AUXOUTPUT1_PWM_PORT         GPIOA       // - Bed-out (T2CH2)
+#define AUXOUTPUT1_PWM_PIN          1
+
+#endif
 
 // Define driver spindle pins.
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
@@ -214,25 +226,25 @@
 #define COOLANT_MIST_PIN            AUXOUTPUT7_PIN
 #endif
 
-#define AUXINPUT0_PORT              GPIOC   // Safety door - PWR-DET
+#define AUXINPUT0_PORT              GPIOC       // Safety door - PWR-DET
 #define AUXINPUT0_PIN               0
-#define AUXINPUT1_PORT              GPIOB   // Probe - Z probe "left"
+#define AUXINPUT1_PORT              GPIOB       // Probe - Z probe "left"
 #define AUXINPUT1_PIN               6
-#define AUXINPUT2_PORT              GPIOB   // Z probe "right"
+#define AUXINPUT2_PORT              GPIOB       // Z probe "right"
 #define AUXINPUT2_PIN               7
-#define AUXINPUT3_PORT              GPIOB   //Button on PCB
+#define AUXINPUT3_PORT              GPIOB       // Button on PCB
 #define AUXINPUT3_PIN               2
-#define AUXINPUT4_PORT              GPIOF   // Reset - TB
+#define AUXINPUT4_PORT              GPIOF       // Reset - TB
 #define AUXINPUT4_PIN               3
-#define AUXINPUT5_PORT              GPIOF   // Feed hold - T0
+#define AUXINPUT5_PORT              GPIOF       // Feed hold - T0
 #define AUXINPUT5_PIN               4
-#define AUXINPUT6_PORT              GPIOF   // Cycle start - T1
+#define AUXINPUT6_PORT              GPIOF       // Cycle start - T1
 #define AUXINPUT6_PIN               5
 
-#define AUXINTPUT0_ANALOG_PORT      GPIOF   //T2
+#define AUXINTPUT0_ANALOG_PORT      GPIOF       // T2
 #define AUXINTPUT0_ANALOG_PIN       6
 
-#define AUXINTPUT1_ANALOG_PORT      GPIOF   //T3
+#define AUXINTPUT1_ANALOG_PORT      GPIOF       // T3
 #define AUXINTPUT1_ANALOG_PIN       7
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.

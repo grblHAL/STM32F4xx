@@ -48,19 +48,20 @@ static stream_type_t active_stream = StreamType_Null;
 static network_services_t services = {0}, allowed_services;
 static nvs_address_t nvs_address;
 static network_settings_t ethernet, network;
-static on_report_options_ptr on_report_options;
-static on_stream_changed_ptr on_stream_changed;
 static char netservices[NETWORK_SERVICES_LEN] = "";
 static network_flags_t network_status = {};
 
 #if MQTT_ENABLE
 
-static bool mqtt_connected = false;
+static void status_event_publish (network_flags_t changed)
+
 static on_mqtt_client_connected_ptr on_client_connected;
 
 static void mqtt_connection_changed (bool connected)
 {
-    mqtt_connected = connected;
+    network_status.mqtt_connected = connected;
+
+    status_event_publish((network_flags_t){ .mqtt_connected = On });
 
     if(on_client_connected)
          on_client_connected(connected);
@@ -110,60 +111,6 @@ static network_info_t *get_info (const char *interface)
     }
 
     return NULL;
-}
-
-static void report_options (bool newopt)
-{
-    if(newopt) {
-        hal.stream.write(",ETH");
-#if FTP_ENABLE
-        if(services.ftp)
-            hal.stream.write(",FTP");
-#endif
-#if WEBDAV_ENABLE
-        if(services.webdav)
-            hal.stream.write(",WebDAV");
-#endif
-#if MDNS_ENABLE
-        if(services.mdns)
-            hal.stream.write(",mDNS");
-#endif
-#if SSDP_ENABLE
-        if(services.ssdp)
-            hal.stream.write(",SSDP");
-#endif
-    } else {
-
-        network_info_t *network;
-
-        if((network = get_info(if_name))) {
-
-            hal.stream.write("[MAC:");
-            hal.stream.write(network->mac);
-            hal.stream.write("]" ASCII_EOL);
-
-            hal.stream.write("[IP:");
-            hal.stream.write(network->status.ip);
-            hal.stream.write("]" ASCII_EOL);
-
-            if(active_stream == StreamType_Telnet || active_stream == StreamType_WebSocket) {
-                hal.stream.write("[NETCON:");
-                hal.stream.write(active_stream == StreamType_Telnet ? "Telnet" : "Websocket");
-                hal.stream.write("]" ASCII_EOL);
-            }
-
-#if MQTT_ENABLE
-            char *client_id;
-            if(*(client_id = get_info(NULL)->mqtt_client_id)) {
-                hal.stream.write("[MQTT CLIENTID:");
-                hal.stream.write(client_id);
-                hal.stream.write(mqtt_connected ? "]" ASCII_EOL : " (offline)]" ASCII_EOL);
-            }
-#endif
-        }
-    }
-
-    on_report_options(newopt);
 }
 
 static void status_event_out (void *data)
@@ -270,7 +217,7 @@ static void netif_status_callback (struct netif *netif)
 #endif
 
 #if MQTT_ENABLE
-    if(!mqtt_connected)
+    if(!network_status.mqtt_connected)
         mqtt_connect(get_info(if_name), &network.mqtt);
 #endif
 
@@ -646,15 +593,6 @@ static void ethernet_settings_load (void)
     ethernet.services.mask &= allowed_services.mask;
 }
 
-static void stream_changed (stream_type_t type)
-{
-    if(type != StreamType_SDCard)
-        active_stream = type;
-
-    if(on_stream_changed)
-        on_stream_changed(type);
-}
-
 bool enet_init (network_settings_t *settings)
 {
     static setting_details_t setting_details = {
@@ -672,12 +610,6 @@ bool enet_init (network_settings_t *settings)
     if((nvs_address = nvs_alloc(sizeof(network_settings_t)))) {
 
         networking_init();
-
-        on_report_options = grbl.on_report_options;
-        grbl.on_report_options = report_options;
-
-        on_stream_changed = grbl.on_stream_changed;
-        grbl.on_stream_changed = stream_changed;
 
 #if MQTT_ENABLE
         on_client_connected = mqtt_events.on_client_connected;

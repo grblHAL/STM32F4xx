@@ -56,6 +56,10 @@ static const pwm_signal_t pwm_pin[] = {
         .en = timerCCEN(1, ), .pol = timerCCP(1, ), .ois = timerCR2OIS(1,), .ocm = timerOCM(1, 1), .ocmc = timerOCM(1, 1)
     },
     {
+        .port = GPIOA, .pin = 1, .timer = timer(2), .ccr = &timerCCR(2, 2), .ccmr = &timerCCMR(2, 1), .af = timerAF(2, 1),
+        .en = timerCCEN(2, ), .pol = timerCCP(2, ), .ois = timerCR2OIS(2,), .ocm = timerOCM(1, 2), .ocmc = timerOCM(1, 2)
+    },
+    {
         .port = GPIOA, .pin = 3, .timer = timer(2), .ccr = &timerCCR(2, 4), .ccmr = &timerCCMR(2, 2), .af = timerAF(2, 1),
         .en = timerCCEN(4, ), .pol = timerCCP(4, ), .ois = timerCR2OIS(4, ), .ocm = timerOCM(2, 4), .ocmc = timerOCM(2, 4)
     },
@@ -94,6 +98,24 @@ static const pwm_signal_t pwm_pin[] = {
     {
         .port = GPIOC, .pin = 8, .timer = timer(3), .ccr = &timerCCR(3, 3), .ccmr = &timerCCMR(3, 2), .af = timerAF(3, 2),
         .en = timerCCEN(3, ), .pol = timerCCP(3, ), .ois = timerCR2OIS(3, ), .ocm = timerOCM(2, 3), .ocmc = timerOCM(2, 3)
+    },
+#endif
+#if !IS_TIMER_CLAIMED(TIM4_BASE)
+    {
+        .port = GPIOD, .pin = 12, .timer = timer(4), .ccr = &timerCCR(4, 1), .ccmr = &timerCCMR(4, 1), .af = timerAF(4, 2),
+        .en = timerCCEN(1, ), .pol = timerCCP(1, ), .ois = timerCR2OIS(1, ), .ocm = timerOCM(1, 1), .ocmc = timerOCM(1, 1)
+    },
+    {
+        .port = GPIOD, .pin = 13, .timer = timer(4), .ccr = &timerCCR(4, 2), .ccmr = &timerCCMR(4, 1), .af = timerAF(4, 2),
+        .en = timerCCEN(2, ), .pol = timerCCP(2, ), .ois = timerCR2OIS(3, ), .ocm = timerOCM(1, 2), .ocmc = timerOCM(1, 2)
+    },
+    {
+        .port = GPIOD, .pin = 14, .timer = timer(4), .ccr = &timerCCR(4, 3), .ccmr = &timerCCMR(4, 2), .af = timerAF(4, 2),
+        .en = timerCCEN(3, ), .pol = timerCCP(3, ), .ois = timerCR2OIS(3, ), .ocm = timerOCM(2, 3), .ocmc = timerOCM(2, 3)
+    },
+    {
+        .port = GPIOD, .pin = 15, .timer = timer(4), .ccr = &timerCCR(4, 4), .ccmr = &timerCCMR(4, 2), .af = timerAF(4, 2),
+        .en = timerCCEN(4, ), .pol = timerCCP(4, ), .ois = timerCR2OIS(3, ), .ocm = timerOCM(2, 4), .ocmc = timerOCM(2, 4)
     },
 #endif
     {

@@ -504,12 +504,12 @@ static output_signal_t outputpin[] = {
     { .id = Output_Analog_Aux0,     .port = AUXOUTPUT0_PWM_PORT,    .pin = AUXOUTPUT0_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
 #ifdef AUXOUTPUT1_ANALOG_PORT
-    { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_ANALOG_PORT, .pin = AUXOUTPUT1_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog }
+    { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_ANALOG_PORT, .pin = AUXOUTPUT1_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog },
 #elif defined(AUXOUTPUT1_PWM_PORT)
     { .id = Output_Analog_Aux1,     .port = AUXOUTPUT1_PWM_PORT,    .pin = AUXOUTPUT1_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
 #ifdef AUXOUTPUT2_ANALOG_PORT
-    { .id = Output_Analog_Aux2,     .port = AUXOUTPUT2_ANALOG_PORT, .pin = AUXOUTPUT2_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog }
+    { .id = Output_Analog_Aux2,     .port = AUXOUTPUT2_ANALOG_PORT, .pin = AUXOUTPUT2_ANALOG_PIN,   .group = PinGroup_AuxOutputAnalog },
 #elif defined(AUXOUTPUT2_PWM_PORT)
     { .id = Output_Analog_Aux2,     .port = AUXOUTPUT2_PWM_PORT,    .pin = AUXOUTPUT2_PWM_PIN,      .group = PinGroup_AuxOutputAnalog, .mode = { PINMODE_PWM } },
 #endif
@@ -1677,7 +1677,7 @@ static control_signals_t systemGetState (void)
 #if DRIVER_PROBES
 
 // Returns the probe triggered pin state.
-static bool probeGetState (void * input)
+static bool probeGetState (void *input)
 {
     return DIGITAL_IN(((input_signal_t *)input)->port, ((input_signal_t *)input)->pin);
 }
@@ -1850,11 +1850,11 @@ static void aux_assign_irq (void)
                         if(input->pin == input2->pin) {
                             if(input->id < input2->id || (aux->signal.bits & main_signals.bits)) {
                                 input2->cap.irq_mode = IRQ_Mode_None;
-                                if(!(xbar_is_probe_in(input2->id)))
+                                if(!xbar_is_probe_in(input2->id))
                                     input2->id = (pin_function_t)(Input_Aux0 + input2->user_port);
                             } else {
                                 input->cap.irq_mode = IRQ_Mode_None;
-                                if(!(xbar_is_probe_in(input->id)))
+                                if(!xbar_is_probe_in(input->id))
                                     input->id = (pin_function_t)(Input_Aux0 + input->user_port);
                             }
                         }
@@ -2564,12 +2564,16 @@ static bool driver_setup (settings_t *settings)
 
 #endif
 
-#if LITTLEFS_ENABLE
+#if EEPROM_ENABLE >= 32 && LITTLEFS_ENABLE
 
 #include "sdcard/fs_littlefs.h"
-#include "sdcard/macros.h"
 
+#if LITTLEFS_ENABLE == 1
+    fs_littlefs_mount("/littlefs", eeprom_littlefs_hal());
+#else
     fs_littlefs_mount("/", eeprom_littlefs_hal());
+#endif
+
 #endif
 
     IOInitDone = settings->version.id == 23;
@@ -2772,7 +2776,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260410";
+    hal.driver_version = "260729";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;

@@ -43,6 +43,15 @@
 #define DMA_STREAM_N    7
 #define DMA_CHANNEL_N   5
 
+#elif LED_PWM_PORT == GPIOB_BASE && LED_PWM_PIN == 10
+
+#define PWM_TIMER_N     2
+#define PWM_CHANNEL_N   3
+#define PWM_GPIO_AF_N   1
+#define DMA_INSTANCE_N  1
+#define DMA_STREAM_N    1
+#define DMA_CHANNEL_N   3
+
 #elif LED_PWM_PORT == GPIOC_BASE && LED_PWM_PIN == 6
 
 #define PWM_TIMER_N     8
@@ -175,11 +184,16 @@ static DMA_HandleTypeDef pwm_dma = {
     .Init.Direction = DMA_MEMORY_TO_PERIPH,
     .Init.PeriphInc = DMA_PINC_DISABLE,
     .Init.MemInc = DMA_MINC_ENABLE,
+#if PWM_TIMER_N == 2
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD,
+    .Init.MemDataAlignment = DMA_MDATAALIGN_WORD,
+#else
     .Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD,
     .Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD,
+#endif
     .Init.Mode = DMA_NORMAL,
     .Init.Priority = DMA_PRIORITY_MEDIUM,
-    .Init.FIFOMode = DMA_FIFOMODE_DISABLE
+    .Init.FIFOMode = DMA_FIFOMODE_ENABLE
 };
 
 #if PWM_LEDS == 2
@@ -203,8 +217,13 @@ static DMA_HandleTypeDef pwm1_dma = {
     .Init.Direction = DMA_MEMORY_TO_PERIPH,
     .Init.PeriphInc = DMA_PINC_DISABLE,
     .Init.MemInc = DMA_MINC_ENABLE,
+#if PWM_TIMER_N == 2
+    .Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD,
+    .Init.MemDataAlignment = DMA_MDATAALIGN_WORD,
+#else
     .Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD,
     .Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD,
+#endif
     .Init.Mode = DMA_NORMAL,
     .Init.Priority = DMA_PRIORITY_MEDIUM,
     .Init.FIFOMode = DMA_FIFOMODE_DISABLE
@@ -212,7 +231,13 @@ static DMA_HandleTypeDef pwm1_dma = {
 
 #endif // PWM_LEDS == 2
 
-static uint16_t t_high;
+#if PWM_TIMER_N == 2
+typedef uint32_t led_bit_t;
+#else
+typedef uint16_t led_bit_t;
+#endif
+
+static led_bit_t t_high;
 
 typedef struct {
 	volatile bool busy;
@@ -222,7 +247,7 @@ typedef struct {
 
 static settings_changed_ptr settings_changed;
 
-static inline void rgb_24bpp_pack (uint16_t *led, rgb_color_t color, rgb_color_mask_t mask, uint8_t intensity, uint16_t t_high)
+static inline void rgb_24bpp_pack (led_bit_t *led, rgb_color_t color, rgb_color_mask_t mask, uint8_t intensity, led_bit_t t_high)
 {
     uint8_t bitmask = 0b10000000;
 
@@ -251,7 +276,7 @@ static inline void rgb_24bpp_pack (uint16_t *led, rgb_color_t color, rgb_color_m
     }
 }
 
-static inline rgb_color_t rgb_24bpp_unpack (uint16_t *led, uint8_t intensity, uint16_t t_high)
+static inline rgb_color_t rgb_24bpp_unpack (led_bit_t *led, uint8_t intensity, led_bit_t t_high)
 {
     rgb_color_t color = {0};
 
@@ -291,7 +316,7 @@ static pwm_strip_t strip0 = { .cfg.intensity = 255 };
 static inline void _write (void)
 {
     if(!strip0.busy)
-    	strip0.busy = HAL_TIM_PWM_Start_DMA(&pwm_timer, PWM_CHANNEL, (uint32_t *)strip0.cfg.leds, strip0.cfg.num_bytes >> 1) == HAL_OK;
+    	strip0.busy = HAL_TIM_PWM_Start_DMA(&pwm_timer, PWM_CHANNEL, (uint32_t *)strip0.cfg.leds, strip0.cfg.num_bytes >> (sizeof(led_bit_t) / 2)) == HAL_OK;
 }
 
 static void neopixels_write (void)
@@ -304,7 +329,7 @@ static void neopixel_out_masked (uint16_t device, rgb_color_t color, rgb_color_m
 {
     if(strip0.cfg.num_leds && device < strip0.cfg.num_leds) {
 
-        rgb_24bpp_pack((uint16_t *)&strip0.cfg.leds[device * 24 * 2], color, mask, strip0.cfg.intensity, t_high);
+        rgb_24bpp_pack((led_bit_t *)&strip0.cfg.leds[device * 24 * sizeof(led_bit_t)], color, mask, strip0.cfg.intensity, t_high);
 
         if(strip0.cfg.num_leds == 1)
             _write();
@@ -329,7 +354,7 @@ static uint8_t neopixels_set_intensity (uint8_t intensity)
             uint_fast16_t device = strip0.cfg.num_leds;
             do {
                 device--;
-                rgb_color_t color = rgb_24bpp_unpack((uint16_t *)&strip0.cfg.leds[device * 24 * 2], prev, t_high);
+                rgb_color_t color = rgb_24bpp_unpack((led_bit_t *)&strip0.cfg.leds[device * sizeof(led_bit_t) * 2], prev, t_high);
                 neopixel_out(device, color);
             } while(device);
 
@@ -355,7 +380,7 @@ static pwm_strip_t strip1 = { .cfg.intensity = 255 };
 static inline void _write1 (void)
 {
     if(!strip1.busy)
-    	strip1.busy = HAL_TIM_PWM_Start_DMA(&pwm_timer, PWM1_CHANNEL, (uint32_t *)strip1.cfg.leds, strip1.cfg.num_bytes >> 1) == HAL_OK;
+    	strip1.busy = HAL_TIM_PWM_Start_DMA(&pwm_timer, PWM1_CHANNEL, (uint32_t *)strip1.cfg.leds, strip1.cfg.num_bytes >> (sizeof(led_bit_t) / 2)) == HAL_OK;
 }
 
 static void neopixels1_write (void)
@@ -368,7 +393,7 @@ static void neopixel1_out_masked (uint16_t device, rgb_color_t color, rgb_color_
 {
     if(strip1.cfg.num_leds && device < strip1.cfg.num_leds) {
 
-        rgb_24bpp_pack((uint16_t *)&strip1.cfg.leds[device * 24 * 2], color, mask, strip1.cfg.intensity, t_high);
+        rgb_24bpp_pack((led_bit_t *)&strip1.cfg.leds[device * 24 * sizeof(led_bit_t)], color, mask, strip1.cfg.intensity, t_high);
 
         if(strip1.cfg.num_leds == 1)
             _write1();
@@ -393,7 +418,7 @@ static uint8_t neopixels1_set_intensity (uint8_t intensity)
             uint_fast16_t device = strip1.cfg.num_leds;
             do {
                 device--;
-                rgb_color_t color = rgb_24bpp_unpack((uint16_t *)&strip1.cfg.leds[device * 24 * 2], prev, t_high);
+                rgb_color_t color = rgb_24bpp_unpack((led_bit_t *)&strip1.cfg.leds[device * 24 * sizeof(led_bit_t)], prev, t_high);
                 neopixel1_out(device, color);
             } while(device);
 
@@ -425,7 +450,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
         }
 
         if(hal.rgb0.num_devices) {
-        	strip0.cfg.num_bytes = hal.rgb0.num_devices * 24 * 2 + 40; // 40 -> 80?
+        	strip0.cfg.num_bytes = hal.rgb0.num_devices * 24 * sizeof(led_bit_t) + 20 * sizeof(led_bit_t); // 20 -> 40?
             if((strip0.cfg.leds = calloc(strip0.cfg.num_bytes, sizeof(uint8_t))) == NULL)
             	hal.rgb0.num_devices = 0;
         }
@@ -447,7 +472,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
         }
 
         if(hal.rgb1.num_devices) {
-        	strip1.cfg.num_bytes = hal.rgb1.num_devices * 24 * 2 + 40; // 40 -> 80?
+        	strip1.cfg.num_bytes = hal.rgb1.num_devices * 24 * sizeof(led_bit_t) + 20 * sizeof(led_bit_t); // 20 -> 40?
             if((strip1.cfg.leds = calloc(strip1.cfg.num_bytes, sizeof(uint8_t))) == NULL)
             	hal.rgb1.num_devices = 0;
         }

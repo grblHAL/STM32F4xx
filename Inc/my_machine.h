@@ -168,6 +168,14 @@
 //#define Z_GANGED_LIM_MAX    1
 //
 
+#if EEPROM_ENABLE >= 32
+#if SDCARD_ENABLE
+//#define LITTLEFS_ENABLE 1 // Mount EEPROM based littlefs as /littlefs
+#else
+//#define LITTLEFS_ENABLE 2 // Mount EEPROM based littlefs as / (root)
+#endif
+#endif
+
 #ifdef _WIZCHIP_
 #define ETHERNET_ENABLE 1
 #endif
