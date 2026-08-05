@@ -4,7 +4,7 @@
   Part of grblHAL
 
   Copyright (c) 2021 qbazd
-  Copyright (c) 2023-2025 Terje Io
+  Copyright (c) 2023-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,10 +27,11 @@
 #error "MKS ROBIN-NANO 3.0 does not support ganged motors with Trinamic drivers."
 #endif
 
-#if IS_NUCLEO_DEVKIT
+#if defined(DEBUG) && IS_NUCLEO_DEVKIT
 // When debugging with Nucleo-144
 #define IS_NUCLEO_BOB
 #define SERIAL_PORT    32   // GPIOD: TX = 8, RX = 9
+#define NUCLEO144_DEBUG
 #define SERIAL1_PORT    2   // GPIOB: TX = 10, RX = 11
 #elif !defined(STM32F407xx) || HSE_VALUE != 8000000
 #error "This board has STM32F407 processor with a 8MHz crystal, select a corresponding build!"
@@ -43,6 +44,8 @@
 
 #define BOARD_NAME "MKS ROBIN-NANO 3.0"
 #define BOARD_URL "https://github.com/makerbase-mks/MKS-Robin-Nano-V3.X"
+
+#define HAS_BOARD_INIT
 
 #undef I2C_ENABLE
 #define I2C_ENABLE      1
@@ -159,14 +162,14 @@
 #define AUXINPUT1_PIN           5
 #define AUXINPUT2_PORT          GPIOE // Reset/EStop
 #define AUXINPUT2_PIN           12
+#if defined(DEBUG)
+#undef CONTROL_ENABLE // since Feed hold is on a debugger pin (DIO)
+#define CONTROL_ENABLE          CONTROL_HALT
+#else
 #define AUXINPUT3_PORT          GPIOA // Feed hold
 #define AUXINPUT3_PIN           13
-#if IS_NUCLEO_DEVKIT
-#define AUXINPUT4_PORT          GPIOA // Cycle start
-#define AUXINPUT4_PIN           10    //  - when debugging with Nucleo-144
-#else
 #define AUXINPUT4_PORT          GPIOE // Cycle start
-#define AUXINPUT4_PIN           6     //  - MT_DET1
+#define AUXINPUT4_PIN           6     // - MT_DET1
 #endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
