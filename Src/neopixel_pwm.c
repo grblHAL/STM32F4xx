@@ -245,7 +245,7 @@ typedef struct {
 	HAL_TIM_ActiveChannel channel;
 } pwm_strip_t;
 
-static settings_changed_ptr settings_changed;
+static settings_changed_ptr on_settings_changed;
 
 static inline void rgb_24bpp_pack (led_bit_t *led, rgb_color_t color, rgb_color_mask_t mask, uint8_t intensity, led_bit_t t_high)
 {
@@ -483,8 +483,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 
 #endif // PWM_LEDS == 2
 
-    if(settings_changed)
-        settings_changed(settings, changed);
+    on_settings_changed(settings, changed);
 }
 
 void neopixel_pwm_init (void)
@@ -596,8 +595,8 @@ void neopixel_pwm_init (void)
         }
 
         if(leds) {
-            settings_changed = hal.settings_changed;
-            hal.settings_changed = onSettingsChanged;
+            on_settings_changed = grbl.on_settings_changed;
+            grbl.on_settings_changed = onSettingsChanged;
         }
     }
 

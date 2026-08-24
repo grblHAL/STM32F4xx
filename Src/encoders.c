@@ -72,7 +72,7 @@ typedef struct {
     __IO uint32_t *cnt; // shortcut to timer CNT register
     __IO uint32_t *ccr; // shortcut to timer CCR3 register
     TIM_TypeDef *timer;
-    settings_changed_ptr settings_changed;
+    settings_changed_ptr on_settings_changed;
 } spindle_encoder_hw_t;
 
 static struct {
@@ -238,7 +238,7 @@ static void spindle_encoder_cfg (settings_t *settings, settings_changed_flags_t 
 
     static bool event_claimed = false;
 
-    sp_encoder.settings_changed(settings, changed);
+    sp_encoder.on_settings_changed(settings, changed);
 
     if((hal.spindle_data.get = settings->spindle.ppr > 0 ? spindleGetData : NULL)) {
 
@@ -482,10 +482,10 @@ static bool encoder_add (uint32_t id)
 
 #if SPINDLE_ENCODER_ENABLE
 
-        if(sp_encoder.settings_changed == NULL && timer_get_cap(encoder->timer).comp3) {
+        if(sp_encoder.on_settings_changed == NULL && timer_get_cap(encoder->timer).comp3) {
 
-            sp_encoder.settings_changed = hal.settings_changed;
-            hal.settings_changed = spindle_encoder_cfg;
+            sp_encoder.on_settings_changed = grbl.on_settings_changed;
+            grbl.on_settings_changed = spindle_encoder_cfg;
 
             sp_encoder.cr1 = &encoder->timer->CR1;
             sp_encoder.cnt = &encoder->timer->CNT;
@@ -592,8 +592,8 @@ void driver_encoders_init (void)
 
             hal.periph_port.register_pin(&ssp);
 
-            sp_encoder.settings_changed = hal.settings_changed;
-            hal.settings_changed = spindle_encoder_cfg;
+            sp_encoder.on_settings_changed = grbl.on_settings_changed;
+            grbl.on_settings_changed = spindle_encoder_cfg;
 
             break;
         }

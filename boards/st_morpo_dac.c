@@ -33,7 +33,7 @@ I2S_HandleTypeDef hi2s1;
 DMA_HandleTypeDef hdma_spi1_tx;
 
 static stepper_pulse_start_ptr stepper_pulse_start;
-static settings_changed_ptr settings_changed;
+static settings_changed_ptr on_settings_changed;
 uint16_t data[4];
 int32_t count[2];
 
@@ -135,7 +135,7 @@ static void MX_DMA_Init (void)
 // Reclaim entry points that may have been changed on settings change.
 static void onSettingsChanged (settings_t *settings)
 {
-    settings_changed(settings);
+    on_settings_changed(settings);
 
     if(hal.stepper.pulse_start != stepperPulseStart) {
         stepper_pulse_start = hal.stepper.pulse_start;
@@ -161,8 +161,8 @@ void board_init (void)
     MX_DMA_Init();
     MX_I2S1_Init();
 
-    settings_changed = hal.settings_changed;
-    hal.settings_changed = onSettingsChanged;
+    on_settings_changed = grbl.on_settings_changed;
+    grbl.on_settings_changed = onSettingsChanged;
 
     stepper_pulse_start = hal.stepper.pulse_start;
     hal.stepper.pulse_start = stepperPulseStart;

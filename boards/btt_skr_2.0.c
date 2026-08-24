@@ -153,7 +153,6 @@ void board_init (void)
   DAC->DHR12R2 = 0;                       // set dac output to 0
   __HAL_DAC_ENABLE(&hdac, DAC_CHANNEL_2); // enable the dac
 
-  // Intercept the settings_changed pointer
   on_spindle_select = grbl.on_spindle_select;
   grbl.on_spindle_select = my_spindle_select;
 }

@@ -31,7 +31,7 @@
 #include "grbl/nvs_buffer.h"
 #include "grbl/task.h"
 
-static settings_changed_ptr settings_changed;
+static settings_changed_ptr on_settings_changed;
 
 #if PPI_ENABLE
 
@@ -503,7 +503,7 @@ static void spindle1_settings_changed (spindle1_pwm_settings_t *settings)
 // Configures peripherals when settings are initialized or changed
 static void settingsChanged (settings_t *settings, settings_changed_flags_t changed)
 {
-    settings_changed(settings, changed);
+    on_settings_changed(settings, changed);
 
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
     if(changed.spindle) {
@@ -683,8 +683,8 @@ void driver_spindles_init (void)
 
 #endif // DRIVER_SPINDLE1_ENABLE
 
-    settings_changed = hal.settings_changed;
-    hal.settings_changed = settingsChanged;
+    on_settings_changed = grbl.on_settings_changed;
+    grbl.on_settings_changed = settingsChanged;
 
 #if PPI_ENABLE
 

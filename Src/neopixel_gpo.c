@@ -42,7 +42,7 @@ static ws2812_led_t ws2812 = {
     .oneLow = 3,
 };
 
-static settings_changed_ptr settings_changed;
+static settings_changed_ptr on_settings_changed;
 
 // LED0
 
@@ -278,8 +278,7 @@ static void onSettingsChanged (settings_t *settings, settings_changed_flags_t ch
 
 #endif // LED1_GPO_PIN
 
-    if(settings_changed)
-        settings_changed(settings, changed);
+    on_settings_changed(settings, changed);
 }
 
 void neopixel_gpo_init (void)
@@ -364,8 +363,8 @@ void neopixel_gpo_init (void)
         		ws2812.zeroLow = ws2812.oneHigh = 9;
         	}
 
-            settings_changed = hal.settings_changed;
-            hal.settings_changed = onSettingsChanged;
+            on_settings_changed = grbl.on_settings_changed;
+            grbl.on_settings_changed = onSettingsChanged;
         }
     }
 }
