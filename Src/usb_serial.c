@@ -78,24 +78,36 @@ static void usbRxCancel (void)
 static inline bool usb_write (void)
 {
     static uint8_t dummy = 0;
+    static volatile bool in_write = false;
+
+    if(in_write)
+        return false;  // Prevent reentrancy from stream_tx_blocking callback
+
+    in_write = true;
 
     txbuf.s = txbuf.use_tx2data ? txbuf.data2 : txbuf.data;
 
     while(CDC_Transmit_FS(txbuf.s, txbuf.length) == USBD_BUSY) {
-        if(!hal.stream_blocking_callback())
+        if(!hal.stream_blocking_callback()) {
+            in_write = false;
             return false;
+        }
     }
 
     if(txbuf.length % 64 == 0) {
         while(CDC_Transmit_FS(&dummy, 0) == USBD_BUSY) {
-            if(!hal.stream_blocking_callback())
+            if(!hal.stream_blocking_callback()) {
+                in_write = false;
                 return false;
+            }
         }
     }
 
     txbuf.use_tx2data = !txbuf.use_tx2data;
     txbuf.s = txbuf.use_tx2data ? txbuf.data2 : txbuf.data;
     txbuf.length = 0;
+
+    in_write = false;
 
     return true;
 }
