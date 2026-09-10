@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Driver (patch-1)
+      - name: Checkout Driver
         uses: actions/checkout@v4
 
       - name: Checkout Core
@@ -17,11 +17,7 @@ jobs:
           repository: grblHAL/core
           path: core
 
-      - name: Install ARM Toolchain
-        uses: gautamkrishnar/blog-post-workflow@v1 # Установка gcc-arm
-        continue-on-error: true
-
-      - name: Install GNU Arm Embedded Toolchain
+      - name: Set up ARM Toolchain
         uses: supplypike/setup-bin@v3
         with:
           name: arm-none-eabi-gcc
@@ -30,14 +26,12 @@ jobs:
 
       - name: Build Firmware
         run: |
-          mkdir build
-          cd build
-          arm-none-eabi-gcc -v || true
+          make -j2
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: BlackPill-Firmware
           path: |
-            *.bin
-            *.hex
+            **/*.bin
+            **/*.hex
