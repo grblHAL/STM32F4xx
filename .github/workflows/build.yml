@@ -1,0 +1,37 @@
+name: Build grblHAL Firmware
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Driver
+        uses: actions/checkout@v4
+
+      - name: Checkout Core
+        uses: actions/checkout@v4
+        with:
+          repository: grblHAL/core
+          path: core
+
+      - name: Set up ARM Toolchain
+        uses: supplypike/setup-bin@v3
+        with:
+          name: arm-none-eabi-gcc
+          version: '12.2.1'
+          uri: 'https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz'
+
+      - name: Build Firmware
+        run: |
+          make -j2
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlackPill-Firmware
+          path: |
+            **/*.bin
+            **/*.hex
