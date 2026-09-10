@@ -19,29 +19,28 @@
   along with grblHAL. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* Pin Assignments:
+/* Custom OpenPnP / Router Pin Assignments:
  *
  *                               -----------
- *                           VB |           | +3V
- *                          C13 |           | GND
- *           Coolant Flood  C14 |           | +5V
- *            Coolant Mist  C15 | *     - * | B9   Safety door / Aux In 0
- *                          RST |      |K|  | B8   Cycle Start
- *                  X Step   A0 |       -   | B7   Feed Hold
- *             X Direction   A1 |           | B6   Reset/EStop
- *                  Y Step   A2 |           | B5
- *             Y Direction   A3 |    / \    | B4   Coolant Mist
- *                  Z Step   A4 |   <MCU>   | B3   Spindle Index
- *             Z Direction   A5 |    \ /    | A15  Spindle Pulse
- *    Aux In 0/1 / M3 Step   A6 |           | A12  USB D+
- * Aux In 1 / M3 Direction   A7 |   -   -   | A11  USB D-
- *          Steppers enable  B0 |  |R| |B|  | A10  M4 Direction
- *          Spindle Enable   B1 |   -   -   | A9   M4 Step
- *       Spindle Direction   B2 |           | A8   Spindle PWM
- *                M4 Limit  B10 |           | B15  Probe / M3 Limit
- *                          +3V |   -----   | B14  Z Limit
- *                          GND |  |     |  | B13  Y Limit
- *                          +5V |  | USB |  | B12  X Limit
+ *                            VB |           | +3V
+ *                           C13 |           | GND
+ *            Steppers Enable C14 | *     - * | B9   Aux In 0 (Unused)
+ *                               |           | B8   Cycle Start
+ *                           RST |     |K|   | B7   Feed Hold
+ *                        X Dir  A1 |       -   | B6   Reset/EStop
+ *                        Y Dir  A0 |           | B5   Coolant Mist
+ *                       Z Step  A2 |           | B4   
+ *                        Z Dir  A3 |    / \    | B3   
+ *                       Aux Out 0 A4 |   <MCU>   | A15  
+ *                       Coolant Flood A5 |    \ /    | A12  USB D+
+ *                     Aux Out 1 A6 |           | A11  USB D-
+ *                        X Step  A7 |   -   -   | A10  Spindle Direction (PB10)
+ *                        X Step  B0 |  |R| |B|  | A9   
+ *                    Spindle On  B1 |   -   -   | A8   Spindle PWM / Svet_PWM
+ *                                B2 |           | B15  Aux In 1
+ *                           +3V |     ----- | B14  Z Limit
+ *                           GND |    |     | | B13  Y Limit
+ *                           +5V |    | USB | | B12  X Limit
  *                               -----------
  */
 
@@ -49,27 +48,36 @@
 #error "Axis configuration is not supported!"
 #endif
 
-#define BOARD_NAME "BlackPill"
+#define BOARD_NAME "Custom BlackPill OpenPnP"
 
 // Define step pulse output pins.
-#define STEP_PORT               GPIOA
-#define X_STEP_PIN              0
-#define Y_STEP_PIN              2
-#define Z_STEP_PIN              4
+// X_STEP: PB0, Y_STEP: PA1, Z_STEP: PA2
 #define STEP_OUTMODE            GPIO_MAP
+#define X_STEP_PORT             GPIOB
+#define X_STEP_PIN              0
+#define Y_STEP_PORT             GPIOA
+#define Y_STEP_PIN              1
+#define Z_STEP_PORT             GPIOA
+#define Z_STEP_PIN              2
 
-#define DIRECTION_PORT          GPIOA
-#define X_DIRECTION_PIN         1
-#define Y_DIRECTION_PIN         3
-#define Z_DIRECTION_PIN         5
+// Define step direction output pins.
+// X_DIR: PA7, Y_DIR: PA0, Z_DIR: PA3
 #define DIRECTION_OUTMODE       GPIO_MAP
+#define X_DIRECTION_PORT        GPIOA
+#define X_DIRECTION_PIN         7
+#define Y_DIRECTION_PORT        GPIOA
+#define Y_DIRECTION_PIN         0
+#define Z_DIRECTION_PORT        GPIOA
+#define Z_DIRECTION_PIN         3
 
 // Define stepper driver enable/disable output pin.
-#define STEPPERS_ENABLE_PORT    GPIOB
-#define STEPPERS_ENABLE_PIN     0
+// Steppers Enable: PC14
+#define STEPPERS_ENABLE_PORT    GPIOC
+#define STEPPERS_ENABLE_PIN     14
 #define STEPPERS_ENABLE_MASK    STEPPERS_ENABLE_BIT
 
 // Define homing/hard limit switch input pins.
+// X_LIMIT: PB12, Y_LIMIT: PB13, Z_LIMIT: PB14
 #define LIMIT_PORT              GPIOB
 #define X_LIMIT_PIN             12
 #define Y_LIMIT_PIN             13
@@ -89,22 +97,21 @@
 #endif
 #endif
 
-#if N_ABC_MOTORS == 0
-#define AUXOUTPUT0_PORT         GPIOA
-#define AUXOUTPUT0_PIN          7
-#define AUXOUTPUT1_PORT         GPIOA
+// Define Auxiliary Outputs
+#define AUXOUTPUT0_PORT         GPIOA // Aux Out 0 (P0)
+#define AUXOUTPUT0_PIN          4
+#define AUXOUTPUT1_PORT         GPIOA // Aux Out 1 (Fan 0)
 #define AUXOUTPUT1_PIN          6
-#endif
-#define AUXOUTPUT2_PORT         GPIOA // Spindle PWM
+#define AUXOUTPUT2_PORT         GPIOA // Spindle PWM (Svet_PWM)
 #define AUXOUTPUT2_PIN          8
-#define AUXOUTPUT3_PORT         GPIOB // Spindle direction
-#define AUXOUTPUT3_PIN          2
-#define AUXOUTPUT4_PORT         GPIOB // Spindle enable
+#define AUXOUTPUT3_PORT         GPIOB // Spindle Direction
+#define AUXOUTPUT3_PIN          10
+#define AUXOUTPUT4_PORT         GPIOB // Spindle On (KL_1)
 #define AUXOUTPUT4_PIN          1
-#define AUXOUTPUT5_PORT         GPIOC // Coolant flood
-#define AUXOUTPUT5_PIN          15
-#define AUXOUTPUT6_PORT         GPIOC // Coolant mist
-#define AUXOUTPUT6_PIN          14
+#define AUXOUTPUT5_PORT         GPIOA // Coolant Flood
+#define AUXOUTPUT5_PIN          5
+#define AUXOUTPUT6_PORT         GPIOB // Coolant Mist
+#define AUXOUTPUT6_PIN          5
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
@@ -130,29 +137,18 @@
 #define COOLANT_MIST_PIN        AUXOUTPUT6_PIN
 #endif
 
-// Spindle encoder pins.
-#if SPINDLE_ENCODER_ENABLE
-
-#define RPM_COUNTER_N           2
-#define RPM_TIMER_N             3
-#define SPINDLE_INDEX_PORT      GPIOB
-#define SPINDLE_INDEX_PIN       3
-#define SPINDLE_PULSE_PORT      GPIOA
-#define SPINDLE_PULSE_PIN       15
-
-#endif
-
-#define AUXINPUT0_PORT          GPIOB // Safety door
+// Auxiliary Inputs
+#define AUXINPUT0_PORT          GPIOB // Aux In 0 (Unused - PB9)
 #define AUXINPUT0_PIN           9
 #if !N_AUTO_SQUARED
-#define AUXINPUT1_PORT          GPIOB // Probe
+#define AUXINPUT1_PORT          GPIOB // Aux In 1 (PB15)
 #define AUXINPUT1_PIN           15
 #endif
-#define AUXINPUT2_PORT          GPIOB // Reset/EStop
+#define AUXINPUT2_PORT          GPIOB // Reset / Emergency Stop (PB6)
 #define AUXINPUT2_PIN           6
-#define AUXINPUT3_PORT          GPIOB // Feed hold
+#define AUXINPUT3_PORT          GPIOB // Feed Hold (PB7)
 #define AUXINPUT3_PIN           7
-#define AUXINPUT4_PORT          GPIOB // Cycle start
+#define AUXINPUT4_PORT          GPIOB // Cycle Start (PB8)
 #define AUXINPUT4_PIN           8
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
@@ -180,11 +176,6 @@
 #elif MOTOR_FAULT_ENABLE
 #define MOTOR_FAULT_PORT        AUXINPUT0_PORT
 #define MOTOR_FAULT_PIN         AUXINPUT0_PIN
-#endif
-
-// NOT SUPPORTED
-#if SDCARD_ENABLE
-//#error SDcard not supported
 #endif
 
 /* EOF */
