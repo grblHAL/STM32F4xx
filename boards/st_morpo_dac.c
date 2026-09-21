@@ -133,9 +133,9 @@ static void MX_DMA_Init (void)
 }
 
 // Reclaim entry points that may have been changed on settings change.
-static void onSettingsChanged (settings_t *settings)
+static void onSettingsChanged (settings_t *settings, settings_changed_flags_t changed)
 {
-    on_settings_changed(settings);
+    on_settings_changed(settings, changed);
 
     if(hal.stepper.pulse_start != stepperPulseStart) {
         stepper_pulse_start = hal.stepper.pulse_start;

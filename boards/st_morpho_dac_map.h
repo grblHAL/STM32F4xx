@@ -142,10 +142,6 @@
 #define CYCLE_START_PIN         4
 #define CONTROL_INMODE GPIO_MAP
 
-// Define probe switch input pin.
-#define PROBE_PORT              GPIOC
-#define PROBE_PIN               7
-
 #define AUXINPUT0_PORT          GPIOB
 #define AUXINPUT0_PIN           13
 #define AUXINPUT1_PORT          GPIOB
@@ -157,6 +153,7 @@
 #define AUXINPUT4_PORT          GPIOC // Probe input
 #define AUXINPUT4_PIN           7
 
+// Define probe switch input pin.
 #if PROBE_ENABLE
 #define PROBE_PORT              AUXINPUT4_PORT
 #define PROBE_PIN               AUXINPUT4_PIN
