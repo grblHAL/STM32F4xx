@@ -225,11 +225,22 @@ static SPI_HandleTypeDef spi_port = {
     .Init.CRCPolynomial = 10
 };
 
+#define SPI_WAIT_ITERATIONS 100000 // bounded so a dropped byte can't hang the controller
+
+static inline bool spi_wait_flag (uint32_t flag)
+{
+    uint32_t timeout = SPI_WAIT_ITERATIONS;
+
+    while(!__HAL_SPI_GET_FLAG(&spi_port, flag) && --timeout);
+
+    return timeout != 0;
+}
+
 static uint8_t _spi_get_byte (void)
 {
     spi_port.Instance->DR = 0xFF; // Writing dummy data into Data register
 
-    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_RXNE));
+    spi_wait_flag(SPI_FLAG_RXNE);
 
     return (uint8_t)spi_port.Instance->DR;
 }
@@ -238,8 +249,8 @@ static uint8_t _spi_put_byte (uint8_t byte)
 {
     spi_port.Instance->DR = byte;
 
-    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_TXE));
-    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_RXNE));
+    spi_wait_flag(SPI_FLAG_TXE);
+    spi_wait_flag(SPI_FLAG_RXNE);
 
     __HAL_SPI_CLEAR_OVRFLAG(&spi_port);
 
@@ -631,7 +642,10 @@ TMC_spi20_datagram_t tmc_spi20_write (trinamic_motor_t driver, TMC_spi20_datagra
     TMC_spi20_datagram_t status = {0};
 
 #ifdef TRINAMIC_SPI_PORT
-    while(__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_BSY)) {};
+    {
+        uint32_t timeout = SPI_WAIT_ITERATIONS;
+        while(__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_BSY) && --timeout);
+    }
     DIGITAL_OUT(cs[driver.id].port, cs[driver.id].pin, 0);
 #else
     dev.cs_pin = cs[driver.id].pin;
