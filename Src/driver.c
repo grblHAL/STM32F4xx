@@ -603,7 +603,7 @@ static void driver_delay (uint32_t ms, delay_callback_ptr callback)
     if((delay.ms = ms) > 0) {
         if(!(delay.callback = callback)) {
             while(delay.ms)
-                grbl.on_execute_delay(state_get());
+                task_execute(true);
         }
     } else {
         delay.callback = NULL;
@@ -2776,7 +2776,7 @@ bool driver_init (void)
 #else
     hal.info = "STM32F401";
 #endif
-    hal.driver_version = "260729";
+    hal.driver_version = "261003";
     hal.driver_url = GRBL_URL "/STM32F4xx";
 #ifdef BOARD_NAME
     hal.board = BOARD_NAME;
