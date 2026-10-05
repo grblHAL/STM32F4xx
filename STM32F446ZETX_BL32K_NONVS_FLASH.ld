@@ -49,6 +49,8 @@ MEMORY
   FLASH    (rx)    : ORIGIN = 0x8008000,   LENGTH = 512K - 32K
 }
 
+_FLASH_VectorTable = ORIGIN(FLASH);
+
 /* Sections */
 SECTIONS
 {
@@ -58,7 +60,7 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
-  } >BOOT_FLASH
+  } >FLASH
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
