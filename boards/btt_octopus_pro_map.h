@@ -134,9 +134,9 @@
 #define M6_DIRECTION_PORT           GPIOE
 #define M6_DIRECTION_PIN            3
 #define M6_LIMIT_PORT               GPIOG
-#define M6_LIMIT_PIN                14          // MIN6
+#define M6_LIMIT_PIN                14          // MIN7
 #define M6_ENABLE_PORT              GPIOD
-#define M6_ENABLE_PIN               4           // EN for M5 motor
+#define M6_ENABLE_PIN               4           // EN for M6 motor
 #endif
 
 #if N_ABC_MOTORS > 4
@@ -146,9 +146,9 @@
 #define M7_DIRECTION_PORT           GPIOA
 #define M7_DIRECTION_PIN            14
 #define M7_LIMIT_PORT               GPIOG
-#define M7_LIMIT_PIN                15          // MIN6
+#define M7_LIMIT_PIN                15          // MIN8
 #define M7_ENABLE_PORT              GPIOE
-#define M7_ENABLE_PIN               0           // EN for M5 motor
+#define M7_ENABLE_PIN               0           // EN for M7 motor
 #endif
 
 #define AUXOUTPUT0_PORT             GPIOA       // Spindle PWM - FAN0 (T1CH1)
@@ -241,11 +241,11 @@
 #define AUXINPUT6_PORT              GPIOF       // Cycle start - T1
 #define AUXINPUT6_PIN               5
 
-#define AUXINTPUT0_ANALOG_PORT      GPIOF       // T2
-#define AUXINTPUT0_ANALOG_PIN       6
+#define AUXINPUT0_ANALOG_PORT       GPIOF       // T2
+#define AUXINPUT0_ANALOG_PIN        6
 
-#define AUXINTPUT1_ANALOG_PORT      GPIOF       // T3
-#define AUXINTPUT1_ANALOG_PIN       7
+#define AUXINPUT1_ANALOG_PORT       GPIOF       // T3
+#define AUXINPUT1_ANALOG_PIN        7
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 #if CONTROL_ENABLE & CONTROL_HALT
