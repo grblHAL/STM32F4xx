@@ -149,20 +149,27 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
   * @param  None
   * @retval None
   */
+// Written by enter_dfu() in driver.c. A second word guards against a stray RAM write
+// (this lives in plain SRAM, which a warm reset does not clear) falsely triggering entry.
+#define DFU_MAGIC_ARM     0xDEADBEEFU
+#define DFU_MAGIC_CONFIRM 0x21524110U /* ~DFU_MAGIC_ARM */
+
 void SystemInit(void)
 {
     extern uint8_t _estack; /* Symbol defined in the linker script */
 
-    uint32_t *addr;
+    uint32_t *addr, *confirm;
 
     addr = (uint32_t *)(((uint32_t)&_estack - 1) & 0xFFFFFFE0);
+    confirm = addr - 1;
 
-    if(*addr == 0xDEADBEEF) {
+    if(*addr == DFU_MAGIC_ARM && *confirm == DFU_MAGIC_CONFIRM) {
 
         uint32_t i;
         void (*SysMemBootJump)(void);
 
         *addr = 0xCAFEFEED; // Reset our trigger
+        *confirm = 0;
 
         __disable_irq();
 
@@ -184,6 +191,11 @@ void SystemInit(void)
         SysMemBootJump();
 
         while(1) {};
+
+    } else if(*addr == DFU_MAGIC_ARM || *confirm == DFU_MAGIC_CONFIRM) {
+        // Only one word matched - stray data, not a real request. Clear both.
+        *addr = 0;
+        *confirm = 0;
     }
 
   /* FPU settings ------------------------------------------------------------*/

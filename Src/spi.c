@@ -461,11 +461,22 @@ spi_cap_t spi_start (spi_slave_t *device)
     return (spi_cap_t){ .started = On };
 }
 
+#define SPI_WAIT_ITERATIONS 100000 // bounded so a dropped byte can't hang the controller
+
+static inline bool spi_wait_flag (uint32_t flag)
+{
+    uint32_t timeout = SPI_WAIT_ITERATIONS;
+
+    while(!__HAL_SPI_GET_FLAG(&spi_port, flag) && --timeout);
+
+    return timeout != 0;
+}
+
 uint8_t spi_get_byte (void)
 {
 	spi_port.Instance->DR = 0xFF; // Writing dummy data into Data register
 
-    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_RXNE));
+    spi_wait_flag(SPI_FLAG_RXNE);
 
     return (uint8_t)spi_port.Instance->DR;
 }
@@ -474,8 +485,8 @@ uint8_t spi_put_byte (uint8_t byte)
 {
 	spi_port.Instance->DR = byte;
 
-    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_TXE));
-    while(!__HAL_SPI_GET_FLAG(&spi_port, SPI_FLAG_RXNE));
+    spi_wait_flag(SPI_FLAG_TXE);
+    spi_wait_flag(SPI_FLAG_RXNE);
 
     __HAL_SPI_CLEAR_OVRFLAG(&spi_port);
 
@@ -484,8 +495,12 @@ uint8_t spi_put_byte (uint8_t byte)
 
 bool spi_write (uint8_t *data, uint16_t len)
 {
-    if(HAL_SPI_Transmit_DMA(&spi_port, data, len) == HAL_OK)
-        while(spi_port.State != HAL_SPI_STATE_READY);
+    if(HAL_SPI_Transmit_DMA(&spi_port, data, len) == HAL_OK) {
+        uint32_t timeout = SPI_WAIT_ITERATIONS;
+        while(spi_port.State != HAL_SPI_STATE_READY && --timeout);
+        if(!timeout)
+            HAL_SPI_Abort(&spi_port);
+    }
 
     __HAL_DMA_DISABLE(&spi_dma_tx);
 
@@ -494,8 +509,12 @@ bool spi_write (uint8_t *data, uint16_t len)
 
 bool spi_read (uint8_t *data, uint16_t len)
 {
-    if(HAL_SPI_Receive_DMA(&spi_port, data, len) == HAL_OK)
-        while(spi_port.State != HAL_SPI_STATE_READY);
+    if(HAL_SPI_Receive_DMA(&spi_port, data, len) == HAL_OK) {
+        uint32_t timeout = SPI_WAIT_ITERATIONS;
+        while(spi_port.State != HAL_SPI_STATE_READY && --timeout);
+        if(!timeout)
+            HAL_SPI_Abort(&spi_port);
+    }
 
     __HAL_DMA_DISABLE(&spi_dma_rx);
     __HAL_DMA_DISABLE(&spi_dma_tx);
