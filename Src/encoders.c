@@ -126,7 +126,8 @@ static spindle_data_t *spindleGetData (spindle_data_request_t request)
 
 //    while(spindle_encoder.spin_lock);
 
-    __disable_irq();
+    uint32_t irq = __get_PRIMASK();
+    __set_PRIMASK(1);
 
     if(spindle_data.ccw != !!(sp_encoder.timer->CR1 & TIM_CR1_DIR)) {
         if((spindle_data.ccw = !spindle_data.ccw) /*&& spindle_encoder.timer.pulse_length == 0*/)
@@ -142,7 +143,7 @@ static spindle_data_t *spindleGetData (spindle_data_request_t request)
 
     // if 16 bit RPM timer and TIMESTAMP < spindle_encoder.timer.last_pulse then what?
 
-    __enable_irq();
+    __set_PRIMASK(irq);
 
     // If no spindle pulses during last 250 ms assume RPM is 0
     if((stopped = ((pulse_length == 0) || (rpm_timer_delta > spindle_encoder.maximum_tt)))) {
@@ -296,10 +297,13 @@ ISR_CODE void spindle_encoder_irq (void *context)
 
     spindle_encoder_hw_t *qei = (spindle_encoder_hw_t *)context;
 
-    __disable_irq();
+    uint32_t irq = __get_PRIMASK();
+    __set_PRIMASK(1);
+
     uint32_t tval = TIMESTAMP;
     uint16_t cval = *qei->cnt;
-    __enable_irq();
+
+    __set_PRIMASK(irq);
 
     if(*qei->cr1 & TIM_CR1_DIR)
         *qei->ccr = (uint16_t)(*qei->ccr - spindle_encoder.tics_per_irq);

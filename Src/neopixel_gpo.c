@@ -58,7 +58,7 @@ static inline void _write (void)
 
     if(led && !modbus_isbusy()) {
 
-        __disable_irq();
+        hal.irq_disable();
 
         do {
             v = *led++;
@@ -86,7 +86,7 @@ static inline void _write (void)
             } while((mask >>= 1));
         } while(--i);
 
-        __enable_irq();
+        hal.irq_enable();
     }
 }
 
@@ -151,7 +151,7 @@ static void _write1 (void)
 
     if(led && !modbus_isbusy()) {
 
-        __disable_irq();
+        hal.irq_disable();
 
         do {
             v = *led++;
@@ -179,7 +179,7 @@ static void _write1 (void)
             } while((mask >>= 1));
         } while(--i);
 
-        __enable_irq();
+        hal.irq_enable();
     }
 }
 
