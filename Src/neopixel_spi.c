@@ -115,7 +115,8 @@ static settings_changed_ptr on_settings_changed;
 
 static inline void _write (void)
 {
-    while(spi_port.State == HAL_SPI_STATE_BUSY_TX);
+    uint32_t timeout = 100000; // bounded, see spi.c
+    while(spi_port.State == HAL_SPI_STATE_BUSY_TX && --timeout);
 
     HAL_SPI_Transmit_DMA(&spi_port, neopixel.leds, neopixel.num_bytes);
 }
