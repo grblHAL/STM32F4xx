@@ -348,7 +348,9 @@ uint32_t timer_clk_enable (TIM_TypeDef *timer)
 #endif
         }
 
-        dtimer->freq_hz = (apb2_clock ? HAL_RCC_GetPCLK2Freq() : HAL_RCC_GetPCLK1Freq()) * 2;
+        dtimer->freq_hz = apb2_clock
+                           ? (HAL_RCC_GetPCLK2Freq() * (LL_RCC_GetAPB2Prescaler() ? 2 : 1))
+                           : (HAL_RCC_GetPCLK1Freq() * (LL_RCC_GetAPB1Prescaler() ? 2 : 1));
     }
 
     return dtimer ? dtimer->freq_hz : 0;

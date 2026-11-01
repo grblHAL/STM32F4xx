@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2023 Terje Io
+  Copyright (c) 2020-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -44,6 +44,8 @@
 #define HAS_BOARD_INIT
 #define I2C_PORT 1
 #define IS_NUCLEO_BOB
+
+#define PULLUPS_ENABLE          0 // All inputs are protected
 
 // Define step pulse output pins.
 #define STEP_PORT               GPIOC

@@ -121,21 +121,21 @@
 
 #elif LED1_PWM_PORT == GPIOC_BASE && LED1_PWM_PIN == 8
 
-#define PWM1_TIMER_N     8
-#define PWM1_CHANNEL_N   3
-#define PWM1_GPIO_AF_N   3
-#define DMA1_INSTANCE_N  2
-#define DMA1_STREAM_N    4
-#define DMA1_CHANNEL_N   7
+#define PWM1_TIMER_N    8
+#define PWM1_CHANNEL_N  3
+#define PWM1_GPIO_AF_N  3
+#define DMA1_INSTANCE_N 2
+#define DMA1_STREAM_N   4
+#define DMA1_CHANNEL_N  7
 
 #elif LED1_PWM_PORT == GPIOC_BASE && LED1_PWM_PIN == 9
 
-#define PWM_TIMER_N     8
-#define PWM_CHANNEL_N   4
-#define PWM_GPIO_AF_N   3
-#define DMA_INSTANCE_N  2
-#define DMA_STREAM_N    7
-#define DMA_CHANNEL_N   7
+#define PWM1_TIMER_N    8
+#define PWM1_CHANNEL_N  4
+#define PWM1_GPIO_AF_N  3
+#define DMA1_INSTANCE_N 2
+#define DMA1_STREAM_N   7
+#define DMA1_CHANNEL_N  7
 
 #endif
 

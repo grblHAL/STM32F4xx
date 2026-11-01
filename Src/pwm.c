@@ -93,11 +93,19 @@ static const pwm_signal_t pwm_pin[] = {
     },
     {
         .port = GPIOC, .pin = 6, .timer = timer(3), .ccr = &timerCCR(3, 1), .ccmr = &timerCCMR(3, 1), .af = timerAF(3, 2),
-        .en = timerCCEN(1, ), .pol = timerCCP(1, ), .ois = timerCR2OIS(3, ), .ocm = timerOCM(1, 1), .ocmc = timerOCM(1, 1)
+        .en = timerCCEN(1, ), .pol = timerCCP(1, ), .ois = timerCR2OIS(1, ), .ocm = timerOCM(1, 1), .ocmc = timerOCM(1, 1)
+    },
+    {
+        .port = GPIOC, .pin = 7, .timer = timer(3), .ccr = &timerCCR(3, 2), .ccmr = &timerCCMR(3, 1), .af = timerAF(3, 2),
+        .en = timerCCEN(2, ), .pol = timerCCP(2, ), .ois = timerCR2OIS(2, ), .ocm = timerOCM(1, 2), .ocmc = timerOCM(1, 2)
     },
     {
         .port = GPIOC, .pin = 8, .timer = timer(3), .ccr = &timerCCR(3, 3), .ccmr = &timerCCMR(3, 2), .af = timerAF(3, 2),
         .en = timerCCEN(3, ), .pol = timerCCP(3, ), .ois = timerCR2OIS(3, ), .ocm = timerOCM(2, 3), .ocmc = timerOCM(2, 3)
+    },
+    {
+        .port = GPIOC, .pin = 9, .timer = timer(3), .ccr = &timerCCR(3, 4), .ccmr = &timerCCMR(3, 2), .af = timerAF(3, 2),
+        .en = timerCCEN(4, ), .pol = timerCCP(4, ), .ois = timerCR2OIS(4, ), .ocm = timerOCM(2, 4), .ocmc = timerOCM(2, 4)
     },
 #endif
 #if !IS_TIMER_CLAIMED(TIM4_BASE)

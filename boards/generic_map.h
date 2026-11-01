@@ -3,7 +3,7 @@
 
   Part of grblHAL
 
-  Copyright (c) 2020-2025 Terje Io
+  Copyright (c) 2020-2026 Terje Io
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
 #if TRINAMIC_ENABLE
 #error "Trinamic plugin not supported!"
 #endif
+
+//#define PULLUPS_ENABLE          0 // Uncomment if your board has external pullups for limits, control and probe inputs.
 
 #define SERIAL_PORT             1 // GPIOA: TX = 9, RX = 10
 
