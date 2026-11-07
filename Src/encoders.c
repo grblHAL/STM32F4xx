@@ -250,7 +250,7 @@ static void spindle_encoder_cfg (settings_t *settings, settings_changed_flags_t 
             spindle_ptrs_t *spindle;
 
             hal.spindle_data.reset = spindleDataReset;
-            if((spindle = spindle_get(0)))
+            if((spindle = spindle_get(-1)))
                 spindle->set_state(spindle, (spindle_state_t){0}, 0.0f);
 
             if(!event_claimed) {
