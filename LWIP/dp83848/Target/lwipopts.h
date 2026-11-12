@@ -31,6 +31,13 @@
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
 
+#include <stdint.h>
+
+extern void networking_set_rtc (uint32_t sec, uint32_t us);
+
+//#define LWIP_DHCP_MAX_NTP_SERVERS 3
+#define SNTP_SET_SYSTEM_TIME_NTP(sec, us) networking_set_rtc(sec, us)
+
 /* USER CODE END 0 */
 
 #ifdef __cplusplus
